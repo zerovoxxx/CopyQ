@@ -1,10 +1,10 @@
-# CopyQ — Windows 剪贴板体验定制
+# QClip — 跨平台剪贴板体验重构
 
 > 本文件是项目的导航入口。详细方案以 `docs/astack/version/*_SPEC.md` 为准。
 
 ## 1. 项目定位
 
-CopyQ 是支持文本、HTML、图片及其他剪贴板格式的跨平台剪贴板管理器。本分支在保留现有功能的基础上，为本机 Windows 增加参考 Alfred 的快捷搜索与粘贴体验，并为未来发布保留工程基础。
+QClip 基于官方 CopyQ 二次深度开发并开源。首版重做全部界面，剪贴板交互与能力完整对标 Alfred，深度整合 CopyQ 底层并保留所有现有能力。持续支持 Windows、macOS、Linux 三端桌面，Windows/macOS 优先，Linux 次之。详细范围、技术取舍及未验证边界见活跃 SPEC。
 
 ## 2. 核心开发原则
 
@@ -53,9 +53,9 @@ CopyQ 是支持文本、HTML、图片及其他剪贴板格式的跨平台剪贴�
 
 ### 3.1 项目与改造约束
 
-- 代码事实：C++17、Qt 6 Widgets、CMake；Windows 构建入口见 `CMakePresets.json` 的 `Windows` preset 和 `.github/workflows/build-windows.yml`。不得套用 astack 应用自身的 Node/pnpm 构建命令。
-- 用户目标：本机 Windows 使用优先，未来可能发布；以 Alfred 剪贴板能力和交互为产品参照，保留 CopyQ 现有功能。已确认与待确认事项见活跃 SPEC。
-- 初始技术方案：同一 CopyQ 应用内新增 Qt Widgets 快捷面板，复用历史模型和 Windows 粘贴链路；完整管理窗口继续承载现有功能。
+- 现有代码事实：C++17、Qt 6 Widgets、CMake；Windows 构建入口见 `CMakePresets.json` 的 `Windows` preset 和 `.github/workflows/build-windows.yml`。不得套用 astack 应用自身的 Node/pnpm 构建命令。
+- 用户目标：QClip 开源、三端桌面支持、Windows/macOS 优先；首版重做全部界面，剪贴板交互与能力完整对标 Alfred，保留 CopyQ 所有能力。预览、Snippet、自动展开和连续复制合并已升级为正式需求。已确认与待确认事项见活跃 SPEC。
+- 目标技术方案：C++17 + Qt 6 Quick/QML + Qt Quick Controls + CMake，在现有 Qt 服务进程内重做界面，复用历史、插件、脚本和三端平台实现；Widgets 依赖按功能迁移。插件呈现、Quick 窗口焦点与 QML 打包需先验证，不能以保留旧管理窗口代替全界面验收。
 - 测试使用隔离 session、配置、状态和数据路径；运行应用或测试前必须满足下文环境与显示会话约束。不得用日常剪贴板历史验证删除、清空或迁移。
 - 仅运行与变更相关的指定测试，不运行全量测试。文档初始化只验证文档和入口关系，不启动剪贴板监控或粘贴。
 - 用户界面验收要覆盖真实窗口、输入法和粘贴结果。WSL/Xvfb 结果不等价于 Windows 前台窗口粘贴结果；未验证的边界必须写入 SPEC。
@@ -71,6 +71,7 @@ CopyQ 是支持文本、HTML、图片及其他剪贴板格式的跨平台剪贴�
 | SPEC 创建或更新 | 使用本机 astack 的 `spec/scripts/spec-lint.sh` 检查 `docs/astack/version/`，errors=0、warnings=0；完整命令见活跃 SPEC |
 | Linux 编译 | 完成下文 CMake 配置后运行 `cmake --build build`，退出 0；环境依赖未就绪时据实记录 |
 | Windows 编译 | 在已配置 MSVC、Qt、依赖路径和 sccache 的环境中运行 `cmake --preset Windows`，再运行 `cmake --build --preset Windows`，均退出 0；本机工具链尚未验证 |
+| macOS 编译 | 在已配置依赖的原生 macOS 主机执行对应架构的 `cmake --preset macOS-13` / `cmake --build --preset macOS-13` 或 `macOS-13-m1` 对应命令，均退出 0；本轮尚未验证 |
 | 聚焦测试 | 完成下文 Xvfb/openbox 与所有环境变量后，运行 `build/copyq-tests "testCore:configPath" "testCore:searchItemsAndCopy" "testCore:keysAndFocusing"`；按实际影响面裁剪或新增具体测试 |
 | 完整测试 | 不适用：项目要求始终指定测试函数，禁止直接跑全量套件 |
 | Windows 用户体验 | 原生 `.exe` 的隔离测试入口须在开发阶段落实；按 SPEC 的实际应用、焦点、中文输入及 DPI 场景留证，不把 Linux 测试当作 Windows 验收 |
@@ -249,5 +250,11 @@ SPEC 至少写清：
 
 ## 6. 当前活跃迭代
 
-- [Iteration1_ClipboardPalette_SPEC.md](docs/astack/version/Iteration1_ClipboardPalette_SPEC.md) — **待实施**：Windows 剪贴板快捷面板。
-- [docs/astack/INDEX.md](docs/astack/INDEX.md) 记录状态和初始化结果。2026-09-28 已接入 harness 并沉淀需求；应用功能尚未进入实现与验收。
+首版只设三个实施 SPEC，按 1 → 2 → 3 推进；三个阶段共同满足全界面重做、Alfred 剪贴板完整对齐和 CopyQ 全能力保留，内部阶段产物不能替代完整首版。公共架构与接入契约以 Iteration1 为准。
+
+- [Iteration1_ClipboardPalette_SPEC.md](docs/astack/version/Iteration1_ClipboardPalette_SPEC.md) — **待实施**：核心接入与快捷面板；当前开发入口。
+- [Iteration2_CopyQCompatibility_SPEC.md](docs/astack/version/Iteration2_CopyQCompatibility_SPEC.md) — **待实施**：全界面重做与 CopyQ 能力保留，依赖 Iteration1。
+- [Iteration3_AlfredDesktopRelease_SPEC.md](docs/astack/version/Iteration3_AlfredDesktopRelease_SPEC.md) — **待实施**：Alfred 增强能力与三端发布，依赖前两阶段。
+- [docs/astack/INDEX.md](docs/astack/INDEX.md) 记录需求/验收归属和 GPT-6 Sol xhigh 执行入口。2026-09-28 已完成 harness、官方代码同步核对及三份 SPEC 拆分；产品实现与验收均未开始。
+
+各 SPEC 已包含 3–4 个实施里程碑。执行时先核对当前里程碑的代码接口和相关验证，完成后把结果与交接内容写回所属 SPEC；确有必要再增加局部 PLAN，不默认拆更多 SPEC 或旁路报告。
