@@ -15,6 +15,7 @@
 #include "app/app.h"
 #include "common/client_server.h"
 #include "common/config.h"
+#include "tests/clipboardguard.h"
 #include "common/log.h"
 #include "common/process.h"
 #include "common/settings.h"
@@ -459,7 +460,8 @@ public:
         // Remove all configuration files and tab data.
         const auto settingsPaths = {
             settingsDirectoryPath(),
-            qEnvironmentVariable("COPYQ_SETTINGS_PATH")
+            qEnvironmentVariable("COPYQ_SETTINGS_PATH"),
+            QFileInfo(tabDataFileBasePath()).path()
         };
         for ( const auto &settingsPath : settingsPaths ) {
             Q_ASSERT( !settingsPath.isEmpty() );
@@ -860,17 +862,21 @@ int main(int argc, char **argv)
     const QString appName = QStringLiteral("copyq.test");
     QCoreApplication::setOrganizationName(appName);
     QCoreApplication::setApplicationName(appName);
-    const auto configPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    const auto requestedConfigPath = qEnvironmentVariable("COPYQ_SETTINGS_PATH");
+    const auto configPath = requestedConfigPath.isEmpty()
+        ? QStandardPaths::writableLocation(QStandardPaths::CacheLocation) : requestedConfigPath;
     qCInfo(testCategory) << "Using config directory for tests:" << configPath;
     QDir configDir(configPath);
     qputenv("COPYQ_SETTINGS_PATH", configPath.toLocal8Bit());
     qputenv("COPYQ_LOG_FILE", configDir.absoluteFilePath(QStringLiteral("tests.log")).toLocal8Bit());
-    qputenv("COPYQ_ITEM_DATA_PATH", configDir.absoluteFilePath(QStringLiteral("items")).toLocal8Bit());
+    if (qEnvironmentVariableIsEmpty("COPYQ_ITEM_DATA_PATH"))
+        qputenv("COPYQ_ITEM_DATA_PATH", configDir.absoluteFilePath(QStringLiteral("items")).toLocal8Bit());
 
     setSessionName(sessionName);
     const auto platform = platformNativeInterface();
     std::unique_ptr<QGuiApplication> app( platform->createTestApplication(argc, argv) );
     initSession(app.get(), sessionName);
+    const auto originalClipboard = backupClipboard();
 
     // Set higher default tests timeout.
     // The default value is 5 minutes (in Qt 5.15) which is not enough to run
@@ -897,6 +903,7 @@ int main(int argc, char **argv)
         exitCode = QTest::qExec(&aggregator, args);
     }
 
+    restoreClipboard(originalClipboard);
     return exitCode;
 }
 

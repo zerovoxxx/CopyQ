@@ -186,6 +186,16 @@ unlike in GUI, where row numbers start from 1 by default.
    :returns: ``true`` only if main window is being shown, otherwise ``false``.
    :rtype: bool
 
+.. js:function:: palette()
+
+   Shows or hides the clipboard palette for the current history tab.
+   The palette searches real history without changing the clipboard while browsing.
+   Enter pastes to the original window; Ctrl+Enter (Cmd+Enter on macOS) only copies.
+   Shift+Enter pastes plain text and Alt+Enter bypasses a configured Enter command.
+
+   :returns: ``true`` if the palette is shown, otherwise ``false``.
+   :rtype: bool
+
 .. js:function:: menu()
 
    Opens context menu.

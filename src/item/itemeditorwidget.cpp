@@ -22,12 +22,18 @@
 #include <QTextDocument>
 #include <QTextFrame>
 #include <QToolBar>
+#include <algorithm>
 
 namespace {
 
 bool containsRichText(const QTextDocument &document)
 {
-    return document.allFormats().size() > 3;
+    const auto formats = document.allFormats();
+    return formats.size() > 3 || std::any_of(formats.cbegin(), formats.cend(), [](const QTextFormat &format) {
+        const auto character = format.toCharFormat();
+        return character.fontWeight() != QFont::Normal || character.fontItalic()
+            || character.fontUnderline() || character.fontStrikeOut();
+    });
 }
 
 QString findImageFormat(const QMimeData &data)

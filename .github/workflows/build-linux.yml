@@ -37,6 +37,13 @@ env:
     qt6-tools-dev-tools
     qt6-l10n-tools
     qt6-declarative-dev
+    qml6-module-qtqml
+    qml6-module-qtqml-models
+    qml6-module-qtqml-workerscript
+    qml6-module-qtquick
+    qml6-module-qtquick-controls
+    qml6-module-qtquick-layouts
+    qml6-module-qtquick-templates
 
     libqt6svg6-dev
     libqt6svg6
@@ -227,6 +234,7 @@ jobs:
             -DCMAKE_C_FLAGS="${{matrix.compiler_flags}}" \
             -DWITH_NATIVE_NOTIFICATIONS=${{matrix.with_native_notifications}}
           cmake --build --preset '${{ matrix.cmake_preset }}'
+          cmake --build build/copyq/${{ matrix.cmake_preset }} --target copyq-palette-ui_qmllint
 
       - name: Create gnupg directory for tests
         run: mkdir -p ~/.gnupg && chmod go-rwx ~/.gnupg
@@ -303,6 +311,8 @@ jobs:
           echo "Found QCA ossl plugin: $qca_ossl"
           cp -a "$qca_ossl" "$DESTDIR/usr/plugins/crypto/"
           deps_only_flags+=(--deploy-deps-only "$DESTDIR/usr/plugins/crypto")
+          export QML_SOURCES_PATHS="$GITHUB_WORKSPACE/src/gui/qml"
+          export QML_IMPORT_PATH="$GITHUB_WORKSPACE/build/copyq/${{ matrix.cmake_preset }}/src"
 
           linuxdeploy --appdir "$DESTDIR" \
             --desktop-file "$DESTDIR/usr/share/applications/com.github.hluk.copyq.desktop" \
@@ -348,7 +358,12 @@ jobs:
         working-directory: >-
           ${{github.workspace}}/build/copyq/${{ matrix.cmake_preset }}
         if: matrix.test_x11 && !matrix.appimage
-        run: '${{github.workspace}}/utils/github/test-linux.sh'
+        run: |
+          ${{github.workspace}}/utils/github/test-linux.sh \
+            testCore:configPath testCore:searchItemsAndCopy testCore:keysAndFocusing \
+            testCore:clipboardUriList testCore:paletteSearchAndCopy testCore:paletteCommands testCore:paletteClipboardFailure \
+            testCore:paletteEditor testCore:palettePaste testCore:paletteMimeAndDisplayCommands \
+            testItemFakeVim:createItem testItemFakeVim:paletteEditor
 
       - name: Test on X11 (AppImage)
         working-directory: >-

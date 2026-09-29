@@ -4,6 +4,7 @@
 
 #include "common/mimetypes.h"
 #include "gui/traymenu.h"
+#include "gui/clipboardpalettemodel.h"
 #include "item/itemdelegate.h"
 
 #include <QAction>
@@ -41,9 +42,18 @@ PersistentDisplayItem::PersistentDisplayItem(QAction *action, const QVariantMap 
 
 bool PersistentDisplayItem::isValid()
 {
+    if (m_paletteModel)
+        return m_index.isValid() && m_index == m_paletteModel->selectedIndex()
+            && m_revision == m_paletteModel->displayRevision();
     return !m_action.isNull() || (
         !m_widget.isNull() && !m_delegate.isNull()
         && !m_delegate->invalidateHidden(m_widget.data()) );
+}
+
+PersistentDisplayItem::PersistentDisplayItem(ClipboardPaletteModel *model,
+        const QPersistentModelIndex &index, int revision, const QVariantMap &data)
+    : m_data(data), m_paletteModel(model), m_index(index), m_revision(revision)
+{
 }
 
 void PersistentDisplayItem::setData(const QVariantMap &data)
@@ -51,7 +61,9 @@ void PersistentDisplayItem::setData(const QVariantMap &data)
     if ( data.isEmpty() || dataEquals(data, m_data) )
         return;
 
-    if ( !m_action.isNull() ) {
+    if (m_paletteModel) {
+        m_paletteModel->setDisplayData(m_index, m_revision, data);
+    } else if ( !m_action.isNull() ) {
         TrayMenu::updateTextFromData(m_action, data);
         TrayMenu::updateIconFromData(m_action, data);
     } else if ( !m_widget.isNull() && !m_delegate.isNull() ) {

@@ -386,17 +386,19 @@ FilterLineEdit::FilterLineEdit(QWidget *parent)
 
 ItemFilterPtr FilterLineEdit::filter() const
 {
-    const QString pattern = text();
-    if (m_actionRe->isChecked()) {
-        const auto sensitivity =
-            m_actionCaseInsensitive->isChecked()
-            ? QRegularExpression::CaseInsensitiveOption
-            : QRegularExpression::NoPatternOption;
-        return std::make_shared<ItemFilterRegExp>(QRegularExpression(pattern, sensitivity), pattern);
-    }
-
     const auto sensitivity = m_actionCaseInsensitive->isChecked()
         ? Qt::CaseInsensitive : Qt::CaseSensitive;
+    return createFilter(text(), m_actionRe->isChecked(), sensitivity);
+}
+
+ItemFilterPtr FilterLineEdit::createFilter(
+        const QString &pattern, bool regularExpression, Qt::CaseSensitivity sensitivity)
+{
+    if (regularExpression) {
+        const auto options = sensitivity == Qt::CaseInsensitive
+            ? QRegularExpression::CaseInsensitiveOption : QRegularExpression::NoPatternOption;
+        return std::make_shared<ItemFilterRegExp>(QRegularExpression(pattern, options), pattern);
+    }
     return std::make_shared<ItemFilterFixedStrings>(pattern, sensitivity);
 }
 

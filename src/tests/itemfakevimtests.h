@@ -22,6 +22,7 @@ private slots:
     void cleanup();
 
     void createItem();
+    void paletteEditor();
 
     void blockSelection();
 

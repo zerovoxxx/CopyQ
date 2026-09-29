@@ -4,9 +4,11 @@
 
 
 #include <QByteArray>
+#include <functional>
 
 class QString;
 class QWidget;
+class QWindow;
 
 /**
  * Window storage class for platform. Used to raise/focus window and paste to window.
@@ -42,6 +44,12 @@ public:
      * Return true if this native window belongs to the given widget.
      */
     virtual bool matchesWidget(const QWidget *widget) const = 0;
+
+    virtual bool matchesWindow(const QWindow *window) const = 0;
+    virtual bool isValid() const = 0;
+    virtual bool isActive() const = 0;
+    // This path must verify focus immediately before sending input.
+    virtual bool pasteFromClipboardSafely(const std::function<bool()> &canPaste) = 0;
 
     PlatformWindow(const PlatformWindow &) = delete;
     PlatformWindow &operator=(const PlatformWindow &) = delete;

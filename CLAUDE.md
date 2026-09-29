@@ -186,12 +186,13 @@ Useful scripts (omit the `tab(...)` call to use the default tab):
 
 `CLAUDE.md` 是治理主入口。astack 标准结构使用 `AGENTS.md -> CLAUDE.md` 符号链接。
 
-本机原生符号链接创建需要管理员权限，WSL 在 NTFS 上创建的 Linux 符号链接无法被 Windows 读取，因此本 checkout 使用 **NTFS 硬链接**，两个文件共享同一内容。只编辑 `CLAUDE.md`；会采用临时文件替换保存的编辑器可能断开硬链接，编辑后运行 `utils/check-harness.ps1` 验证。
+Windows checkout 的原生符号链接创建需要管理员权限，WSL 在 NTFS 上创建的 Linux 符号链接无法被 Windows 读取，因此该环境使用 **NTFS 硬链接**，两个文件共享同一内容。2026-09-29 的原生 macOS checkout 在确认内容相同后恢复 `AGENTS.md -> CLAUDE.md` 标准符号链接。只编辑 `CLAUDE.md`；会采用临时文件替换保存的编辑器可能断开硬链接，编辑后运行 `utils/check-harness.ps1` 验证。
 
-Git 不保留硬链接身份，两入口提交时均为普通文件。首次迁移已将本仓库局部 `core.symlinks` 设为 `true`，使 Git 正确识别旧 `CLAUDE.md` 从软链到普通文件的类型转换；全局设置未改。新 Windows checkout 中先比较两个文件内容；完全一致时可执行以下命令恢复硬链接。内容不同先合并有效规则，禁止直接覆盖。
+Git 不保留硬链接身份；原 Windows 交付将两入口记录为普通文件，本机 macOS 恢复后 `AGENTS.md` 记录为符号链接。首次迁移将本仓库局部 `core.symlinks` 设为 `true`，全局设置未改。新 Windows checkout 中先比较两个文件内容；完全一致时可恢复硬链接。若 Git 因不支持软链而生成仅包含 `CLAUDE.md` 的链接占位文件，也可按已确认的目标恢复。其他内容差异先合并有效规则，禁止直接覆盖。
 
 ```powershell
-if ((Get-FileHash -LiteralPath AGENTS.md).Hash -ne (Get-FileHash -LiteralPath CLAUDE.md).Hash) {
+$isLinkPlaceholder = (Get-Content -LiteralPath AGENTS.md -Raw).Trim() -eq 'CLAUDE.md'
+if (-not $isLinkPlaceholder -and (Get-FileHash -LiteralPath AGENTS.md).Hash -ne (Get-FileHash -LiteralPath CLAUDE.md).Hash) {
     throw '两个治理入口内容不同，请先合并'
 }
 Remove-Item -LiteralPath AGENTS.md
@@ -252,9 +253,9 @@ SPEC 至少写清：
 
 首版只设三个实施 SPEC，按 1 → 2 → 3 推进；三个阶段共同满足全界面重做、Alfred 剪贴板完整对齐和 CopyQ 全能力保留，内部阶段产物不能替代完整首版。公共架构与接入契约以 Iteration1 为准。
 
-- [Iteration1_ClipboardPalette_SPEC.md](docs/astack/version/Iteration1_ClipboardPalette_SPEC.md) — **待实施**：核心接入与快捷面板；当前开发入口。
-- [Iteration2_CopyQCompatibility_SPEC.md](docs/astack/version/Iteration2_CopyQCompatibility_SPEC.md) — **待实施**：全界面重做与 CopyQ 能力保留，依赖 Iteration1。
+- [Iteration1_ClipboardPalette_SPEC.md](docs/astack/version/Iteration1_ClipboardPalette_SPEC.md) — **开发中**：核心、快捷面板、插件/输入原型及三端构建测试入口已实现；macOS/Linux 已有聚焦证据，Windows 和剩余实机验收待补。
+- [Iteration2_CopyQCompatibility_SPEC.md](docs/astack/version/Iteration2_CopyQCompatibility_SPEC.md) — **开发中**：I2-1 的 QML 管理、显式多选/命令、单集合和批量操作已有 macOS/Linux 聚焦证据；组级管理与其他页面样板收尾后继续 I2-2，全部界面/历史策略及三端验收待完成。当前开发入口。
 - [Iteration3_AlfredDesktopRelease_SPEC.md](docs/astack/version/Iteration3_AlfredDesktopRelease_SPEC.md) — **待实施**：Alfred 增强能力与三端发布，依赖前两阶段。
-- [docs/astack/INDEX.md](docs/astack/INDEX.md) 记录需求/验收归属和 GPT-6 Sol xhigh 执行入口。2026-09-28 已完成 harness、官方代码同步核对及三份 SPEC 拆分；产品实现与验收均未开始。
+- [docs/astack/INDEX.md](docs/astack/INDEX.md) 记录需求/验收归属和 GPT-6 Sol xhigh 执行入口。2026-09-29 已实施 SPEC1 及 SPEC2 首批开发任务；详细验证与未通过边界写在对应 SPEC，三端总验收尚未通过。
 
 各 SPEC 已包含 3–4 个实施里程碑。执行时先核对当前里程碑的代码接口和相关验证，完成后把结果与交接内容写回所属 SPEC；确有必要再增加局部 PLAN，不默认拆更多 SPEC 或旁路报告。

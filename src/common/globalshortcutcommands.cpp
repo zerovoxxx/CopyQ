@@ -61,6 +61,7 @@ Command createGlobalShortcut(const QString &name, const QString &script, IconId 
 QVector<Command> globalShortcutCommands()
 {
     return {
+        createGlobalShortcut(AddCommandDialog::tr("Show/hide clipboard palette"), "palette()", IconRectangleList, "copyq_global_palette"),
         createGlobalShortcut( AddCommandDialog::tr("Show/hide main window"), "toggle()", IconRectangleList, "copyq_global_toggle"),
         createGlobalShortcut( AddCommandDialog::tr("Show the tray menu"), "menu()", IconInbox, "copyq_global_menu"),
         createGlobalShortcut( AddCommandDialog::tr("Show main window under mouse cursor"), "visible() ? hide() : showAt()", IconRectangleList, "copyq_global_show_under_mouse"),

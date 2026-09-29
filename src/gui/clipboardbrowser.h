@@ -93,12 +93,15 @@ class ClipboardBrowser final : public QListView
         void keyboardSearch(const QString &text) override;
 
         QVariantMap copyIndex(const QModelIndex &index) const;
+        QVariantMap copyItem(const QVariantMap &data) const;
 
         QVariantMap copyIndexes(const QModelIndexList &indexes) const;
 
         void removeIndexes(const QModelIndexList &indexes, QString *error = nullptr);
 
         bool canRemoveItems(const QModelIndexList &indexes, QString *error = nullptr);
+        bool transferIndexes(ClipboardBrowser *target, const QModelIndexList &indexes,
+                             int row, bool move, QString *error);
 
         /** Render preview image with items. */
         QPixmap renderItemPreview(const QModelIndexList &indexes, int maxWidth, int maxHeight);

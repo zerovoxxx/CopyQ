@@ -10,6 +10,7 @@
 #include <QHash>
 #include <QPalette>
 #include <QStringList>
+#include <QVariantMap>
 
 namespace Ui {
 class ConfigTabAppearance;
@@ -44,6 +45,7 @@ public:
 
     /** Return parsed font. */
     QFont font(const QString &name) const;
+    QVariantMap quickTheme() const;
 
     /** Returt evaluated color expression. */
     QColor evalColorExpression(const QString &expr) const;

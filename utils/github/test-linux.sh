@@ -8,11 +8,6 @@ export QT_LOGGING_RULES="*.debug=true;qt.*.debug=false;qt.*.warning=true"
 
 export COPYQ_TESTS_EXECUTABLE=${COPYQ_TESTS_EXECUTABLE:-"./copyq"}
 
-# Test command line arguments that don't need GUI.
-DISPLAY="" "$COPYQ_TESTS_EXECUTABLE" --help
-DISPLAY="" "$COPYQ_TESTS_EXECUTABLE" --version
-DISPLAY="" "$COPYQ_TESTS_EXECUTABLE" --info
-
 # Start X11 and window manager.
 export DISPLAY=':99.0'
 Xvfb :99 -screen 0 1280x960x24 &
@@ -20,15 +15,29 @@ sleep 5
 openbox &
 sleep 8
 
-# Smoke test the default session
-"$COPYQ_TESTS_EXECUTABLE" --start-server exit
+runner="${GITHUB_WORKSPACE}/utils/run-isolated.sh"
+
+# Test the installed app with disposable settings, history and state.
+"$runner" "$COPYQ_TESTS_EXECUTABLE" --help
+"$runner" "$COPYQ_TESTS_EXECUTABLE" --version
+"$runner" "$COPYQ_TESTS_EXECUTABLE" --info
+"$runner" "$COPYQ_TESTS_EXECUTABLE" --start-server exit
 
 # Test handling Unix signals.
-"$(dirname "$0")/test-signals.sh"
+"$runner" "$(dirname "$0")/test-signals.sh"
 
 # Test global shortcuts on X11.
-"$(dirname "$0")/test-linux-global-shortcuts.sh"
+"$runner" "$(dirname "$0")/test-linux-global-shortcuts.sh"
 
 # Run tests.
 export COPYQ_TESTS_RERUN_FAILED=1
-./copyq-tests "$@"
+"$runner" ./copyq-tests "$@"
+"$runner" ./copyq-tests \
+    testCore:managementActions testCore:managementTabs testCore:managementCommands testCore:managementEditor
+"$runner" ./copyq-palette-tests \
+    modelIdentity queryChanges displayCopiesAndPreview sourceDestructionAndReset \
+    qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews \
+    nativeWindowIdentification pluginEditorAndSettings
+"$runner" ./copyq-management-tests \
+    multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay transferAndDeleteProtection \
+    qmlSelectionAndActions nativeDropRoundTrip themeMapping

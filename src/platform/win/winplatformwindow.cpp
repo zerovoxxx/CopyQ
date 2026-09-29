@@ -12,6 +12,7 @@
 #include <QString>
 #include <QVector>
 #include <QWidget>
+#include <QWindow>
 
 namespace {
 
@@ -24,12 +25,12 @@ QString windowTitle(HWND window)
 
 INPUT createInput(WORD key, DWORD flags = 0)
 {
-    INPUT input;
+    INPUT input{};
 
     input.type = INPUT_KEYBOARD;
     input.ki.wVk = key;
     input.ki.wScan = 0;
-    input.ki.dwFlags = KEYEVENTF_UNICODE | flags;
+    input.ki.dwFlags = flags;
     input.ki.time = 0;
     input.ki.dwExtraInfo = GetMessageExtraInfo();
 
@@ -135,7 +136,7 @@ bool waitForModifiersReleased(const AppConfig &config)
 bool sendInputs(QVector<INPUT> input, HWND wnd)
 {
     const UINT numberOfAddedEvents = SendInput( input.size(), input.data(), sizeof(INPUT) );
-    if (numberOfAddedEvents == 0u) {
+    if (numberOfAddedEvents != static_cast<UINT>(input.size())) {
         logWindowWarning("Failed to simulate key events", wnd);
         return false;
     }
@@ -147,6 +148,32 @@ bool sendInputs(QVector<INPUT> input, HWND wnd)
 WinPlatformWindow::WinPlatformWindow(HWND window)
     : m_window(window)
 {
+    GetWindowThreadProcessId(window, &m_processId);
+}
+
+bool WinPlatformWindow::matchesWindow(const QWindow *window) const
+{
+    return window && window->handle() && reinterpret_cast<HWND>(window->winId()) == m_window;
+}
+
+bool WinPlatformWindow::isValid() const
+{
+    DWORD processId = 0;
+    return IsWindow(m_window) && IsWindowVisible(m_window) && GetWindowThreadProcessId(m_window, &processId)
+        && processId == m_processId;
+}
+
+bool WinPlatformWindow::isActive() const
+{
+    return isValid() && GetForegroundWindow() == m_window;
+}
+
+bool WinPlatformWindow::pasteFromClipboardSafely(const std::function<bool()> &canPaste)
+{
+    const AppConfig config;
+    return isActive() && (pasteWithCtrlV(*this, config)
+        ? sendKeyPress(VK_LCONTROL, 'V', config, true, canPaste)
+        : sendKeyPress(VK_LSHIFT, VK_INSERT, config, true, canPaste));
 }
 
 bool WinPlatformWindow::matchesWidget(const QWidget *widget) const
@@ -194,12 +221,14 @@ bool WinPlatformWindow::copyToClipboard()
     return clipboardSequenceNumber != GetClipboardSequenceNumber();
 }
 
-bool WinPlatformWindow::sendKeyPress(WORD modifier, WORD key, const AppConfig &config)
+bool WinPlatformWindow::sendKeyPress(WORD modifier, WORD key, const AppConfig &config, bool requireFocus,
+                                    const std::function<bool()> &canPaste)
 {
-    waitMs(config.option<Config::window_wait_before_raise_ms>());
-
-    if (!raiseWindow(m_window))
-        return false;
+    if (!requireFocus) {
+        waitMs(config.option<Config::window_wait_before_raise_ms>());
+        if (!raiseWindow(m_window))
+            return false;
+    }
 
     waitMs(config.option<Config::window_wait_after_raised_ms>());
 
@@ -208,6 +237,9 @@ bool WinPlatformWindow::sendKeyPress(WORD modifier, WORD key, const AppConfig &c
         logWindowWarning("Failed to simulate key presses while modifiers are pressed", m_window);
         return false;
     }
+
+    if (requireFocus && (!isActive() || !canPaste()))
+        return false;
 
     const int keyPressTimeMs = config.option<Config::window_key_press_time_ms>();
     if (keyPressTimeMs <= 0) {

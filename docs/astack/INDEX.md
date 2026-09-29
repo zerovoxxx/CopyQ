@@ -6,13 +6,15 @@
 
 | 迭代 | 标题 | 状态 | 文档 | 创建日期 |
 |------|------|------|------|---------|
-| Iteration1 | QClip 核心接入与快捷面板 | 待实施 | [SPEC](version/Iteration1_ClipboardPalette_SPEC.md) | 2026-09-28 |
-| Iteration2 | QClip 全界面重做与 CopyQ 能力保留 | 待实施 | [SPEC](version/Iteration2_CopyQCompatibility_SPEC.md) | 2026-09-28 |
+| Iteration1 | QClip 核心接入与快捷面板 | 开发中 | [SPEC](version/Iteration1_ClipboardPalette_SPEC.md) | 2026-09-28 |
+| Iteration2 | QClip 全界面重做与 CopyQ 能力保留 | 开发中 | [SPEC](version/Iteration2_CopyQCompatibility_SPEC.md) | 2026-09-28 |
 | Iteration3 | QClip Alfred 增强能力与三端发布 | 待实施 | [SPEC](version/Iteration3_AlfredDesktopRelease_SPEC.md) | 2026-09-28 |
 
 用户已确认：QClip、公开开源、Windows/macOS 优先且支持 Linux、首版重做全部界面、Alfred 剪贴板和相关 Snippet 完整对齐、CopyQ 全部能力保留。技术方向为 C++17 + Qt 6 Quick/QML + Qt Quick Controls + CMake，并复用现有原生平台实现。
 
-已完成需求分析、官方代码同步核对和三份 SPEC 拆分；产品实现与验收均未开始。阶段产物属于内部开发成果，不能替代完整首版。原总 SPEC 路径保留在 Iteration1，历史讨论/验证证据继续保存在其中。
+已完成需求分析、官方代码同步核对和三份 SPEC 拆分；2026-09-29 已实施 Iteration1 的核心/面板、插件和平台原型、隔离测试及 QML 部署入口。macOS/Linux 聚焦验证已有证据；Windows、真实中文输入法、多屏及部分应用/预览场景仍待验收，Iteration1 总状态保持开发中。阶段产物属于内部开发成果，不能替代完整首版。原总 SPEC 路径保留在 Iteration1，历史讨论/验证证据继续保存在其中。
+
+2026-09-29 已开始 Iteration2 的 I2-1：逐项登记 49 个动作、87 项配置、24 个主表单、7 个插件表单、149 个文档化 API（含别名）及八插件；新 QML 管理窗口、显式多选/命令、单集合管理及批量传输已实施，相关 macOS/Linux 隔离验证写在 SPEC2。当前交接仍为 I2-1 收尾与 I2-2 接入，组级管理、其余页面样板、设置/命令/插件全部界面、历史策略及三端总验收尚未完成。
 
 ## 为什么这样拆分
 
@@ -93,3 +95,4 @@ wsl.exe -d Ubuntu --cd /mnt/d/CodeSpace/Github/CopyQ -- bash /home/alexk/data/co
 | 2026-09-28 | 初始化交付 | zerovoxxx | 补充原始 UI 预览来源与验证边界，按用户要求提交当前治理文件；产品功能仍待实施，SPEC 归档检查为 no-op。 |
 | 2026-09-28 | 产品方向与上游同步 | zerovoxxx | 确定 QClip、开源、三端优先级、首版全界面重做、Alfred 剪贴板完整对齐与 CopyQ 全能力保留；推荐 Qt Quick/QML，更新能力/验收矩阵。添加 upstream 并核对已包含官方最新 master `1cddb851`，保留 harness 提交，产品状态仍待实施。 |
 | 2026-09-28 | 三阶段实施拆分 | zerovoxxx | 保留原 SPEC 路径并收敛公共架构/面板阶段，新增全界面兼容、Alfred 增强与三端发布两份 SPEC；A1–A7/C1–C4/P1–P14 完整映射，补充 GPT-6 Sol xhigh 执行入口。 |
+| 2026-09-29 | Iteration1 开发 | zerovoxxx | 实施快捷面板与核心动作链路，建立插件/原生输入原型、三端 QML 构建部署和隔离聚焦测试；证据及后续接口集中于 SPEC1，未验证的平台门保持未通过。 |

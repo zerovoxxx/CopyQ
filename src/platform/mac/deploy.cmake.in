@@ -5,10 +5,38 @@ include("@QT_DEPLOY_SUPPORT@")
 
 set(_bundle "@BUNDLE@")
 
-# Run macdeployqt for Qt libraries and plugins.
-qt_deploy_runtime_dependencies(
-    EXECUTABLE "${_bundle}"
-    GENERATE_QT_CONF
-    VERBOSE
-    NO_APP_STORE_COMPLIANCE
+# Scan the actual QML sources, including imports from the linked static UI module.
+# macdeployqt's -qmldir works on the project's Qt 6.4 minimum as well.
+set(_qml_libpaths "")
+set(COPYQ_DEPLOY_LIBPATHS "@COPYQ_DEPLOY_LIBPATHS@")
+foreach(_libpath IN LISTS COPYQ_DEPLOY_LIBPATHS)
+    list(APPEND _qml_libpaths "-libpath=${_libpath}")
+endforeach()
+execute_process(
+    COMMAND "@COPYQ_MACDEPLOYQT@" "${_bundle}"
+        "-qmldir=@CMAKE_CURRENT_SOURCE_DIR@/gui/qml"
+        "-qmlimport=@CMAKE_CURRENT_BINARY_DIR@"
+        -always-overwrite -no-strip -no-codesign ${_qml_libpaths}
+    RESULT_VARIABLE _qml_deploy_result
 )
+if(NOT _qml_deploy_result EQUAL 0)
+    message(FATAL_ERROR "QML deployment failed: ${_qml_deploy_result}")
+endif()
+
+# Homebrew exposes some qmldir files as symlinks which macdeployqt skips.
+# Complete metadata for modules it already deployed, without copying all of Qt.
+execute_process(COMMAND "@COPYQ_QTPATHS@" --query QT_INSTALL_QML
+    OUTPUT_VARIABLE _qt_qml_dir OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE _qtpaths_result)
+if(NOT _qtpaths_result EQUAL 0)
+    message(FATAL_ERROR "Unable to find Qt QML imports: ${_qtpaths_result}")
+endif()
+set(_qml_dest "${_bundle}/Contents/Resources/qml")
+file(GLOB_RECURSE _qml_plugins RELATIVE "${_qml_dest}" "${_qml_dest}/*.dylib")
+foreach(_plugin IN LISTS _qml_plugins)
+    get_filename_component(_module "${_plugin}" DIRECTORY)
+    if(NOT EXISTS "${_qml_dest}/${_module}/qmldir" AND EXISTS "${_qt_qml_dir}/${_module}/qmldir")
+        get_filename_component(_qmldir "${_qt_qml_dir}/${_module}/qmldir" REALPATH)
+        configure_file("${_qmldir}" "${_qml_dest}/${_module}/qmldir" COPYONLY)
+    endif()
+endforeach()

@@ -338,6 +338,18 @@ void Theme::decorateScrollArea(QAbstractScrollArea *scrollArea) const
     scrollArea->setHorizontalScrollBarPolicy(scrollbarPolicy);
 }
 
+QVariantMap Theme::quickTheme() const
+{
+    QVariantMap result;
+    for (const auto name : {"bg", "fg", "alt_bg", "sel_bg", "sel_fg", "edit_bg", "edit_fg",
+            "find_bg", "find_fg", "notes_bg", "notes_fg"})
+        result.insert(QLatin1String(name), color(QLatin1String(name)));
+    result.insert(QStringLiteral("font"), font(QStringLiteral("font")));
+    result.insert(QStringLiteral("edit_font"), editorFont());
+    result.insert(QStringLiteral("find_font"), searchFont());
+    return result;
+}
+
 void Theme::decorateItemPreview(QAbstractScrollArea *itemPreview) const
 {
     decorateBrowser(itemPreview);

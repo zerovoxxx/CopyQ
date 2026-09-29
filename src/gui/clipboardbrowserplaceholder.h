@@ -40,6 +40,7 @@ public:
     void removeItems();
 
     bool isDataLoaded() const;
+    void refreshActiveState();
 
     /// Create browser if it doesn't exist and even if it previously failed.
     ClipboardBrowser *createBrowserAgain();

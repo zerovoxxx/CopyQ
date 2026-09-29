@@ -19,6 +19,7 @@
 #include <QGuiApplication>
 #include <QScopedPointer>
 #include <QStringList>
+#include <QWindow>
 
 #include <Cocoa/Cocoa.h>
 #include <Carbon/Carbon.h>
@@ -241,6 +242,11 @@ QString MacPlatform::themePrefix()
 
 PlatformWindowPtr MacPlatform::getCurrentWindow()
 {
+    NSRunningApplication *runningApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
+    if (runningApp && ![runningApp isEqual:[NSRunningApplication currentApplication]])
+        return PlatformWindowPtr(new MacPlatformWindow(runningApp));
+    if (auto focus = QGuiApplication::focusWindow())
+        return PlatformWindowPtr(new MacPlatformWindow(focus->winId()));
     // FIXME: frontmostApplication doesn't seem to work well for own windows (at least in tests).
     auto window = QApplication::activeWindow();
     if (window == nullptr)
@@ -248,7 +254,6 @@ PlatformWindowPtr MacPlatform::getCurrentWindow()
     if (window != nullptr)
         return PlatformWindowPtr(new MacPlatformWindow(window->winId()));
 
-    NSRunningApplication *runningApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
     return PlatformWindowPtr(new MacPlatformWindow(runningApp));
 }
 

@@ -24,6 +24,8 @@ class ActionDialog;
 class AppConfig;
 class ClipboardBrowser;
 class ClipboardBrowserPlaceholder;
+class ClipboardPalette;
+class ClipboardManagement;
 class CommandAction;
 class CommandDialog;
 class ConfigurationManager;
@@ -188,6 +190,12 @@ public:
 
     /** Show and focus main window. */
     void showWindow();
+    bool togglePalette();
+    void showManagement();
+    ClipboardManagement *management() const { return m_management.get(); }
+    bool isBrowserVisibleInQuickWindow(const ClipboardBrowser *browser) const;
+    QVariantMap managementSelectionData() const;
+    bool pasteToCurrentWindow(int actionId);
     /** Hide window to tray or minimize if tray is not available. */
     void hideWindow();
     /** Minimize window (hide if option is set). */
@@ -668,6 +676,22 @@ private:
         const QString &script, const ClipboardBrowser *browser, int firstRow, int lastRow);
 
     void activateCurrentItemHelper();
+    void updatePaletteCommands();
+    void activatePaletteItem(const QPersistentModelIndex &index, const QVariantMap &data, bool paste);
+    void finishPaletteClipboard(int providerId);
+    void openPaletteEditor(const QPersistentModelIndex &index);
+    void openItemEditor(const QPersistentModelIndex &index, const QString &format, ClipboardBrowser *source);
+    void setManagementSource(const QString &tabName);
+    void updateQuickWindowState();
+    void updateManagementCommands();
+    void runManagementCommand(const Command &command, const QString &shortcut);
+    void onManagementAction(int id, const QString &tabName,
+                            const QList<QPersistentModelIndex> &indexes, const QPersistentModelIndex &current);
+    void onManagementTab(const QString &operation, const QString &tabName, const QVariantMap &properties);
+    void transferManagementItems(const QString &sourceTab, const QString &targetTab,
+                                 const QList<QPersistentModelIndex> &indexes, bool move, int row, bool *accepted);
+    void openPalettePluginSettings();
+    void runPaletteCommand(const Command &command, const QString &shortcut);
     void onItemClicked();
     void onItemDoubleClicked();
 
@@ -687,6 +711,21 @@ private:
         Tabs *tabs);
 
     ConfigurationManager *cm;
+    std::unique_ptr<ClipboardPalette> m_palette;
+    std::unique_ptr<ClipboardManagement> m_management;
+    QMenu *m_managementCommandMenu = nullptr;
+    MenuMatchCommands m_managementMatchCommands;
+    QMenu *m_paletteCommandMenu = nullptr;
+    MenuMatchCommands m_paletteMatchCommands;
+    QTimer m_paletteClipboardTimer;
+    int m_paletteProviderId = -1;
+    int m_registeredClipboardProviderId = -1;
+    bool m_palettePastes = false;
+    struct PalettePasteAction {
+        quint64 activationId;
+        PlatformWindowPtr window;
+    };
+    QHash<int, PalettePasteAction> m_palettePasteActions;
     Ui::MainWindow *ui;
 
     QMenu *m_menuItem;

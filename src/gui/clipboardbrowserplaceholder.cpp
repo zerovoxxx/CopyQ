@@ -9,6 +9,7 @@
 #include "item/itemstore.h"
 #include "item/serialize.h"
 #include "gui/clipboardbrowser.h"
+#include "gui/mainwindow.h"
 #include "gui/iconfactory.h"
 #include "gui/icons.h"
 
@@ -321,15 +322,25 @@ void ClipboardBrowserPlaceholder::unloadBrowser()
 
 bool ClipboardBrowserPlaceholder::canExpire() const
 {
+    const auto mainWindow = qobject_cast<const MainWindow*>(window());
     return m_browser
             && m_storeItems
             && !isVisible()
+            && !(mainWindow && mainWindow->isBrowserVisibleInQuickWindow(m_browser))
             && !isEditorOpen();
 }
 
 bool ClipboardBrowserPlaceholder::hasActiveFocus() const
 {
-    return isVisible() && qApp->applicationState() == Qt::ApplicationActive;
+    const auto mainWindow = qobject_cast<const MainWindow*>(window());
+    return (isVisible() || (mainWindow && mainWindow->isBrowserVisibleInQuickWindow(m_browser)))
+        && qApp->applicationState() == Qt::ApplicationActive;
+}
+
+void ClipboardBrowserPlaceholder::refreshActiveState()
+{
+    restartExpiring();
+    restartPasswordExpiry();
 }
 
 void ClipboardBrowserPlaceholder::restartExpiring()

@@ -57,7 +57,7 @@ endif()
 set(CMAKE_AUTOMOC ON)
 
 set(QT_DEFAULT_MAJOR_VERSION 6)
-find_package(Qt6Widgets 6.2.0 REQUIRED)
+find_package(Qt6Widgets 6.4.0 REQUIRED)
 set(copyq_qt Qt6)
 add_definitions( -DQT_DEPRECATED_WARNINGS_SINCE=0x060200 )
 

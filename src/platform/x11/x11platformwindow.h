@@ -23,14 +23,18 @@ public:
 
     bool copyToClipboard() override;
 
-    bool isValid() const;
+    bool isValid() const override;
+    bool isActive() const override;
+    bool pasteFromClipboardSafely(const std::function<bool()> &canPaste) override;
 
     bool matchesWidget(const QWidget *widget) const override;
+    bool matchesWindow(const QWindow *window) const override;
 
 private:
     bool waitForFocus(int ms);
 
-    bool sendKeyPress(int modifier, int key, const AppConfig &config);
+    bool sendKeyPress(int modifier, int key, const AppConfig &config, bool requireFocus = false,
+                      const std::function<bool()> &canPaste = {});
 
     quintptr m_window;
 };

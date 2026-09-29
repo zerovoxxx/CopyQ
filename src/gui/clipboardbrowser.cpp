@@ -641,6 +641,11 @@ void ClipboardBrowser::dragDropScroll()
 QVariantMap ClipboardBrowser::copyIndex(const QModelIndex &index) const
 {
     auto data = index.data(contentType::data).toMap();
+    return copyItem(data);
+}
+
+QVariantMap ClipboardBrowser::copyItem(const QVariantMap &data) const
+{
     return m_itemSaver ? m_itemSaver->copyItem(m, data) : data;
 }
 
@@ -729,6 +734,56 @@ bool ClipboardBrowser::canRemoveItems(const QModelIndexList &indexes, QString *e
     Q_ASSERT(m_itemSaver);
 
     return m_itemSaver->canRemoveItems(indexes, error);
+}
+
+bool ClipboardBrowser::transferIndexes(ClipboardBrowser *target, const QModelIndexList &indexes,
+        int row, bool moveItems, QString *error)
+{
+    if (indexes.isEmpty() || !target || !isLoaded() || !target->isLoaded())
+        return false;
+    for (const auto &index : indexes) {
+        if (!index.isValid() || index.model() != &m)
+            return false;
+    }
+    if (target == this && moveItems) {
+        move(indexes, row < 0 ? length() : row);
+        return true;
+    }
+    auto persistent = toPersistentModelIndexList(indexes);
+    QPointer<ClipboardBrowser> self(this);
+    QPointer<ClipboardBrowser> destination(target);
+    if (moveItems) {
+        if (!canRemoveItems(indexes, error))
+            return false;
+        bool canRemove = true;
+        emit runOnRemoveItemsHandler(persistent, &canRemove);
+        if (!self || !destination || !canRemove) {
+            if (error)
+                *error = tr("Item move was cancelled.");
+            return false;
+        }
+    }
+    QModelIndexList current;
+    for (const auto &index : persistent) {
+        if (!index.isValid())
+            return false;
+        current.append(index);
+    }
+    // A removal script can alter protection or rows while it runs.
+    if (moveItems && !canRemoveItems(current, error))
+        return false;
+    const auto data = copyIndexes(current);
+    if (data.isEmpty() || !destination->add(data, row)) {
+        if (error)
+            *error = tr("Cannot add items to the target collection.");
+        return false;
+    }
+    if (moveItems && self) {
+        m_itemSaver->itemsRemovedByUser(persistent);
+        if (self)
+            dropIndexes(persistent);
+    }
+    return true;
 }
 
 QPixmap ClipboardBrowser::renderItemPreview(const QModelIndexList &indexes, int maxWidth, int maxHeight)

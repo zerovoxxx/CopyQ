@@ -709,6 +709,12 @@ void Scriptable::show()
         m_proxy->showBrowser( toString(argument(0)) );
 }
 
+QJSValue Scriptable::palette()
+{
+    m_skipArguments = 0;
+    return m_proxy->togglePalette();
+}
+
 void Scriptable::showAt()
 {
     QRect rect(-1, -1, 0, 0);

@@ -71,6 +71,17 @@ void ItemFakeVimTests::createItem()
     RUN(args << "read" << "0", "ABC\nXYZ\nDEF");
 }
 
+void ItemFakeVimTests::paletteEditor()
+{
+    RUN("disable", "");
+    RUN("add" << "original", "");
+    RUN("palette", "true\n");
+    WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests', 'paletteState').filtering", "false\n");
+    RUN("eval" << "callPlugin('itemtests', 'paletteEdit')", "true\n");
+    KEYS("focus:palette_editor_text" << ":ggccVIM edited" << "ESC" << "focus:" << "::wq" << "ENTER");
+    RUN("read" << "0", "VIM edited");
+}
+
 void ItemFakeVimTests::blockSelection()
 {
     const QString tab1 = testTab(1);

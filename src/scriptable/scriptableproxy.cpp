@@ -17,6 +17,7 @@
 #include "common/mimetypes.h"
 #include "common/textdata.h"
 #include "gui/clipboardbrowser.h"
+#include "gui/clipboardmanagement.h"
 #include "gui/filedialog.h"
 #include "gui/geometry.h"
 #include "gui/iconfactory.h"
@@ -874,7 +875,13 @@ bool ScriptableProxy::showWindow()
 {
     INVOKE(showWindow, ());
     m_wnd->showWindow();
-    return m_wnd->isVisible();
+    return m_wnd->isVisible() || (m_wnd->management() && m_wnd->management()->isVisible());
+}
+
+bool ScriptableProxy::togglePalette()
+{
+    INVOKE(togglePalette, ());
+    return m_wnd->togglePalette();
 }
 
 bool ScriptableProxy::showWindowAt(QRect rect)
@@ -887,14 +894,7 @@ bool ScriptableProxy::showWindowAt(QRect rect)
 bool ScriptableProxy::pasteToCurrentWindow()
 {
     INVOKE(pasteToCurrentWindow, ());
-
-    PlatformWindowPtr window = platformNativeInterface()->getCurrentWindow();
-    if (!window) {
-        log("Failed to get current window for pasting from clipboard", LogWarning);
-        return false;
-    }
-
-    return window->pasteFromClipboard();
+    return m_wnd->pasteToCurrentWindow(m_actionId);
 }
 
 bool ScriptableProxy::copyFromCurrentWindow()
@@ -919,13 +919,15 @@ bool ScriptableProxy::isMonitoringEnabled()
 bool ScriptableProxy::isMainWindowVisible()
 {
     INVOKE(isMainWindowVisible, ());
-    return !m_wnd->isMinimized() && m_wnd->isVisible();
+    const auto management = m_wnd->management();
+    return (!m_wnd->isMinimized() && m_wnd->isVisible())
+        || (management && management->isVisible() && management->visibility() != QWindow::Minimized);
 }
 
 bool ScriptableProxy::isMainWindowFocused()
 {
     INVOKE(isMainWindowFocused, ());
-    return m_wnd->isActiveWindow();
+    return m_wnd->isActiveWindow() || (m_wnd->management() && m_wnd->management()->isActive());
 }
 
 bool ScriptableProxy::preview(const QVariant &arg)
@@ -1036,7 +1038,7 @@ bool ScriptableProxy::showBrowser(const QString &tabName)
     ClipboardBrowser *c = fetchBrowser(tabName);
     if (c)
         m_wnd->showBrowser(c);
-    return m_wnd->isVisible();
+    return m_wnd->isVisible() || (m_wnd->management() && m_wnd->management()->isVisible());
 }
 
 bool ScriptableProxy::showBrowserAt(const QString &tabName, QRect rect)
@@ -1088,13 +1090,19 @@ QVariantMap ScriptableProxy::nextItem(const QString &tabName, int where)
     if (!c)
         return QVariantMap();
 
-    const int row = qMax(0, c->currentIndex().row()) + where;
+    auto management = m_wnd->management();
+    auto view = management && management->isVisible() && management->history()->sourceModel() == c->model()
+        ? management->history() : nullptr;
+    const int row = qMax(0, view ? view->selectedIndex().row() : c->currentIndex().row()) + where;
     const QModelIndex index = c->index(row);
 
     if (!index.isValid())
         return QVariantMap();
 
-    c->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
+    if (view)
+        view->selectRow(view->resultRow(index));
+    else
+        c->selectionModel()->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
     return c->copyIndex(index);
 }
 
@@ -1108,7 +1116,14 @@ void ScriptableProxy::browserMoveToClipboard(const QString &tabName, int row)
 void ScriptableProxy::browserSetCurrent(const QString &tabName, int arg1)
 {
     INVOKE2(browserSetCurrent, (tabName, arg1));
-    BROWSER(tabName, setCurrent(arg1));
+    auto c = fetchBrowser(tabName);
+    auto management = m_wnd->management();
+    if (c && management && management->isVisible() && management->history()->sourceModel() == c->model()) {
+        management->history()->selectRow(management->history()->resultRow(c->index(arg1)));
+        return;
+    }
+    if (c)
+        c->setCurrent(arg1);
 }
 
 QString ScriptableProxy::browserRemoveRows(const QString &tabName, QVector<int> rows)
@@ -1401,6 +1416,17 @@ bool ScriptableProxy::selectItems(const QString &tabName, const QVector<int> &ro
     if (!c)
         return false;
 
+    if (auto management = m_wnd->management(); management && management->isVisible()
+            && management->history()->sourceModel() == c->model()) {
+        QList<QPersistentModelIndex> indexes;
+        for (const int row : rows) {
+            const auto index = c->index(row);
+            if (index.isValid())
+                indexes.append(index);
+        }
+        management->history()->setSelectedIndexes(indexes);
+        return true;
+    }
     c->clearSelection();
 
     if ( !rows.isEmpty() ) {
@@ -2658,11 +2684,13 @@ QVariant ScriptableProxy::waitForFunctionCallFinished(int functionCallId)
 
 bool ScriptableProxy::getSelectionData()
 {
-    auto c = m_wnd->browser();
-    if (c == nullptr)
-        return false;
-
-    const QVariantMap data = selectionData(*c);
+    auto data = m_wnd->managementSelectionData();
+    if (data.isEmpty()) {
+        auto c = m_wnd->browser();
+        if (c == nullptr)
+            return false;
+        data = selectionData(*c);
+    }
     for (auto it = data.constBegin(); it != data.constEnd(); ++it)
         m_actionData[it.key()] = it.value();
     return true;

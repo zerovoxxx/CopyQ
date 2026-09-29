@@ -129,6 +129,7 @@ jobs:
             -DWITH_QCA_ENCRYPTION=TRUE \
             -DWITH_KEYCHAIN=TRUE
           cmake --build --preset Windows
+          cmake --build build/copyq/Windows --target copyq-palette-ui_qmllint
 
 
       - name: Get version string
@@ -164,9 +165,26 @@ jobs:
       - name: Test
         working-directory: ${{ github.workspace }}/copyq-${{ steps.version.outputs.version }}
         run: |
-          PATH="$(pwd):/c/Program Files/Git/usr/bin"
+          PATH="$(pwd):/c/Program Files/Git/usr/bin:$PATH"
           export PATH
-          ./copyq-tests.exe
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
+            -Executable ./copyq-tests.exe \
+            "testCore:configPath" "testCore:searchItemsAndCopy" "testCore:keysAndFocusing" \
+            "testCore:clipboardUriList" "testCore:paletteSearchAndCopy" "testCore:paletteCommands" "testCore:paletteClipboardFailure" \
+            "testCore:paletteEditor" "testCore:palettePaste" "testCore:paletteMimeAndDisplayCommands" \
+            "testItemFakeVim:createItem" "testItemFakeVim:paletteEditor"
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
+            -Executable ./copyq-tests.exe \
+            testCore:managementActions testCore:managementTabs testCore:managementCommands testCore:managementEditor
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
+            -Executable ./copyq-palette-tests.exe \
+            modelIdentity queryChanges displayCopiesAndPreview sourceDestructionAndReset \
+            qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews \
+            nativeWindowIdentification pluginEditorAndSettings nativeInputListeningAndReplacement
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
+            -Executable ./copyq-management-tests.exe \
+            multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay transferAndDeleteProtection \
+            qmlSelectionAndActions nativeDropRoundTrip themeMapping
         env:
           QT_FORCE_STDERR_LOGGING: 1
           COPYQ_LOG_LEVEL: DEBUG
@@ -178,6 +196,8 @@ jobs:
           APP="copyq-${APP_VERSION}"
           mkdir -p "${APP}-tests"
           mv "${APP}/copyq-tests.exe" "${APP}-tests/"
+          mv "${APP}/copyq-palette-tests.exe" "${APP}-tests/"
+          mv "${APP}/copyq-management-tests.exe" "${APP}-tests/"
           mv "${APP}/itemtests.dll" "${APP}-tests/"
           mv "${APP}/Qt6Test.dll" "${APP}-tests/"
         env:

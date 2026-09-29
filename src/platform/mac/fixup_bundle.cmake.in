@@ -1,7 +1,7 @@
 # Post-deploy fixup for CopyQ macOS bundle.
 # macdeployqt does not handle transitive dependencies of third-party libraries.
-# This script walks the bundle, finds unresolved @rpath deps, copies them from
-# known library directories, and rewrites install names.
+# This script resolves bundled @rpath and absolute dependencies, including CopyQ
+# plugin modules, then rewrites install names and signs the completed bundle.
 #
 # Generated from fixup_bundle.cmake.in by configure_file(@ONLY).
 
@@ -13,7 +13,7 @@ set(_fwk_dir "${_bundle}/Contents/Frameworks")
 function(collect_bundle_binaries out_var)
     set(_result "")
     foreach(_dir ${ARGN})
-        file(GLOB_RECURSE _dylibs "${_dir}/*.dylib")
+        file(GLOB_RECURSE _dylibs "${_dir}/*.dylib" "${_dir}/*.so")
         list(APPEND _result ${_dylibs})
         file(GLOB_RECURSE _fwk_files "${_dir}/*.framework/Versions/*")
         foreach(_f ${_fwk_files})
@@ -26,8 +26,8 @@ function(collect_bundle_binaries out_var)
     set(${out_var} ${_result} PARENT_SCOPE)
 endfunction()
 
-# Return all @rpath-relative references from a binary via otool -L.
-function(get_rpath_deps bin out_var)
+# Return non-system dependencies, including absolute Homebrew install names.
+function(get_bundle_deps bin out_var)
     execute_process(
         COMMAND otool -L "${bin}"
         OUTPUT_VARIABLE _output
@@ -37,41 +37,74 @@ function(get_rpath_deps bin out_var)
     set(_refs "")
     string(REPLACE "\n" ";" _lines "${_output}")
     foreach(_line ${_lines})
-        if(_line MATCHES "^[ \t]+@rpath/([^ ]+)")
-            list(APPEND _refs "${CMAKE_MATCH_1}")
+        if(_line MATCHES "^[ \t]+(@rpath/[^ ]+|/[^ ]+)")
+            set(_ref "${CMAKE_MATCH_1}")
+            if(NOT _ref MATCHES "^(/System/Library/|/usr/lib/)")
+                list(APPEND _refs "${_ref}")
+            endif()
         endif()
     endforeach()
     set(${out_var} ${_refs} PARENT_SCOPE)
+endfunction()
+
+function(bundle_dependency_path ref out_var)
+    if(ref MATCHES "^@rpath/(.*)")
+        set(_rel "${CMAKE_MATCH_1}")
+    elseif(ref MATCHES "/([^/]+\\.framework/.*)")
+        set(_rel "${CMAKE_MATCH_1}")
+    else()
+        get_filename_component(_rel "${ref}" NAME)
+    endif()
+    set(${out_var} "${_rel}" PARENT_SCOPE)
 endfunction()
 
 # --- Phase 1: Copy missing transitive dependencies into the bundle. ---
 message(STATUS "Fixup bundle: searching for missing deps in: ${_libpaths}")
 foreach(_iter RANGE 1 5)
     collect_bundle_binaries(_bins "${_bundle}/Contents/Frameworks" "${_bundle}/Contents/PlugIns")
+    list(APPEND _bins "${_bundle}/Contents/MacOS/@COPYQ_EXECUTABLE_NAME@")
 
     set(_found_new FALSE)
     foreach(_bin ${_bins})
-        get_rpath_deps("${_bin}" _refs)
-        foreach(_rel ${_refs})
+        get_bundle_deps("${_bin}" _refs)
+        foreach(_ref ${_refs})
+            bundle_dependency_path("${_ref}" _rel)
             if(EXISTS "${_fwk_dir}/${_rel}")
                 continue()
             endif()
-            foreach(_sd ${_libpaths})
+            set(_search_dirs ${_libpaths})
+            if(IS_ABSOLUTE "${_ref}")
+                if(_ref MATCHES "^(.*)/[^/]+\\.framework/")
+                    set(_dependency_dir "${CMAKE_MATCH_1}")
+                else()
+                    get_filename_component(_dependency_dir "${_ref}" DIRECTORY)
+                endif()
+                list(APPEND _search_dirs "${_dependency_dir}")
+            endif()
+            foreach(_sd ${_search_dirs})
                 if(NOT EXISTS "${_sd}/${_rel}")
                     continue()
                 endif()
                 if(_rel MATCHES "^([^/]+\\.framework)/")
                     set(_fname "${CMAKE_MATCH_1}")
                     if(NOT EXISTS "${_fwk_dir}/${_fname}")
+                        if(IS_SYMLINK "${_fwk_dir}/${_fname}")
+                            file(REMOVE "${_fwk_dir}/${_fname}")
+                        endif()
                         message(STATUS "  Bundling framework: ${_fname}")
-                        file(COPY "${_sd}/${_fname}" DESTINATION "${_fwk_dir}")
+                        get_filename_component(_framework "${_sd}/${_fname}" REALPATH)
+                        file(COPY "${_framework}" DESTINATION "${_fwk_dir}")
                         set(_found_new TRUE)
                     endif()
                 else()
                     get_filename_component(_dest "${_fwk_dir}/${_rel}" DIRECTORY)
                     file(MAKE_DIRECTORY "${_dest}")
                     message(STATUS "  Bundling library: ${_rel}")
-                    file(COPY "${_sd}/${_rel}" DESTINATION "${_dest}")
+                    if(IS_SYMLINK "${_fwk_dir}/${_rel}")
+                        file(REMOVE "${_fwk_dir}/${_rel}")
+                    endif()
+                    get_filename_component(_library "${_sd}/${_rel}" REALPATH)
+                    configure_file("${_library}" "${_fwk_dir}/${_rel}" COPYONLY)
                     set(_found_new TRUE)
                 endif()
                 break()
@@ -85,15 +118,23 @@ foreach(_iter RANGE 1 5)
     endif()
 endforeach()
 
-# --- Phase 2: Rewrite @rpath references to @executable_path/../Frameworks/. ---
+# --- Phase 2: Rewrite bundled dependencies and library IDs. ---
 collect_bundle_binaries(_all_bins "${_bundle}/Contents/Frameworks" "${_bundle}/Contents/PlugIns")
+list(APPEND _all_bins "${_bundle}/Contents/MacOS/@COPYQ_EXECUTABLE_NAME@")
 foreach(_bin ${_all_bins})
-    get_rpath_deps("${_bin}" _refs)
-    foreach(_rel ${_refs})
+    execute_process(COMMAND otool -D "${_bin}" OUTPUT_VARIABLE _id ERROR_QUIET)
+    if(_id MATCHES "\n[^\n]+")
+        file(RELATIVE_PATH _install_name "${_bundle}/Contents" "${_bin}")
+        execute_process(COMMAND install_name_tool -id "@executable_path/../${_install_name}" "${_bin}"
+            ERROR_QUIET)
+    endif()
+    get_bundle_deps("${_bin}" _refs)
+    foreach(_ref ${_refs})
+        bundle_dependency_path("${_ref}" _rel)
         if(EXISTS "${_fwk_dir}/${_rel}")
             execute_process(
                 COMMAND install_name_tool -change
-                    "@rpath/${_rel}" "@executable_path/../Frameworks/${_rel}" "${_bin}"
+                    "${_ref}" "@executable_path/../Frameworks/${_rel}" "${_bin}"
                 ERROR_QUIET
             )
         endif()
@@ -101,3 +142,15 @@ foreach(_bin ${_all_bins})
 endforeach()
 
 message(STATUS "Bundle fixup complete.")
+
+# Dependency rewrites invalidate signatures, including third-party dylibs.
+execute_process(COMMAND codesign --force --deep --sign - "${_bundle}"
+    RESULT_VARIABLE _sign_result)
+if(NOT _sign_result EQUAL 0)
+    message(FATAL_ERROR "Bundle signing failed: ${_sign_result}")
+endif()
+execute_process(COMMAND codesign --verify --deep --strict "${_bundle}"
+    RESULT_VARIABLE _verify_result)
+if(NOT _verify_result EQUAL 0)
+    message(FATAL_ERROR "Bundle signature verification failed: ${_verify_result}")
+endif()

@@ -28,6 +28,16 @@ private slots:
     void cleanup();
 
     void configPath();
+    void paletteSearchAndCopy();
+    void paletteCommands();
+    void paletteClipboardFailure();
+    void paletteEditor();
+    void palettePaste();
+    void paletteMimeAndDisplayCommands();
+    void managementActions();
+    void managementTabs();
+    void managementCommands();
+    void managementEditor();
     void readLog();
     void rotateLog();
     void pluginsDisabled();

@@ -162,6 +162,7 @@ public slots:
     QJSValue help();
 
     void show();
+    QJSValue palette();
     void showAt();
     void hide();
     QJSValue toggle();

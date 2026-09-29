@@ -10,6 +10,7 @@
 #include "platform/platformcommon.h"
 
 #include <QWidget>
+#include <QWindow>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -105,13 +106,17 @@ bool waitForModifiersReleased(Display *display, const AppConfig &config)
     return !isModifierPressed(display);
 }
 
-bool simulateKeyPress(Display *display, const QList<int> &modCodes, unsigned int key, const AppConfig &config)
+bool simulateKeyPress(Display *display, const QList<int> &modCodes, unsigned int key, const AppConfig &config,
+                      const PlatformWindow *target = nullptr, const std::function<bool()> &canPaste = {})
 {
     // Wait for user to release modifiers.
     if (!waitForModifiersReleased(display, config)) {
         log("Failed to simulate key presses while modifiers are pressed", LogWarning);
         return false;
     }
+
+    if (target && (!target->isActive() || !canPaste()))
+        return false;
 
     if ( !simulateModifierKeyPress(display, modCodes, True) )
         return false;
@@ -254,10 +259,29 @@ bool X11PlatformWindow::matchesWidget(const QWidget *widget) const
         && static_cast<quintptr>(widget->winId()) == m_window;
 }
 
+bool X11PlatformWindow::matchesWindow(const QWindow *window) const
+{
+    return window && window->handle() && static_cast<quintptr>(window->winId()) == m_window;
+}
+
+bool X11PlatformWindow::isActive() const
+{
+    return isValid() && getCurrentWindow() == m_window;
+}
+
+bool X11PlatformWindow::pasteFromClipboardSafely(const std::function<bool()> &canPaste)
+{
+    const AppConfig config;
+    return isActive() && (pasteWithCtrlV(*this, config)
+        ? sendKeyPress(XK_Control_L, XK_V, config, true, canPaste)
+        : sendKeyPress(XK_Shift_L, XK_Insert, config, true, canPaste));
+}
+
 
 QString X11PlatformWindow::getTitle()
 {
-    Q_ASSERT( isValid() );
+    if (!isValid())
+        return QString();
 
     if (!X11Info::isPlatformX11())
         return QString();
@@ -281,7 +305,8 @@ QString X11PlatformWindow::getTitle()
 
 void X11PlatformWindow::raise()
 {
-    Q_ASSERT( isValid() );
+    if (!isValid())
+        return;
 
     if (!X11Info::isPlatformX11())
         return;
@@ -345,7 +370,10 @@ bool X11PlatformWindow::copyToClipboard()
 
 bool X11PlatformWindow::isValid() const
 {
-    return m_window != 0L;
+    if (!m_window || !X11Info::isPlatformX11() || !X11Info::display())
+        return false;
+    XWindowAttributes attributes{};
+    return XGetWindowAttributes(X11Info::display(), m_window, &attributes) != 0;
 }
 
 bool X11PlatformWindow::waitForFocus(int ms)
@@ -372,11 +400,12 @@ bool X11PlatformWindow::waitForFocus(int ms)
     return true;
 }
 
-bool X11PlatformWindow::sendKeyPress(int modifier, int key, const AppConfig &config)
+bool X11PlatformWindow::sendKeyPress(int modifier, int key, const AppConfig &config, bool requireFocus,
+                                    const std::function<bool()> &canPaste)
 {
     Q_ASSERT( isValid() );
 
-    if ( !waitForFocus(config.option<Config::window_wait_before_raise_ms>()) ) {
+    if ( !requireFocus && !waitForFocus(config.option<Config::window_wait_before_raise_ms>()) ) {
         raise();
         if ( !waitForFocus(config.option<Config::window_wait_raised_ms>()) ) {
             log( QString("Failed to focus window \"%1\"").arg(getTitle()), LogWarning );
@@ -393,8 +422,12 @@ bool X11PlatformWindow::sendKeyPress(int modifier, int key, const AppConfig &con
     if (!display)
         return false;
 
+    if (requireFocus && (!isActive() || !canPaste()))
+        return false;
+
 #ifdef HAS_X11TEST
-    if ( !simulateKeyPress(display, QList<int>() << modifier, static_cast<uint>(key), config) )
+    if ( !simulateKeyPress(display, QList<int>() << modifier, static_cast<uint>(key), config,
+                           requireFocus ? this : nullptr, canPaste) )
         return false;
 #else
     const int modifierMask = (modifier == XK_Control_L) ? ControlMask : ShiftMask;

@@ -12,6 +12,8 @@
 #include <QScrollBar>
 #include <QTest>
 #include <QTimer>
+#include <QInputMethodEvent>
+#include <QWindow>
 
 namespace {
 
@@ -465,6 +467,96 @@ ItemScriptable *ItemTestsLoader::scriptableObject()
 QVariant ItemTestsLoader::scriptCallback(const QVariantList &arguments)
 {
     const auto cmd = arguments[0].toString();
+
+    if (cmd.startsWith(QLatin1String("palette"))) {
+        QWindow *window = nullptr;
+        for (auto candidate : QGuiApplication::topLevelWindows()) {
+            if (candidate->objectName() == QLatin1String("clipboard_palette")) {
+                window = candidate;
+                break;
+            }
+        }
+        if (!window)
+            return QVariantMap();
+        if (cmd == QLatin1String("paletteState")) {
+            QVariantMap state;
+            state.insert(QStringLiteral("visible"), window->isVisible());
+            for (const auto key : {"busy", "error", "tabName", "enterLabel"})
+                state.insert(QString::fromLatin1(key), window->property(key));
+            auto history = window->property("history").value<QObject*>();
+            if (history) {
+                for (const auto key : {"query", "count", "sourceCount", "selectedRow", "filtering", "preview"})
+                    state.insert(QString::fromLatin1(key), history->property(key));
+            }
+            return state;
+        }
+        if (cmd == QLatin1String("paletteInput")) {
+            if (!window->isVisible() || !window->focusObject())
+                return false;
+            const auto input = arguments.value(1).toString();
+            if (input.startsWith(QLatin1String("preedit:"))) {
+                QInputMethodEvent event(input.mid(8), {});
+                QCoreApplication::sendEvent(window->focusObject(), &event);
+            } else if (input.startsWith(QLatin1String("commit:"))) {
+                QInputMethodEvent event;
+                event.setCommitString(input.mid(7));
+                QCoreApplication::sendEvent(window->focusObject(), &event);
+            } else {
+                const QKeySequence sequence(input, QKeySequence::PortableText);
+                if (sequence.isEmpty())
+                    return false;
+                const auto key = sequence[0];
+                QTest::keyClick(window, key.key(), key.keyboardModifiers());
+            }
+            return true;
+        }
+        if (cmd == QLatin1String("paletteEdit"))
+            return QMetaObject::invokeMethod(window, "editItem");
+        if (cmd == QLatin1String("paletteManage"))
+            return QMetaObject::invokeMethod(window, "showManagement");
+        if (cmd == QLatin1String("paletteSettings"))
+            return QMetaObject::invokeMethod(window, "showPluginSettings");
+    }
+
+    if (cmd.startsWith(QLatin1String("management"))) {
+        QWindow *window = nullptr;
+        for (auto candidate : QGuiApplication::topLevelWindows()) {
+            if (candidate->objectName() == QLatin1String("clipboard_management")) {
+                window = candidate;
+                break;
+            }
+        }
+        if (!window)
+            return QVariantMap();
+        if (cmd == QLatin1String("managementState")) {
+            QVariantMap state{{QStringLiteral("visible"), window->isVisible()}};
+            for (const auto key : {"error", "tabName", "tabs", "tabProperties", "commands", "monitoring"})
+                state.insert(QString::fromLatin1(key), window->property(key));
+            auto history = window->property("history").value<QObject*>();
+            if (history) {
+                for (const auto key : {"query", "count", "sourceCount", "selectedRow", "selectedCount", "filtering", "preview"})
+                    state.insert(QString::fromLatin1(key), history->property(key));
+            }
+            return state;
+        }
+        if (cmd == QLatin1String("managementAction"))
+            return QMetaObject::invokeMethod(window, "triggerAction", Q_ARG(int, arguments.value(1).toInt()));
+        if (cmd == QLatin1String("managementCommand"))
+            return QMetaObject::invokeMethod(window, "triggerCommand", Q_ARG(int, arguments.value(1).toInt()));
+        if (cmd == QLatin1String("managementTransfer"))
+            return QMetaObject::invokeMethod(window, "transferItems", Q_ARG(QString, arguments.value(1).toString()), Q_ARG(bool, arguments.value(2).toBool()));
+        if (cmd == QLatin1String("managementTab")) {
+            const auto operation = arguments.value(1).toString().toLatin1();
+            const auto value = arguments.value(2).toString();
+            if (operation == "removeTab")
+                return QMetaObject::invokeMethod(window, operation.constData());
+            if (operation == "moveTab")
+                return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(int, arguments.value(2).toInt()));
+            if (operation == "saveTabProperties")
+                return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(QVariantMap, arguments.value(2).toMap()));
+            return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(QString, value));
+        }
+    }
 
     if (cmd == "sendKeys") {
         const QString expectedWidgetName = arguments.value(1).toString();

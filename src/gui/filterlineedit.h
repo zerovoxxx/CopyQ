@@ -44,6 +44,9 @@ public:
 
     ItemFilterPtr filter() const;
 
+    static ItemFilterPtr createFilter(const QString &pattern, bool regularExpression,
+                                     Qt::CaseSensitivity sensitivity);
+
     void loadSettings();
 
 signals:

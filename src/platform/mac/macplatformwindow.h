@@ -3,6 +3,8 @@
 #pragma once
 
 #include "objcstrong.h"
+#include "cfref.h"
+#include <ApplicationServices/ApplicationServices.h>
 
 #include "platform/platformwindow.h"
 
@@ -32,6 +34,10 @@ public:
     bool pasteFromClipboard() override;
     bool copyToClipboard() override;
     bool matchesWidget(const QWidget *widget) const override;
+    bool matchesWindow(const QWindow *window) const override;
+    bool isValid() const override;
+    bool isActive() const override;
+    bool pasteFromClipboardSafely(const std::function<bool()> &canPaste) override;
 
 private:
     // Don't allow copies
@@ -40,4 +46,5 @@ private:
     long int m_windowNumber = -1;
     ObjCStrong<NSWindow> m_window;
     ObjCStrong<NSRunningApplication> m_runningApplication;
+    CFRef<AXUIElementRef> m_accessibilityWindow;
 };

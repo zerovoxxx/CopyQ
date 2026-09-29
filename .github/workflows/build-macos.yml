@@ -115,6 +115,7 @@ jobs:
         run: |
           cmake --preset '${{ matrix.cmake_preset }}'
           cmake --build --preset '${{ matrix.cmake_preset }}'
+          cmake --build build/copyq/${{ matrix.cmake_preset }} --target copyq-palette-ui_qmllint
 
       - name: Create gnupg directory for tests
         run: mkdir -p ~/.gnupg && chmod go-rwx ~/.gnupg

@@ -70,7 +70,8 @@ cp -v "$OPENSSL_ROOT_DIR"/bin/libssl-*.dll "$DEST"
     --no-system-dxc-compiler \
     --no-compiler-runtime \
     --no-opengl-sw \
-    --no-quick \
+    --qmldir "$GITHUB_WORKSPACE/src/gui/qml" \
+    --qmlimport "$BUILD_DIR/src" \
     --skip-plugin-types qmltooling,generic,networkinformation \
     "${kf_libraries[@]}" \
     "${crypto_libraries[@]}" \
@@ -82,6 +83,8 @@ rm -f "$QT_ROOT_DIR/bin/qt6keychain.dll"
 # Copy test binary and its Qt dependency into the deployed directory
 # so tests run against the fully deployed application layout.
 cp -v "$BUILD_DIR/copyq-tests.exe" "$DEST/"
+cp -v "$BUILD_DIR/copyq-palette-tests.exe" "$DEST/"
+cp -v "$BUILD_DIR/copyq-management-tests.exe" "$DEST/"
 cp -v "$QT_ROOT_DIR/bin/Qt6Test.dll" "$DEST/"
 cp -v "$BUILD_DIR/src/itemtests.dll" "$DEST/"
 

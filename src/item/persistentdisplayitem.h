@@ -5,10 +5,12 @@
 
 #include <QMetaType>
 #include <QPointer>
+#include <QPersistentModelIndex>
 #include <QString>
 #include <QVariantMap>
 
 class ItemDelegate;
+class ClipboardPaletteModel;
 class QAction;
 class QModelIndex;
 class QWidget;
@@ -28,6 +30,9 @@ public:
             ItemDelegate *delegate, const QVariantMap &data, QWidget *widget);
 
     PersistentDisplayItem(QAction *action, const QVariantMap &data);
+
+    PersistentDisplayItem(ClipboardPaletteModel *model, const QPersistentModelIndex &index,
+                          int revision, const QVariantMap &data);
 
     /**
      * Returns display data of the item.
@@ -53,6 +58,9 @@ private:
     QPointer<QWidget> m_widget;
     QPointer<QAction> m_action;
     QPointer<ItemDelegate> m_delegate;
+    QPointer<ClipboardPaletteModel> m_paletteModel;
+    QPersistentModelIndex m_index;
+    int m_revision = 0;
 };
 
 Q_DECLARE_METATYPE(PersistentDisplayItem)

@@ -15,6 +15,7 @@
 
 #include <QApplication>
 #include <QSet>
+#include <QWindow>
 
 namespace {
     // Original from: https://stackoverflow.com/a/33584460/454171
@@ -213,6 +214,12 @@ MacPlatformWindow::MacPlatformWindow(NSRunningApplication *runningApp)
     if (runningApp) {
         m_runningApplication = runningApp;
         m_windowNumber = getTopWindow(runningApp.processIdentifier);
+        if (AXIsProcessTrusted()) {
+            CFRef<AXUIElementRef> app = AXUIElementCreateApplication(runningApp.processIdentifier);
+            CFTypeRef window = nullptr;
+            if (AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute, &window) == kAXErrorSuccess)
+                m_accessibilityWindow = static_cast<AXUIElementRef>(window);
+        }
         COPYQ_LOG_VERBOSE("Created platform window for non-copyq");
     } else {
         log("Failed to convert runningApplication to application", LogWarning);
@@ -253,6 +260,53 @@ bool MacPlatformWindow::matchesWidget(const QWidget *widget) const
     return static_cast<long int>(wid) == m_windowNumber;
 }
 
+bool MacPlatformWindow::matchesWindow(const QWindow *window) const
+{
+    if (!window || !window->handle())
+        return false;
+    if (NSView *view = objc_cast<NSView>((id)window->winId()))
+        return [[view window] windowNumber] == m_windowNumber;
+    return false;
+}
+
+bool MacPlatformWindow::isValid() const
+{
+    if (!m_runningApplication || [m_runningApplication isTerminated])
+        return false;
+    if (m_window)
+        return [NSApp windowWithWindowNumber:m_windowNumber] != nil;
+    if (!m_accessibilityWindow || !AXIsProcessTrusted())
+        return false;
+    CFTypeRef role = nullptr;
+    const auto result = AXUIElementCopyAttributeValue(m_accessibilityWindow, kAXRoleAttribute, &role);
+    if (role)
+        CFRelease(role);
+    return result == kAXErrorSuccess;
+}
+
+bool MacPlatformWindow::isActive() const
+{
+    if (!isValid() || ![m_runningApplication isEqual:[[NSWorkspace sharedWorkspace] frontmostApplication]])
+        return false;
+    if (m_window)
+        return [m_window isKeyWindow];
+    CFRef<AXUIElementRef> app = AXUIElementCreateApplication([m_runningApplication processIdentifier]);
+    CFTypeRef focused = nullptr;
+    const auto result = AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute, &focused);
+    const bool same = result == kAXErrorSuccess && focused && CFEqual(focused, m_accessibilityWindow);
+    if (focused)
+        CFRelease(focused);
+    return same;
+}
+
+bool MacPlatformWindow::pasteFromClipboardSafely(const std::function<bool()> &canPaste)
+{
+    if (!AXIsProcessTrusted() || IsSecureEventInputEnabled() || !isActive() || !canPaste())
+        return false;
+    sendShortcut(kVK_Command, keyCodeFromChar('v', kVK_ANSI_V));
+    return true;
+}
+
 
 QString MacPlatformWindow::getTitle()
 {
@@ -265,6 +319,13 @@ QString MacPlatformWindow::getTitle()
         windowTitle = QString::fromNSString([m_window title]);
     if (windowTitle.isEmpty() && m_windowNumber >= 0)
         windowTitle = getTitleFromWid(m_windowNumber);
+    if (windowTitle.isEmpty() && m_accessibilityWindow) {
+        CFTypeRef title = nullptr;
+        if (AXUIElementCopyAttributeValue(m_accessibilityWindow, kAXTitleAttribute, &title) == kAXErrorSuccess) {
+            windowTitle = QString::fromCFString(static_cast<CFStringRef>(title));
+            CFRelease(title);
+        }
+    }
 
     // We have two separate titles, the application title (shown at the top
     // left in the menu bar and the window title (shown in the window bar).
@@ -297,6 +358,11 @@ void MacPlatformWindow::raise()
 
         COPYQ_LOG( QString("Raise a window \"%1\"").arg(getTitle()) );
         [m_runningApplication activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+        if (m_accessibilityWindow) {
+            AXUIElementSetAttributeValue(m_accessibilityWindow, kAXMainAttribute, kCFBooleanTrue);
+            AXUIElementSetAttributeValue(m_accessibilityWindow, kAXFocusedAttribute, kCFBooleanTrue);
+            AXUIElementPerformAction(m_accessibilityWindow, kAXRaiseAction);
+        }
         if (m_windowNumber != -1) {
             auto window = [NSApp windowWithWindowNumber: m_windowNumber];
             [window makeKeyAndOrderFront:nil];

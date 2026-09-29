@@ -8,6 +8,11 @@ file(GLOB copyq_SOURCES
     scriptable/*.cpp
     scriptable/scriptableproxy.h
     )
+list(REMOVE_ITEM copyq_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardpalette.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardpalettemodel.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardmanagement.cpp"
+)
 
 file(GLOB copyq_FORMS
     ui/*.ui
@@ -127,11 +132,26 @@ target_sources(copyq-common PRIVATE ${copyq_SOURCES})
 add_dependencies(copyq-common generate_version_file)
 
 # Qt modules
-list(APPEND copyq_qt_modules Network Svg Xml Qml)
+list(APPEND copyq_qt_modules Network Svg Xml Qml Quick QuickControls2)
 foreach (copyq_qt_module ${copyq_qt_modules})
     find_package(${copyq_qt}${copyq_qt_module} REQUIRED)
     list(APPEND copyq_LIBRARIES ${copyq_qt}::${copyq_qt_module})
 endforeach()
+
+qt_add_qml_module(copyq-palette-ui
+    URI QClip
+    VERSION 1.0
+    STATIC
+    RESOURCE_PREFIX /copyq
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/QClip"
+    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Theme.qml
+    SOURCES gui/clipboardpalette.h gui/clipboardpalette.cpp
+            gui/clipboardpalettemodel.h gui/clipboardpalettemodel.cpp
+            gui/clipboardmanagement.h gui/clipboardmanagement.cpp
+)
+target_include_directories(copyq-palette-ui PRIVATE . gui)
+target_link_libraries(copyq-palette-ui PRIVATE ${copyq_LIBRARIES})
+list(APPEND copyq_LIBRARIES copyq-palette-ui copyq-palette-uiplugin)
 
 set_target_properties(copyq-common PROPERTIES COMPILE_DEFINITIONS "${copyq_DEFINITIONS}")
 
@@ -222,6 +242,8 @@ else()
         endif()
     endforeach()
     list(REMOVE_DUPLICATES COPYQ_DEPLOY_LIBPATHS)
+    get_target_property(COPYQ_MACDEPLOYQT Qt6::macdeployqt IMPORTED_LOCATION)
+    get_target_property(COPYQ_QTPATHS Qt6::qtpaths IMPORTED_LOCATION)
 
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/platform/mac/deploy.cmake.in"

@@ -17,6 +17,7 @@
 #include "common/log.h"
 #include "common/mimetypes.h"
 #include "common/shortcuts.h"
+#include "common/sleeptimer.h"
 #include "common/tabs.h"
 #include "common/textdata.h"
 #include "common/timer.h"
@@ -28,6 +29,8 @@
 #include "gui/clipboardbrowserplaceholder.h"
 #include "gui/clipboardbrowsershared.h"
 #include "gui/clipboarddialog.h"
+#include "gui/clipboardpalette.h"
+#include "gui/clipboardmanagement.h"
 #include "gui/commandaction.h"
 #include "gui/commanddialog.h"
 #include "gui/configurationmanager.h"
@@ -51,6 +54,7 @@
 #include "gui/traymenu.h"
 #include "gui/windowgeometryguard.h"
 #include "item/itemfactory.h"
+#include "item/itemeditorwidget.h"
 #include "item/itemstore.h"
 #include "item/serialize.h"
 #include "platform/platformclipboard.h"
@@ -66,10 +70,12 @@
 #include <QAction>
 #include <QCloseEvent>
 #include <QDesktopServices>
+#include <QDialogButtonBox>
 #include <QFile>
 #include <QFileDialog>
 #include <QFlags>
 #include <QInputDialog>
+#include <QLabel>
 #include <QLoggingCategory>
 #include <QMenu>
 #include <QMenuBar>
@@ -83,6 +89,9 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QUrl>
+#include <QVBoxLayout>
+#include <QTabWidget>
+#include <QWindow>
 #include <QVector>
 
 #include <algorithm>
@@ -858,6 +867,10 @@ MainWindow::MainWindow(const ClipboardBrowserSharedPtr &sharedData, QWidget *par
     auto act = m_trayMenu->addAction( appIcon(), tr("&Show/Hide") );
     connect(act, &QAction::triggered, this, &MainWindow::toggleVisibleFromTray);
     m_trayMenu->setDefaultAction(act);
+    auto paletteAction = m_trayMenu->addAction(tr("Clipboard Palette"));
+    connect(paletteAction, &QAction::triggered, this, &MainWindow::togglePalette);
+    auto managementAction = m_trayMenu->addAction(tr("Clipboard manager"));
+    connect(managementAction, &QAction::triggered, this, &MainWindow::showManagement);
     addTrayAction(Actions::File_Preferences);
     addTrayAction(Actions::File_ToggleClipboardStoring);
     m_trayMenu->addSeparator();
@@ -1318,6 +1331,12 @@ void MainWindow::onAboutToQuit()
 
     stopMenuCommandFilters(&m_itemMenuMatchCommands);
     stopMenuCommandFilters(&m_trayMenuMatchCommands);
+    stopMenuCommandFilters(&m_paletteMatchCommands);
+    stopMenuCommandFilters(&m_managementMatchCommands);
+    if (m_management)
+        m_management->hide();
+    if (m_palette)
+        m_palette->cancel();
     abortAction(m_displayActionId);
     abortAction(m_provideClipboardActionId);
     abortAction(m_provideSelectionActionId);
@@ -1525,6 +1544,10 @@ void MainWindow::onBrowserLoaded(ClipboardBrowser *browser)
 
 void MainWindow::onBrowserDestroyed(ClipboardBrowserPlaceholder *placeholder)
 {
+    if (m_management && m_management->tabName() == placeholder->tabName()) {
+        m_management->setSource(nullptr, placeholder->tabName(), tabs(), m_management->tabProperties());
+        m_management->setError(tr("Collection is unavailable or locked. Select it again to reload."));
+    }
     if (placeholder == getPlaceholder()) {
         updateContextMenu(0);
         updateItemPreviewAfterMs(0);
@@ -1652,6 +1675,10 @@ void MainWindow::setClipboardData(const QVariantMap &data)
 
 void MainWindow::setFilter(const QString &text)
 {
+    if (m_management && m_management->isVisible()) {
+        m_management->history()->setQuery(text);
+        return;
+    }
     if ( text.isEmpty() ) {
         enterBrowseMode();
     } else {
@@ -1662,6 +1689,8 @@ void MainWindow::setFilter(const QString &text)
 
 QString MainWindow::filter() const
 {
+    if (m_management && m_management->isVisible())
+        return m_management->history()->query();
     return ui->searchBar->isVisible() ? ui->searchBar->text() : QString();
 }
 
@@ -1960,6 +1989,10 @@ bool MainWindow::registerClipboardProviderAction(int actionId, ClipboardMode mod
         return false;
 
     tracked = actionId;
+    if (mode == ClipboardMode::Clipboard)
+        m_registeredClipboardProviderId = actionId;
+    if (mode == ClipboardMode::Clipboard && actionId == m_paletteProviderId)
+        QTimer::singleShot(0, this, [this, actionId]() { finishPaletteClipboard(actionId); });
     return true;
 }
 
@@ -2687,6 +2720,7 @@ void MainWindow::updateCommands(QVector<Command> allCommands, bool forceSave)
     updateTrayMenuCommands();
 
     emit commandsSaved(commands);
+    updateManagementCommands();
 }
 
 bool MainWindow::syncInternalCommands(QVector<Command> *allCommands)
@@ -3065,6 +3099,10 @@ void MainWindow::loadSettings(QSettings &settings, AppConfig *appConfig)
 {
     stopMenuCommandFilters(&m_itemMenuMatchCommands);
     stopMenuCommandFilters(&m_trayMenuMatchCommands);
+    stopMenuCommandFilters(&m_paletteMatchCommands);
+    stopMenuCommandFilters(&m_managementMatchCommands);
+    if (m_palette)
+        m_palette->cancel();
     abortAction(m_displayActionId);
 
     theme().decorateMainWindow(this);
@@ -3205,6 +3243,12 @@ void MainWindow::loadSettings(QSettings &settings, AppConfig *appConfig)
     updateEnabledCommands();
 
     m_sharedData->notifications->setIconColor( theme().color("notification_fg") );
+    if (m_management) {
+        m_management->setTheme(theme().quickTheme());
+        m_management->setActions(m_sharedData->menuItems);
+        if (m_management->isVisible())
+            setManagementSource(getPlaceholder()->tabName());
+    }
 }
 
 void MainWindow::loadTheme(const QSettings &themeSettings)
@@ -3231,6 +3275,10 @@ void MainWindow::openHelp()
 
 void MainWindow::showWindow()
 {
+    if (m_management && m_management->isVisible()) {
+        m_management->open();
+        return;
+    }
     if ( isWindowVisible() )
         return;
 
@@ -3260,6 +3308,8 @@ void MainWindow::showWindow()
 
 void MainWindow::hideWindow()
 {
+    if (m_management)
+        m_management->hide();
     if ( closeMinimizes() )
         minimizeWindow();
     else
@@ -3433,6 +3483,8 @@ void MainWindow::tabChanged(int current, int)
 
     if (m_options.trayCurrentTab)
         updateTrayMenuItems();
+    if (m_management && m_management->isVisible() && current >= 0)
+        setManagementSource(ui->tabWidget->tabName(current));
 }
 
 void MainWindow::saveTabPositions()
@@ -3641,12 +3693,14 @@ void MainWindow::setTrayTooltip(const QString &tooltip)
 
 bool MainWindow::setMenuItemEnabled(int actionId, int currentRun, int menuItemMatchCommandIndex, const QVariantMap &menuItem)
 {
-    if (actionId != m_trayMenuMatchCommands.actionId && actionId != m_itemMenuMatchCommands.actionId)
+    if (actionId != m_trayMenuMatchCommands.actionId && actionId != m_itemMenuMatchCommands.actionId
+            && actionId != m_paletteMatchCommands.actionId && actionId != m_managementMatchCommands.actionId)
         return false;
 
     const auto &menuMatchCommands = actionId == m_trayMenuMatchCommands.actionId
             ? m_trayMenuMatchCommands
-            : m_itemMenuMatchCommands;
+            : actionId == m_paletteMatchCommands.actionId ? m_paletteMatchCommands
+            : actionId == m_managementMatchCommands.actionId ? m_managementMatchCommands : m_itemMenuMatchCommands;
 
     if (currentRun != menuMatchCommands.currentRun)
         return false;
@@ -3685,10 +3739,15 @@ bool MainWindow::setMenuItemEnabled(int actionId, int currentRun, int menuItemMa
 
     const auto shortcuts = action->shortcuts();
 
-    if ( !enabled && (actionId == m_trayMenuMatchCommands.actionId || !m_menuItem->isVisible()) )
+    if ( !enabled && actionId != m_paletteMatchCommands.actionId && actionId != m_managementMatchCommands.actionId
+            && (actionId == m_trayMenuMatchCommands.actionId || !m_menuItem->isVisible()) )
         action->deleteLater();
 
-    if ( !shortcuts.isEmpty() )
+    if (actionId == m_paletteMatchCommands.actionId) {
+        m_palette->setCommandMenu(m_paletteCommandMenu);
+    } else if (actionId == m_managementMatchCommands.actionId) {
+        m_management->setCommandMenu(m_managementCommandMenu);
+    } else if ( !shortcuts.isEmpty() )
         updateActionShortcuts();
 
     return true;
@@ -3772,6 +3831,393 @@ void MainWindow::moveToClipboard(ClipboardBrowser *c, int row)
 const QMimeData *MainWindow::getClipboardData(ClipboardMode mode)
 {
     return m_clipboard->mimeData(mode);
+}
+
+bool MainWindow::togglePalette()
+{
+    if (m_palette && m_palette->isVisible()) {
+        m_palette->cancel();
+        return false;
+    }
+    auto source = browser();
+    if (!source || !source->isLoaded())
+        return false;
+    if (!m_palette) {
+        m_palette = std::make_unique<ClipboardPalette>(m_sharedData->itemFactory);
+        m_paletteCommandMenu = new QMenu(this);
+        connect(m_palette.get(), &QWindow::visibleChanged, this, &MainWindow::updateQuickWindowState);
+        connect(m_palette.get(), &QWindow::activeChanged, this, &MainWindow::updateQuickWindowState);
+        connect(m_palette.get(), &ClipboardPalette::sourceChanged, this, &MainWindow::updateQuickWindowState);
+        connect(m_palette.get(), &ClipboardPalette::activationRequested,
+                this, &MainWindow::activatePaletteItem);
+        connect(m_palette.get(), &ClipboardPalette::activationCancelled, this, [this]() {
+            m_paletteClipboardTimer.stop();
+            m_paletteProviderId = -1;
+            // Keep cancelled action IDs guarded until they finish.
+            for (auto it = m_palettePasteActions.begin(); it != m_palettePasteActions.end(); ++it)
+                it.value().window.reset();
+        });
+        connect(m_palette.get(), &ClipboardPalette::sourceRequested, this, [this](const QString &name) {
+            const int tabIndex = findTabIndexExactMatch(name);
+            auto c = tabIndex >= 0 ? browser(tabIndex) : nullptr;
+            if (c && c->isLoaded())
+                m_palette->setHistorySource(c->model(), c->tabName());
+        });
+        connect(m_palette->history(), &ClipboardPaletteModel::selectionChanged,
+                this, &MainWindow::updatePaletteCommands);
+        connect(m_palette->history(), &ClipboardPaletteModel::itemDisplayRequested,
+                this, &MainWindow::onItemWidgetCreated);
+        connect(m_palette.get(), &ClipboardPalette::editorRequested,
+                this, &MainWindow::openPaletteEditor);
+        connect(m_palette.get(), &ClipboardPalette::pluginSettingsRequested,
+                this, &MainWindow::openPalettePluginSettings);
+        connect(m_palette.get(), &ClipboardPalette::managementRequested,
+                this, &MainWindow::showManagement);
+        connect(m_palette.get(), &ClipboardPalette::errorOccurred, this, [this](const QString &error) {
+            if (!m_palette->isVisible())
+                showError(error);
+        });
+        m_paletteClipboardTimer.setSingleShot(true);
+        connect(&m_paletteClipboardTimer, &QTimer::timeout, this, [this]() {
+            m_paletteProviderId = -1;
+            m_palette->complete(tr("Clipboard writing did not complete. Paste was cancelled."));
+        });
+    }
+    auto target = platformNativeInterface()->getCurrentWindow();
+    for (auto window : QGuiApplication::topLevelWindows()) {
+        if (target && window->isVisible() && target->matchesWindow(window)) {
+            target.reset();
+            break;
+        }
+    }
+    m_palette->open(source->model(), source->tabName(), tabs(), target);
+    if (m_palette->status() != QQuickView::Ready)
+        showError(m_palette->error());
+    return m_palette->isVisible();
+}
+
+void MainWindow::updatePaletteCommands()
+{
+    interruptMenuCommandFilters(&m_paletteMatchCommands);
+    clearActions(m_paletteCommandMenu);
+    m_paletteCommandMenu->setDefaultAction(nullptr);
+    const auto index = m_palette->history()->selectedIndex();
+    const int tabIndex = findTabIndexExactMatch(m_palette->tabName());
+    auto source = tabIndex >= 0 ? browser(tabIndex) : nullptr;
+    if (!index.isValid() || !source || index.model() != source->model()) {
+        m_palette->setCommandMenu(m_paletteCommandMenu);
+        return;
+    }
+    auto data = selectionData(*source, index, {index});
+    if (m_palette->target() && m_palette->target()->isValid())
+        data.insert(mimeWindowTitle, m_palette->target()->getTitle());
+    QList<QKeySequence> used;
+    for (const auto &command : commandsForMenu(data, source->tabName(), m_menuCommands)) {
+        auto action = new CommandAction(command, command.localizedName(), m_paletteCommandMenu);
+        action->setShortcuts(getUniqueShortcuts(command.shortcuts + command.globalShortcuts, &used));
+        for (const auto &shortcut : action->shortcuts()) {
+            if (!m_paletteCommandMenu->defaultAction() && isItemActivationShortcut(shortcut))
+                m_paletteCommandMenu->setDefaultAction(action);
+        }
+        addMenuMatchCommand(&m_paletteMatchCommands, command.matchCmd, action);
+        connect(action, &CommandAction::triggerCommand, this,
+            [this](CommandAction *act, const QString &shortcut) { runPaletteCommand(act->command(), shortcut); });
+        connect(action, &QAction::changed, m_palette.get(), [this]() {
+            m_palette->setCommandMenu(m_paletteCommandMenu);
+        });
+    }
+    runMenuCommandFilters(&m_paletteMatchCommands, data);
+    m_palette->setCommandMenu(m_paletteCommandMenu);
+}
+
+void MainWindow::runPaletteCommand(const Command &command, const QString &shortcut)
+{
+    const auto index = m_palette->history()->selectedIndex();
+    const int tabIndex = findTabIndexExactMatch(m_palette->tabName());
+    auto source = tabIndex >= 0 ? browser(tabIndex) : nullptr;
+    if (m_palette->busy() || m_palette->history()->filtering() || !index.isValid()
+            || !source || index.model() != source->model())
+        return;
+    auto data = selectionData(*source, index, {index});
+    if (m_palette->target() && m_palette->target()->isValid())
+        data.insert(mimeWindowTitle, m_palette->target()->getTitle());
+    if (!shortcut.isEmpty())
+        data.insert(mimeShortcut, shortcut);
+    if (!m_palette->beginCommand())
+        return;
+    const auto activationId = m_palette->activationId();
+    Action *act = nullptr;
+    if (!command.cmd.isEmpty()) {
+        act = action(data, command, command.transform ? QModelIndex(index) : QModelIndex());
+        if (act) {
+            m_palettePasteActions.insert(act->id(), {activationId, m_palette->target()});
+            connect(act, &Action::actionFinished, this, [this, activationId](Action *finished) {
+                m_palettePasteActions.remove(finished->id());
+                if (m_palette->activationId() == activationId && m_palette->busy())
+                    m_palette->complete(finished->actionFailed() || finished->exitCode() != 0
+                        ? tr("The item command failed.") : QString());
+            });
+        }
+    }
+    if (!command.tab.isEmpty() && command.tab != source->tabName()) {
+        auto destination = tab(command.tab);
+        if (destination && index.isValid())
+            destination->addUnique(source->copyIndex(index), ClipboardMode::Clipboard);
+    }
+    if (command.remove && index.isValid() && (command.tab.isEmpty() || command.tab != source->tabName()))
+        source->removeIndexes({index});
+    if (command.hideWindow)
+        m_palette->hide();
+    if (!act)
+        m_palette->complete();
+}
+
+void MainWindow::activatePaletteItem(
+        const QPersistentModelIndex &index, const QVariantMap &data, bool paste)
+{
+    if (!m_palette->pendingValid() || index != m_palette->pendingIndex())
+        return;
+    m_palettePastes = paste;
+    const int tabIndex = findTabIndexExactMatch(m_palette->tabName());
+    auto source = tabIndex >= 0 ? browser(tabIndex) : nullptr;
+    if (!source || source->model() != index.model()) {
+        m_palette->complete(tr("The history source is no longer available."));
+        return;
+    }
+    setClipboard(source->copyItem(data), ClipboardMode::Clipboard);
+    if (!m_palette->pendingValid())
+        return;
+    m_paletteProviderId = m_provideClipboardActionId;
+    m_paletteClipboardTimer.start(5000);
+    auto provider = m_sharedData->actions->findAction(m_paletteProviderId);
+    if (provider) {
+        connect(provider, &Action::actionFinished, this, [this](Action *act) {
+            if (m_paletteProviderId == act->id() && m_palette->pendingValid()) {
+                m_paletteProviderId = -1;
+                m_paletteClipboardTimer.stop();
+                m_palette->complete(tr("Clipboard provider stopped. Paste was cancelled."));
+            }
+        });
+    }
+}
+
+void MainWindow::finishPaletteClipboard(int providerId)
+{
+    if (providerId != m_paletteProviderId || !m_palette->pendingValid())
+        return;
+    m_paletteClipboardTimer.stop();
+    if (!m_palettePastes) {
+        m_paletteProviderId = -1;
+        m_palette->complete();
+        return;
+    }
+    const auto target = m_palette->target();
+    if (!target || !target->isValid()) {
+        m_palette->complete(tr("The original window closed. Paste was cancelled."));
+        return;
+    }
+    // Cancelling or focus loss while waiting must invalidate the pending identity.
+    m_palette->hide();
+    target->raise();
+    const AppConfig config;
+    const int delay = qMax(100, config.option<Config::window_wait_after_raised_ms>());
+    const auto activationId = m_palette->activationId();
+    QTimer::singleShot(delay, this, [this, target, activationId]() {
+        if (m_palette->activationId() != activationId || !m_palette->pendingValid())
+            return;
+        if (!target->isActive()) {
+            m_palette->complete(tr("The original window could not be focused. Paste was cancelled."));
+            return;
+        }
+        if (isScriptOverridden(ScriptOverrides::Paste)) {
+            m_paletteProviderId = -1;
+            auto data = m_palette->pendingData();
+            data.insert(mimeCurrentTab, m_palette->tabName());
+            addSelectionData(&data, QList<QPersistentModelIndex>{m_palette->pendingIndex()});
+            data.insert(mimeCurrentItem, QVariant::fromValue(m_palette->pendingIndex()));
+            const auto act = runScript(QStringLiteral("paste()"), data);
+            m_palettePasteActions.insert(act->id(), {activationId, target});
+            connect(act, &Action::actionFinished, this, [this, activationId](Action *finished) {
+                m_palettePasteActions.remove(finished->id());
+                if (m_palette->activationId() == activationId && m_palette->busy())
+                    m_palette->complete(finished->actionFailed() || finished->exitCode() != 0
+                        ? tr("The custom paste command failed.") : QString());
+            });
+        } else {
+            const auto canPaste = [this, activationId]() {
+                const auto provider = m_sharedData->actions->findAction(m_paletteProviderId);
+                return m_palette->activationId() == activationId && m_palette->pendingValid()
+                    && provider && provider->isRunning();
+            };
+            const bool pasted = target->pasteFromClipboardSafely(canPaste);
+            m_paletteProviderId = -1;
+            m_palette->complete(pasted ? QString()
+                : tr("Paste was cancelled: window focus or input permission is unavailable."));
+        }
+    });
+}
+
+bool MainWindow::pasteToCurrentWindow(int actionId)
+{
+    const auto guard = m_palettePasteActions.constFind(actionId);
+    if (guard != m_palettePasteActions.cend()) {
+        const auto target = guard.value().window;
+        const auto activationId = guard.value().activationId;
+        if (!target || m_palette->activationId() != activationId || !m_palette->pendingValid())
+            return false;
+        // copy() in a user command also writes through a separate provider process.
+        const int providerId = m_provideClipboardActionId;
+        SleepTimer timer(5000);
+        while (m_registeredClipboardProviderId != providerId && timer.sleep()) {
+            if (m_provideClipboardActionId != providerId || m_palette->activationId() != activationId
+                    || !m_palette->pendingValid() || !target->isValid())
+                return false;
+        }
+        if (m_registeredClipboardProviderId != providerId)
+            return false;
+        if (m_palette->isVisible() && m_palette->isActive()) {
+            m_palette->hide();
+            target->raise();
+            const AppConfig config;
+            waitFor(qMax(100, config.option<Config::window_wait_after_raised_ms>()));
+        }
+        const auto canPaste = [this, activationId, providerId]() {
+            const auto provider = m_sharedData->actions->findAction(providerId);
+            return m_palette->activationId() == activationId && m_palette->pendingValid()
+                && (providerId < 0 || (provider && provider->isRunning()));
+        };
+        return target->isActive() && target->pasteFromClipboardSafely(canPaste);
+    }
+    const auto current = platformNativeInterface()->getCurrentWindow();
+    return current && current->pasteFromClipboard();
+}
+
+void MainWindow::openPaletteEditor(const QPersistentModelIndex &index)
+{
+    if (m_palette) {
+        const int tabIndex = findTabIndexExactMatch(m_palette->tabName());
+        auto source = tabIndex >= 0 ? browser(tabIndex) : nullptr;
+        openItemEditor(index, mimeText, source);
+    }
+}
+
+void MainWindow::openItemEditor(const QPersistentModelIndex &index, const QString &format, ClipboardBrowser *browser)
+{
+    const bool isNew = !index.isValid();
+    const auto data = isNew ? QVariantMap() : m_sharedData->itemFactory->data(index);
+    if (!isNew && data.isEmpty())
+        return;
+    if (!isNew && format == mimeText && !data.contains(mimeText) && !data.contains(mimeHtml))
+        return;
+    const QPointer<ClipboardBrowser> source = browser;
+    if (!source || (!isNew && source->model() != index.model()))
+        return;
+    auto dialog = new QDialog(this);
+    dialog->setObjectName(QStringLiteral("palette_editor"));
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setWindowTitle(tr("QClip — Edit clipboard item"));
+    dialog->resize(640, 420);
+    auto layout = new QVBoxLayout(dialog);
+    auto editor = new ItemEditorWidget(index, format, dialog);
+    editor->setObjectName(QStringLiteral("palette_editor_text"));
+    if (format == mimeText && data.contains(mimeHtml))
+        editor->setHtml(getTextData(data, mimeHtml));
+    else
+        editor->setPlainText(getTextData(data, format));
+    editor->setFont(theme().editorFont());
+    editor->setPalette(theme().editorPalette());
+    layout->addWidget(editor->createToolbar(dialog, m_sharedData->menuItems));
+    layout->addWidget(editor);
+    auto error = new QLabel(dialog);
+    error->setWordWrap(true);
+    error->hide();
+    layout->addWidget(error);
+    auto buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, dialog);
+    layout->addWidget(buttons);
+    const auto save = [this, source, index, editor, dialog, error, isNew, format]() {
+        bool saved = false;
+        if (source && source->isLoaded() && (isNew || (index.isValid() && source->model() == index.model()))) {
+            if (isNew) {
+                saved = source->add(editor->data());
+            } else {
+                auto data = m_sharedData->itemFactory->data(index);
+                if (!data.isEmpty()) {
+                    const auto edited = editor->data();
+                    if (format == mimeText && !edited.contains(mimeHtml))
+                        data.remove(mimeHtml);
+                    for (auto it = edited.cbegin(); it != edited.cend(); ++it)
+                        data.insert(it.key(), it.value());
+                    saved = m_sharedData->itemFactory->setData(data, index, source->model());
+                }
+            }
+        }
+        if (!saved) {
+            error->setText(tr("The item could not be saved. Its collection may have been removed, unloaded or locked. Your edits are still available here."));
+            error->show();
+            return;
+        }
+        dialog->accept();
+    };
+    connect(buttons, &QDialogButtonBox::accepted, dialog, save);
+    connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+    connect(editor, &ItemEditorWidget::save, dialog, save);
+    connect(editor, &ItemEditorWidget::cancel, dialog, &QDialog::reject);
+    if (m_palette)
+        m_palette->cancel();
+    dialog->show();
+    raiseWindow(dialog);
+    editor->setFocus();
+}
+
+void MainWindow::openPalettePluginSettings()
+{
+    if (cm) {
+        m_palette->complete(tr("Close Preferences before opening plugin settings."));
+        return;
+    }
+    if (auto existing = findChild<QDialog*>(QStringLiteral("palette_plugin_settings"))) {
+        m_palette->cancel();
+        existing->raise();
+        existing->activateWindow();
+        return;
+    }
+    auto dialog = new QDialog(this);
+    dialog->setObjectName(QStringLiteral("palette_plugin_settings"));
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setWindowTitle(tr("QClip — Plugin settings"));
+    dialog->resize(640, 420);
+    auto layout = new QVBoxLayout(dialog);
+    auto tabs = new QTabWidget(dialog);
+    layout->addWidget(tabs);
+    ItemLoaderList loaders;
+    for (const auto &loader : m_sharedData->itemFactory->loaders()) {
+        // Plugin loaders retain their settings widget; don't open two copies at once.
+        if (!loader->isEnabled())
+            continue;
+        auto widget = loader->createSettingsWidget(tabs);
+        if (widget) {
+            tabs->addTab(widget, loader->name());
+            loaders.append(loader);
+        }
+    }
+    auto buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, dialog);
+    layout->addWidget(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, dialog, [dialog, loaders]() {
+        Settings settings;
+        settings.beginGroup(QStringLiteral("Plugins"));
+        for (const auto &loader : loaders) {
+            settings.beginGroup(loader->id());
+            loader->applySettings(settings);
+            settings.endGroup();
+        }
+        settings.endGroup();
+        settings.sync();
+        dialog->accept();
+    });
+    connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+    m_palette->cancel();
+    dialog->show();
+    raiseWindow(dialog);
 }
 
 void MainWindow::activateCurrentItem()
@@ -3965,6 +4411,8 @@ void MainWindow::disableClipboardStoring(bool disable)
         return;
 
     m_clipboardStoringDisabled = disable;
+    if (m_management)
+        m_management->setMonitoring(!disable);
     emit disableClipboardStoringRequest(disable);
 
     ::setSessionIconEnabled(!disable);
@@ -4043,6 +4491,12 @@ void MainWindow::updateFocusWindows()
     PlatformWindowPtr lastWindow = platform->getCurrentWindow();
     if (!lastWindow)
         return;
+
+    // Quick windows and editor/settings dialogs must not replace an external paste target.
+    for (auto window : QGuiApplication::topLevelWindows()) {
+        if (window != windowHandle() && window->isVisible() && lastWindow->matchesWindow(window))
+            return;
+    }
 
     if (lastWindow->matchesWidget(this)) {
         qCDebug(logCategory) << "Focus: main window";
@@ -4231,6 +4685,10 @@ void MainWindow::openPreferences()
         cm->activateWindow();
         return;
     }
+
+    // Loaders retain pointers to their settings widgets; only one settings host may exist.
+    if (auto dialog = findChild<QDialog*>(QStringLiteral("palette_plugin_settings")))
+        delete dialog;
 
     ConfigurationManager configurationManager(m_sharedData, this);
     WindowGeometryGuard::create(&configurationManager);
@@ -4708,6 +5166,8 @@ void MainWindow::renameTab(const QString &name, int tabIndex)
         return;
 
     ui->tabWidget->setTabName(tabIndex, name);
+    if (m_management && m_management->tabName() != name && m_management->isVisible())
+        setManagementSource(ui->tabWidget->tabName(ui->tabWidget->currentIndex()));
 
     const QStringList tabNames = ui->tabWidget->tabs();
     tabs.save(&appConfig.settings(), tabNames);
@@ -4777,6 +5237,8 @@ void MainWindow::removeTab(bool ask, int tabIndex)
             placeholder->deleteLater();
             w->removeTab(tabIndex);
             saveTabPositions();
+            if (m_management && m_management->isVisible())
+                setManagementSource(w->tabName(w->currentIndex()));
         }
     }
 }
@@ -4824,6 +5286,8 @@ void MainWindow::forceUnloadTab(const QString &tabName)
 
 MainWindow::~MainWindow()
 {
+    m_management.reset();
+    m_palette.reset();
     delete ui;
 }
 
