@@ -39,6 +39,7 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QScrollArea>
+#include <QSpinBox>
 #include <QTranslator>
 
 namespace {
@@ -371,6 +372,9 @@ void ConfigurationManager::initOptions()
 
     bind<Config::terminate_action_timeout_ms>();
     bind<Config::clipboard_mime_size_limit>();
+    bind<Config::clipboard_history_types>();
+    bind<Config::clipboard_history_ignore_apps>();
+    bind<Config::clipboard_history_max_days>();
 }
 
 template <typename Config, typename Widget>
@@ -445,9 +449,15 @@ bool ConfigurationManager::setOptionValue(const QString &name, const QVariant &v
     if ( !m_options.contains(name) )
         return false;
 
-    const QString oldValue = optionValue(name).toString();
+    const bool historyList = name == Config::clipboard_history_types::name() || name == Config::clipboard_history_ignore_apps::name();
+    const QVariant oldValue = historyList ? optionValue(name) : QVariant(optionValue(name).toString());
+    if (historyList) {
+        if (!setDraftValue(name, value)) return false;
+    } else {
+        m_options[name].setValue(value);
+    }
+    // setDraftValue() may detach the implicitly shared options map.
     Option &option = m_options[name];
-    option.setValue(value);
     if ( option.value() == oldValue )
         return false;
 
@@ -461,6 +471,160 @@ QString ConfigurationManager::optionToolTip(const QString &name) const
     return m_options[name].tooltip();
 }
 
+QVariantList ConfigurationManager::optionFields() const
+{
+    auto names = options();
+    names.sort();
+    QVariantList result;
+    for (const auto &name : names) {
+        const auto &option = m_options[name];
+        auto widget = qobject_cast<QWidget*>(option.object());
+        QString section = QStringLiteral("Advanced");
+        if (name.startsWith(QLatin1String("clipboard_history_")))
+            section = QStringLiteral("History");
+        for (auto parent = widget; parent; parent = parent->parentWidget()) {
+            if (parent->objectName().startsWith(QLatin1String("ConfigTab"))) {
+                section = parent->objectName().mid(9);
+                break;
+            }
+        }
+        QString label = qobject_cast<QAbstractButton*>(widget) ? widget->property("text").toString().remove('&') : QString();
+        if (label.isEmpty()) {
+            label = name;
+            label.replace('_', ' ');
+            if (!label.isEmpty())
+                label[0] = label[0].toUpper();
+        }
+        const auto value = option.value();
+        QVariantMap field{{QStringLiteral("name"), name}, {QStringLiteral("label"), label},
+            {QStringLiteral("section"), section}, {QStringLiteral("value"), value},
+            {QStringLiteral("defaultValue"), option.defaultValue()},
+            {QStringLiteral("description"), option.tooltip()},
+            {QStringLiteral("available"), !widget || !widget->isHidden()},
+            {QStringLiteral("kind"), value.typeId() == QMetaType::Bool ? QStringLiteral("bool")
+                : value.typeId() == QMetaType::Int ? QStringLiteral("int")
+                : value.typeId() == QMetaType::QStringList ? QStringLiteral("list") : QStringLiteral("text")}};
+        if (auto spin = qobject_cast<QSpinBox*>(widget)) {
+            field.insert(QStringLiteral("minimum"), spin->minimum());
+            field.insert(QStringLiteral("maximum"), spin->maximum());
+        }
+        if (auto combo = qobject_cast<QComboBox*>(widget)) {
+            QStringList choices;
+            for (int i = 0; i < combo->count(); ++i)
+                choices.append(combo->itemText(i));
+            field.insert(QStringLiteral("choices"), choices);
+        }
+        result.append(field);
+    }
+    return result;
+}
+
+bool ConfigurationManager::setDraftValue(const QString &name, QVariant value)
+{
+    auto it = m_options.find(name);
+    if (it == m_options.end())
+        return false;
+    const auto type = it->defaultValue().metaType();
+    if (type.id() == QMetaType::QStringList && (value.typeId() == QMetaType::QString || value.typeId() == QMetaType::QByteArray))
+        value = value.toString().split('\n', Qt::SkipEmptyParts);
+    if (!value.convert(type))
+        return false;
+    if (name == Config::clipboard_history_max_days::name())
+        value = Config::clipboard_history_max_days::value(value.toInt());
+    if (name == Config::clipboard_history_types::name()) {
+        const auto supported = Config::clipboard_history_types::defaultValue();
+        for (const auto &entry : value.toStringList()) {
+            if (!supported.contains(entry))
+                return false;
+        }
+    }
+    it->setValue(value);
+    return true;
+}
+
+void ConfigurationManager::resetDraft()
+{
+    for (auto it = m_options.begin(); it != m_options.end(); ++it)
+        it->reset();
+}
+
+void ConfigurationManager::applyDraft()
+{
+    AppConfig config;
+    apply(&config);
+    emit configurationChanged(&config);
+}
+
+QVariantList ConfigurationManager::pluginFields() const
+{
+    QVariantList result;
+    for (int i = 0; i < m_tabItems->itemCount(); ++i)
+        result.append(QVariantMap{{QStringLiteral("id"), m_tabItems->data(i).toString()},
+            {QStringLiteral("name"), m_tabItems->itemLabel(i)}, {QStringLiteral("enabled"), m_tabItems->isItemChecked(i)}});
+    return result;
+}
+
+void ConfigurationManager::setPluginEnabled(const QString &id, bool enabled)
+{
+    for (int i = 0; i < m_tabItems->itemCount(); ++i)
+        if (m_tabItems->data(i).toString() == id)
+            m_tabItems->setItemChecked(i, enabled);
+}
+
+void ConfigurationManager::movePlugin(const QString &id, int step)
+{
+    for (int i = 0; i < m_tabItems->itemCount(); ++i)
+        if (m_tabItems->data(i).toString() == id) {
+            const int target = qBound(0, i + step, m_tabItems->itemCount() - 1);
+            if (target != i)
+                m_tabItems->moveTab(i, target);
+            return;
+        }
+}
+
+QWidget *ConfigurationManager::settingsPage(const QString &page)
+{
+    if (page == QLatin1String("Appearance")) return m_tabAppearance;
+    if (page == QLatin1String("Shortcuts")) return m_tabShortcuts;
+    if (page == QLatin1String("Tabs")) return m_tabTabs;
+    for (int i = 0; i < m_tabItems->itemCount(); ++i)
+        if (m_tabItems->data(i).toString() == page) {
+            m_tabItems->setCurrentItem(i);
+            return m_tabItems->widget(i);
+        }
+    return nullptr;
+}
+
+void ConfigurationManager::initializeLanguages()
+{
+    if (m_tabGeneral->comboBoxLanguage->count() == 0)
+        initLanguages();
+    AppConfig config;
+    const auto saved = config.settings().value(QStringLiteral("Options/language"), QStringLiteral("en")).toString();
+    setLanguage(saved);
+}
+
+QVariantList ConfigurationManager::languages() const
+{
+    QVariantList result;
+    const auto combo = m_tabGeneral->comboBoxLanguage;
+    for (int i = 0; i < combo->count(); ++i)
+        result.append(QVariantMap{{QStringLiteral("name"), combo->itemText(i)}, {QStringLiteral("id"), combo->itemData(i)}});
+    return result;
+}
+
+QString ConfigurationManager::language() const { return m_tabGeneral->comboBoxLanguage->currentData().toString(); }
+
+void ConfigurationManager::setLanguage(const QString &language)
+{
+    const auto combo = m_tabGeneral->comboBoxLanguage;
+    const int index = combo->findData(language);
+    if (index >= 0)
+        combo->setCurrentIndex(index);
+}
+
+void ConfigurationManager::changeEncryptionPassword() { onPushButtonChangeEncryptionPasswordClicked(); }
+
 void ConfigurationManager::loadSettings(AppConfig *appConfig)
 {
     Settings &settings = appConfig->settings();
@@ -470,7 +634,10 @@ void ConfigurationManager::loadSettings(AppConfig *appConfig)
         const auto &option = it.key();
         auto &value = it.value();
         if ( settings.contains(option) ) {
-            const auto newValue = settings.value(option);
+            auto newValue = settings.value(option);
+            // QSettings can read a serialized empty QStringList as an invalid QVariant.
+            if (!newValue.isValid() && value.defaultValue().typeId() == QMetaType::QStringList)
+                newValue = QStringList();
             if ( !newValue.isValid() || !value.setValue(newValue) )
                 log( tr("Invalid value for option \"%1\"").arg(option), LogWarning );
         } else {

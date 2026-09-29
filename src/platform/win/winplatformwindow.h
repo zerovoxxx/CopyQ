@@ -18,6 +18,7 @@ public:
     explicit WinPlatformWindow(HWND window);
 
     QString getTitle() override;
+    QString getApplicationId() const override;
 
     void raise() override;
 

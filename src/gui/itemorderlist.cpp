@@ -387,6 +387,12 @@ void ItemOrderList::onListWidgetItemsItemChanged(QListWidgetItem *item)
     }
 }
 
+void ItemOrderList::setItemChecked(int row, bool checked)
+{
+    if (auto item = listItem(row))
+        item->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
+}
+
 void ItemOrderList::moveTab(int row, int targetRow)
 {
     QListWidget *list = ui->listWidgetItems;

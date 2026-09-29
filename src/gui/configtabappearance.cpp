@@ -26,6 +26,9 @@
 #include <QFileDialog>
 #include <QFontDialog>
 #include <QMessageBox>
+#include <QFormLayout>
+#include <QGroupBox>
+#include <QSpinBox>
 #include <QPainter>
 #include <QScrollBar>
 #include <QSettings>
@@ -77,6 +80,46 @@ ConfigTabAppearance::ConfigTabAppearance(QWidget *parent)
     , m_editor()
 {
     ui->setupUi(this);
+    // Replace the dense color matrix with named form cards; keep the same fields and signals.
+    for (int row = 1; row <= 8; ++row) {
+        auto titleItem = ui->gridLayout_6->itemAtPosition(row, 0);
+        auto title = titleItem ? qobject_cast<QLabel *>(titleItem->widget()) : nullptr;
+        if (!title) continue;
+        auto card = new QGroupBox(title->text(), ui->scrollAreaThemeContents);
+        auto form = new QFormLayout(card);
+        form->setSpacing(10);
+        const QStringList names{tr("Background"), tr("Foreground"), tr("Font")};
+        for (int column = 1; column <= 3; ++column) {
+            auto item = ui->gridLayout_6->itemAtPosition(row, column);
+            if (item && item->widget()) {
+                auto field = item->widget();
+                ui->gridLayout_6->removeWidget(field);
+                form->addRow(names[column - 1], field);
+            }
+        }
+        title->hide();
+        ui->verticalLayout_9->insertWidget(row - 1, card);
+    }
+    for (int column = 1; column <= 3; ++column) {
+        auto item = ui->gridLayout_6->itemAtPosition(0, column);
+        if (item && item->widget()) item->widget()->hide();
+    }
+    ui->horizontalLayout_10->setSpacing(24);
+    ui->verticalLayout_9->setSpacing(12);
+    auto quick = new QGroupBox(tr("Quick layout"), ui->scrollAreaThemeContents);
+    auto quickForm = new QFormLayout(quick);
+    for (const auto &field : QList<QPair<QString,QString>>{
+            {QStringLiteral("quick_spacing"), tr("Spacing")}, {QStringLiteral("quick_margin"), tr("Window margins")},
+            {QStringLiteral("quick_row_height"), tr("History row height")}, {QStringLiteral("quick_radius"), tr("Corner radius")}}) {
+        auto spin = new QSpinBox(quick);
+        spin->setObjectName(field.first);
+        spin->setRange(field.first == QLatin1String("quick_row_height") ? 32 : 0, 256);
+        quickForm->addRow(field.second, spin);
+    }
+    auto compatibility = new QLabel(tr("Original QSS and CSS templates apply to native editors, plugin controls, history rows, collection rows, menus, buttons and search backgrounds. Quick layout uses the controls above. Selectors tied to removed widget nesting need to be updated for the new layout."), quick);
+    compatibility->setWordWrap(true);
+    quickForm->addRow(compatibility);
+    ui->verticalLayout_9->insertWidget(8, quick);
 
     connect(ui->pushButtonLoadTheme, &QPushButton::clicked,
             this, &ConfigTabAppearance::onPushButtonLoadThemeClicked);

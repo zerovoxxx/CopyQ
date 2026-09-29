@@ -4,15 +4,36 @@
 #include "ui_importexportdialog.h"
 
 #include "common/tabs.h"
+#include "common/settings.h"
 #include "gui/tabicons.h"
+#include "gui/theme.h"
 
 #include <QPushButton>
+#include <QVBoxLayout>
 
 ImportExportDialog::ImportExportDialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::ImportExportDialog)
 {
     ui->setupUi(this);
+    while (auto item = ui->verticalLayout->takeAt(0)) delete item;
+    auto choices = new QVBoxLayout;
+    choices->addWidget(new QLabel(tr("Include in the file"), this));
+    choices->addWidget(ui->checkBoxAll);
+    choices->addWidget(ui->checkBoxConfiguration);
+    choices->addWidget(ui->checkBoxCommands);
+    choices->addStretch();
+    auto collections = new QVBoxLayout;
+    collections->addWidget(ui->labelTabs);
+    collections->addWidget(ui->listTabs, 1);
+    auto body = new QHBoxLayout;
+    body->addLayout(choices);
+    body->addLayout(collections, 1);
+    ui->verticalLayout->addLayout(body, 1);
+    ui->verticalLayout->addWidget(ui->buttonBox);
+    Settings settings;
+    Theme(settings).decorateDialog(this, tr("Transfer application data"), tr("Choose collections, configuration and commands to include. Existing file formats and encryption are preserved."));
+    resize(760, 500);
 
     connect(ui->checkBoxAll, &QCheckBox::clicked,
             this, &ImportExportDialog::onCheckBoxAllClicked);

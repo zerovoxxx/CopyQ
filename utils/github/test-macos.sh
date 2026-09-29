@@ -34,14 +34,21 @@ export COPYQ_TESTS_EXECUTABLE="$executable"
     "testCore:paletteEditor" "testCore:palettePaste" "testCore:paletteMimeAndDisplayCommands" \
     "testItemFakeVim:createItem" "testItemFakeVim:paletteEditor"
 "$runner" ./copyq-tests \
-    testCore:managementActions testCore:managementTabs testCore:managementCommands testCore:managementEditor
+    testCore:managementActions testCore:managementTabs testCore:managementGroups testCore:managementCommands testCore:managementEditor testCore:managementHistory testCore:managementHistoryCapture testCore:managementDialogs
+"$runner" ./copyq-tests \
+    testCore:importExportTab testCore:commandConfig testCore:commandLoadTheme testCore:displayCommand \
+    testCore:commandDialogFitsContents testCore:commandNotification testCore:commandScreenshot \
+    testItemImage:savePng testItemTags:searchTags testItemPinned:keepPinnedIfMaxItemsChanges \
+    testItemEncrypted:encryptDecryptData testItemEncrypted:encryptDecryptItems \
+    testItemSync:itemsToFiles testItemSync:filesToItems
 "$runner" ./copyq-palette-tests \
     modelIdentity queryChanges displayCopiesAndPreview sourceDestructionAndReset \
     qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews \
     nativeWindowIdentification pluginEditorAndSettings nativeInputListeningAndReplacement
 "$runner" ./copyq-management-tests \
     multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay transferAndDeleteProtection \
-    qmlSelectionAndActions nativeDropRoundTrip themeMapping
+    qmlSelectionAndActions nativeDropRoundTrip themeMapping legacyStyleRules pluginPreviewBridge managementGeometry \
+    settingsDraftTransaction commandDraftRoundTrip pluginSettingsDraft allPluginSettings historyTimeAndProtection historyCaptureFilters
 
 # Verify the bundle is self-contained: every @rpath reference resolves to a
 # library that is actually present in the Frameworks directory.

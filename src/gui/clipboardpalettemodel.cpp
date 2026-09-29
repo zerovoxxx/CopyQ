@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "clipboardpalettemodel.h"
+#include "common/historypolicy.h"
 
 #include "common/appconfig.h"
 #include "common/config.h"
@@ -71,6 +72,7 @@ void ClipboardPaletteModel::setSourceModel(QAbstractItemModel *source, const QSt
     for (const auto &connection : m_sourceConnections)
         disconnect(connection);
     m_sourceConnections.clear();
+    m_displayItems.clear();
     m_source = source;
     m_tabName = tabName;
     m_selected = QPersistentModelIndex();
@@ -80,12 +82,24 @@ void ClipboardPaletteModel::setSourceModel(QAbstractItemModel *source, const QSt
     if (source) {
         const auto changed = [this]() { rebuild(false); };
         m_sourceConnections = {
-            connect(source, &QAbstractItemModel::rowsInserted, this, changed),
+            connect(source, &QAbstractItemModel::rowsInserted, this,
+                [this](const QModelIndex &, int first, int last) {
+                    // First contents of an empty collection get the initial selection.
+                    // Insertion into an existing collection keeps explicit empty selections.
+                    rebuild(sourceCount() == last - first + 1);
+                }),
             connect(source, &QAbstractItemModel::rowsRemoved, this, changed),
             connect(source, &QAbstractItemModel::rowsMoved, this, changed),
             connect(source, &QAbstractItemModel::layoutChanged, this, changed),
-            connect(source, &QAbstractItemModel::dataChanged, this, changed),
-            connect(source, &QAbstractItemModel::modelReset, this, changed),
+            connect(source, &QAbstractItemModel::dataChanged, this,
+                [this](const QModelIndex &first, const QModelIndex &last) {
+                    m_displayItems.erase(std::remove_if(m_displayItems.begin(), m_displayItems.end(),
+                        [&first, &last](const DisplayData &item) {
+                            return item.index.row() >= first.row() && item.index.row() <= last.row();
+                        }), m_displayItems.end());
+                    rebuild(false);
+                }),
+            connect(source, &QAbstractItemModel::modelReset, this, [this] { m_displayItems.clear(); rebuild(false); }),
             connect(source, &QObject::destroyed, this, [this]() {
                 m_source = nullptr;
                 rebuild(false);
@@ -108,7 +122,7 @@ int ClipboardPaletteModel::sourceCount() const
 QHash<int, QByteArray> ClipboardPaletteModel::roleNames() const
 {
     return {{SummaryRole, "summary"}, {TypeRole, "itemType"}, {SelectedRole, "itemSelected"},
-        {NotesRole, "notes"}, {TagsRole, "tags"}, {PinnedRole, "pinned"}};
+        {NotesRole, "notes"}, {TagsRole, "tags"}, {PinnedRole, "pinned"}, {SourceRowRole, "sourceRow"}};
 }
 
 QVariant ClipboardPaletteModel::data(const QModelIndex &index, int role) const
@@ -118,9 +132,12 @@ QVariant ClipboardPaletteModel::data(const QModelIndex &index, int role) const
     const auto source = m_results.at(index.row());
     if (!source.isValid())
         return QVariant();
-    const auto data = source == m_selected ? m_displayData : source.data(contentType::data).toMap();
+    if (role == SourceRowRole) return source.row();
     if (role == SelectedRole)
         return m_selection.contains(source);
+    const auto displayed = std::find_if(m_displayItems.cbegin(), m_displayItems.cend(),
+        [&source](const DisplayData &item) { return item.index == source; });
+    const auto data = displayed != m_displayItems.cend() ? displayed->data : source.data(contentType::data).toMap();
     if (role == NotesRole)
         return getTextData(data, mimeItemNotes).left(512);
     if (role == TagsRole)
@@ -145,6 +162,7 @@ void ClipboardPaletteModel::setQuery(const QString &query)
     if (m_query == query)
         return;
     m_query = query;
+    m_displayItems.clear();
     emit queryChanged();
     rebuild(true);
 }
@@ -152,6 +170,8 @@ void ClipboardPaletteModel::setQuery(const QString &query)
 void ClipboardPaletteModel::rebuild(bool selectFirst)
 {
     m_timer.stop();
+    m_displayItems.erase(std::remove_if(m_displayItems.begin(), m_displayItems.end(),
+        [](const DisplayData &item) { return !item.index.isValid(); }), m_displayItems.end());
     if (!m_selected.isValid())
         emit selectionInvalidated();
     const AppConfig config;
@@ -309,7 +329,14 @@ void ClipboardPaletteModel::select(int row, bool extend, bool toggle)
 
 void ClipboardPaletteModel::selectAll()
 {
-    setSelectedIndexes(m_results);
+    if (filtering()) return;
+    m_selection = m_results;
+    if (!m_results.contains(m_selected))
+        m_selected = m_results.isEmpty() ? QPersistentModelIndex() : m_results.first();
+    m_anchor = m_selected;
+    if (!m_results.isEmpty()) emit dataChanged(index(0), index(count() - 1), {SelectedRole});
+    updatePreview();
+    emit selectionChanged();
 }
 
 void ClipboardPaletteModel::selectNext(int step)
@@ -328,30 +355,72 @@ QVariantMap ClipboardPaletteModel::displayData() const
     return m_displayData;
 }
 
+ItemFactory *ClipboardPaletteModel::itemFactory() const { return m_factory; }
+
 void ClipboardPaletteModel::updatePreview()
 {
-    ++m_displayRevision;
     ++m_previewRevision;
     m_displayData = selectedData();
-    emit previewChanged();
-    if (m_selected.isValid()) {
-        auto data = m_displayData;
-        // Display scripts must never resolve the old management window's selection.
-        data.insert(mimeSelectedItems, QByteArray());
-        emit itemDisplayRequested(PersistentDisplayItem(this, m_selected, m_displayRevision, data));
+    requestDisplay(selectedRow());
+    for (const auto &item : m_displayItems) {
+        if (item.index == m_selected) {
+            m_displayData = item.data;
+            m_displayRevision = item.revision;
+            break;
+        }
     }
+    emit previewChanged();
+}
+
+void ClipboardPaletteModel::requestDisplay(int row)
+{
+    const auto source = sourceIndex(row);
+    if (!m_displayEnabled || !source.isValid())
+        return;
+    for (const auto &item : m_displayItems)
+        if (item.index == source) return;
+    const auto raw = source.data(contentType::data).toMap();
+    const auto revision = ++m_nextDisplayRevision;
+    m_displayItems.append({source, revision, raw});
+    auto data = raw;
+    data.insert(mimeCurrentTab, m_tabName.toUtf8());
+    data.insert(mimeSelectedItems, QByteArray());
+    emit itemDisplayRequested(PersistentDisplayItem(this, source, revision, data));
+}
+
+void ClipboardPaletteModel::setDisplayEnabled(bool enabled)
+{
+    if (m_displayEnabled == enabled) return;
+    m_displayEnabled = enabled;
+    m_displayItems.clear();
+    updatePreview();
+    if (count() > 0) emit dataChanged(index(0), index(count() - 1));
+    emit displaysInvalidated();
+}
+
+bool ClipboardPaletteModel::isDisplayDataValid(const QPersistentModelIndex &index, int revision) const
+{
+    if (!m_displayEnabled || !index.isValid() || index.model() != m_source || !m_results.contains(index))
+        return false;
+    for (const auto &item : m_displayItems)
+        if (item.index == index && item.revision == revision) return true;
+    return false;
 }
 
 void ClipboardPaletteModel::setDisplayData(
         const QPersistentModelIndex &index, int revision, const QVariantMap &data)
 {
-    if (revision != m_displayRevision || index != m_selected || !index.isValid() || data.isEmpty())
+    if (!isDisplayDataValid(index, revision) || data.isEmpty())
         return;
-    m_displayData = data;
-    ++m_previewRevision;
-    if (selectedRow() >= 0)
-        emit dataChanged(this->index(selectedRow()), this->index(selectedRow()));
-    emit previewChanged();
+    for (auto &item : m_displayItems) {
+        if (item.index == index && item.revision == revision) {
+            item.data = data;
+            break;
+        }
+    }
+    const auto row = resultRow(index);
+    if (row >= 0) emit dataChanged(this->index(row), this->index(row));
+    if (index == m_selected) updatePreview();
 }
 
 QVariantMap ClipboardPaletteModel::preview() const
@@ -360,16 +429,19 @@ QVariantMap ClipboardPaletteModel::preview() const
         return QVariantMap();
     if (m_selected.data(contentType::isHidden).toBool())
         return {{QStringLiteral("text"), tr("Hidden item")}};
+    const auto raw = selectedData();
     QVariantMap result{
         {QStringLiteral("text"), getTextData(m_displayData).left(100000)},
         {QStringLiteral("html"), QString::fromUtf8(m_displayData.value(mimeHtml).toByteArray()).left(100000)},
         {QStringLiteral("type"), itemType(m_displayData)},
-        {QStringLiteral("editable"), selectedData().contains(mimeText) || selectedData().contains(mimeHtml)},
+        {QStringLiteral("editable"), raw.contains(mimeText) || raw.contains(mimeHtml)},
         {QStringLiteral("image"), QStringLiteral("image://palette/%1").arg(m_previewRevision)}
     };
     result.insert(QStringLiteral("notes"), getTextData(m_displayData, mimeItemNotes));
     result.insert(QStringLiteral("tags"), QString::fromUtf8(m_displayData.value(QStringLiteral(COPYQ_MIME_PREFIX "tags")).toByteArray()));
     result.insert(QStringLiteral("pinned"), m_displayData.contains(QStringLiteral(COPYQ_MIME_PREFIX "item-pinned")));
+    result.insert(QStringLiteral("copiedAt"), HistoryPolicy::copiedAt(raw));
+    result.insert(QStringLiteral("application"), QString::fromUtf8(raw.value(mimeSourceApplication).toByteArray()));
     QStringList urls;
     const auto lines = QString::fromUtf8(m_displayData.value(mimeUriList).toByteArray()).split('\n');
     for (const auto &line : lines) {

@@ -30,18 +30,18 @@ ClipboardOwnerMonitor::ClipboardOwnerMonitor(ClipboardMonitor *monitor)
         });
 
     QObject::connect( &m_timerUpdateAfterEvent, &QTimer::timeout, [this]() {
-        const QString title = m_monitor->currentClipboardOwner();
+        const auto title = m_monitor->currentClipboardOwner();
         if (m_lastClipboardOwner != title) {
             m_lastClipboardOwner = title;
             if ( m_timerSetOwner.interval() == 0 )
-                m_nextClipboardOwners = QStringList{m_lastClipboardOwner};
+                m_nextClipboardOwners = {m_lastClipboardOwner};
             else
                 m_nextClipboardOwners.append(m_lastClipboardOwner);
 
             if (!m_timerSetOwner.isActive())
                 m_timerSetOwner.start();
 
-            COPYQ_LOG(QStringLiteral("Next clipboard owner: %1").arg(title));
+            COPYQ_LOG(QStringLiteral("Next clipboard owner: %1").arg(title.first));
         }
     });
 }

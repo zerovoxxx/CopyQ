@@ -414,7 +414,7 @@ private:
     void onMonitorOwnClipboardChanged(const QVariantMap &data);
     void onMonitorClipboardUnchanged(const QVariantMap &data);
     void onSynchronizeSelection(ClipboardMode sourceMode, uint sourceTextHash, uint targetTextHash);
-    void onFetchCurrentClipboardOwner(QString *title);
+    void onFetchCurrentClipboardOwner(QString *title, QString *application);
     void onSaveData(const QVariantMap &data);
 
     bool sourceScriptCommands();
@@ -481,6 +481,7 @@ private:
     ItemFactory *m_factory;
     QJSValue m_temporaryFileClass;
     QString m_inputSeparator;
+    QString m_currentApplicationId;
     QJSValue m_input;
     QVariantMap m_data;
     QVariantMap m_oldData;

@@ -64,7 +64,7 @@ void raiseWindow(QWidget *window)
     // When the app is already active (e.g. dialog opened from the main
     // window), the activation calls are redundant and can interfere with
     // focus/key dispatch on some platforms.
-    if (QApplication::applicationState() != Qt::ApplicationActive) {
+    if (QApplication::applicationState() != Qt::ApplicationActive || !QApplication::activeWindow()) {
         window->activateWindow();
         QApplication::setActiveWindow(window);
     }

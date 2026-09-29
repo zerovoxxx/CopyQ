@@ -7,7 +7,9 @@
 #include "common/command.h"
 #include "common/config.h"
 #include "common/mimetypes.h"
+#include "common/settings.h"
 #include "common/textdata.h"
+#include "gui/theme.h"
 #include "item/serialize.h"
 
 #include <QAbstractButton>
@@ -15,6 +17,7 @@
 #include <QLoggingCategory>
 #include <QMessageBox>
 #include <QShortcut>
+#include <QVBoxLayout>
 
 namespace {
 
@@ -56,6 +59,26 @@ ActionDialog::ActionDialog(QWidget *parent)
     , m_currentCommandIndex(-1)
 {
     ui->setupUi(this);
+    ui->verticalLayout->removeItem(ui->formLayout_3);
+    ui->formLayout_3->setParent(nullptr);
+    ui->formLayout_3->setRowWrapPolicy(QFormLayout::WrapAllRows);
+    ui->formLayout_3->setSpacing(10);
+    auto parameters = new QWidget(this);
+    parameters->setLayout(ui->formLayout_3);
+    parameters->setMinimumWidth(230);
+    ui->inputText->setMaximumHeight(200);
+    ui->verticalLayout->removeWidget(ui->label_2);
+    ui->verticalLayout->removeWidget(ui->commandEdit);
+    auto code = new QVBoxLayout;
+    code->addWidget(ui->label_2);
+    code->addWidget(ui->commandEdit, 1);
+    auto body = new QHBoxLayout;
+    body->addWidget(parameters);
+    body->addLayout(code, 1);
+    ui->verticalLayout->insertLayout(1, body, 1);
+    Settings settings;
+    Theme(settings).decorateDialog(this, tr("Run a command"), tr("Choose input and output formats, edit a command, then run it on the selected data."));
+    resize(1000, 660);
 
     // WORKAROUND for broken initial focus in Qt 6.6 (QTBUG-121514)
     ui->comboBoxCommands->setFocus();

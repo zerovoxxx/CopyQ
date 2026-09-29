@@ -5,6 +5,7 @@
 #include "common/common.h"
 #include "common/mimetypes.h"
 #include "common/tabs.h"
+#include "common/historypolicy.h"
 #include "gui/clipboardbrowser.h"
 #include "gui/clipboardbrowserplaceholder.h"
 #include "gui/clipboarddialog.h"
@@ -18,6 +19,7 @@
 #include "ui_mainwindow.h"
 
 #include <QDrag>
+#include <QDateTime>
 #include <QMenu>
 #include <QMimeData>
 #include <QMetaObject>
@@ -40,16 +42,19 @@ QModelIndexList validIndexes(const QList<QPersistentModelIndex> &indexes, const 
 void MainWindow::showManagement()
 {
     auto source = browser();
-    if (!source || !source->isLoaded())
+    auto placeholder = getPlaceholder();
+    if (!placeholder)
         return;
     updateFocusWindows();
     if (m_palette)
         m_palette->cancel();
     if (!m_management) {
         m_management = std::make_unique<ClipboardManagement>(m_sharedData->itemFactory);
+        if (!windowTitle().isEmpty()) m_management->setTitle(windowTitle());
         m_managementCommandMenu = new QMenu(this);
         connect(m_management.get(), &QWindow::visibleChanged, this, &MainWindow::updateQuickWindowState);
         connect(m_management.get(), &QWindow::activeChanged, this, &MainWindow::updateQuickWindowState);
+        connect(m_management.get(), &ClipboardManagement::hideRequested, this, &MainWindow::hideWindow);
         connect(m_management.get(), &ClipboardManagement::sourceRequested, this, [this](const QString &name) {
             const int i = findTabIndexExactMatch(name);
             if (i >= 0 && setCurrentTab(i)) {
@@ -94,7 +99,19 @@ void MainWindow::showManagement()
     m_management->setTheme(theme().quickTheme());
     m_management->setActions(m_sharedData->menuItems);
     m_management->setMonitoring(isMonitoringEnabled());
-    setManagementSource(source->tabName());
+    AppConfig config;
+    m_management->setOptions({{QStringLiteral("hideTabs"), config.option<Config::hide_tabs>()},
+        {QStringLiteral("hideToolbar"), config.option<Config::hide_toolbar>()},
+        {QStringLiteral("hideToolbarLabels"), config.option<Config::hide_toolbar_labels>()},
+        {QStringLiteral("singleClick"), config.option<Config::activate_item_with_single_click>()},
+        {QStringLiteral("navigationStyle"), int(config.option<Config::navigation_style>())},
+        {QStringLiteral("treeMode"), config.option<Config::tab_tree>()},
+        {QStringLiteral("showTabCounts"), config.option<Config::show_tab_item_count>()},
+        {QStringLiteral("rowIndexFromOne"), config.option<Config::row_index_from_one>()},
+        {QStringLiteral("historyTab"), m_options.clipboardTab.isEmpty() ? defaultClipboardTabName() : m_options.clipboardTab},
+        {QStringLiteral("preview"), m_showItemPreview}});
+    setManagementSource(source ? source->tabName() : placeholder->tabName());
+    m_management->setTabCounts(ui->tabWidget->itemCounts());
     m_management->open();
     if (m_management->status() != QQuickView::Ready)
         showError(m_management->error());
@@ -120,14 +137,26 @@ void MainWindow::setManagementSource(const QString &tabName)
 
 bool MainWindow::isBrowserVisibleInQuickWindow(const ClipboardBrowser *source) const
 {
-    return source && ((m_management && m_management->isVisible() && m_management->history()->sourceModel() == source->model())
+    return source && ((m_management && m_management->isVisible() && m_management->windowState() != Qt::WindowMinimized && m_management->history()->sourceModel() == source->model())
         || (m_palette && m_palette->isVisible() && m_palette->history()->sourceModel() == source->model()));
 }
 
 void MainWindow::updateQuickWindowState()
 {
-    for (int i = 0; i < ui->tabWidget->count(); ++i)
+    if (m_management && m_management->isVisible()) {
+        AppConfig config;
+        m_management->setOpacity(1.0 - (m_management->isActive()
+            ? config.option<Config::transparency_focused>() : config.option<Config::transparency>()) / 100.0);
+        if (m_management->isActive())
+            enableHideWindowOnUnfocus();
+        else if (m_options.closeOnUnfocus && m_management->visibility() != QWindow::Minimized)
+            hideWindowOnUnfocus(config.option<Config::close_on_unfocus_delay_ms>());
+    }
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        if (const auto source = browser(i))
+            source->setQuickFocus(isBrowserVisibleInQuickWindow(source));
         getPlaceholder(i)->refreshActiveState();
+    }
 }
 
 QVariantMap MainWindow::managementSelectionData() const
@@ -162,6 +191,7 @@ void MainWindow::onManagementAction(int id, const QString &tabName,
     case Actions::File_Import: importData(); return;
     case Actions::File_Export: exportData(); return;
     case Actions::File_ShowClipboardContent: showClipboardContent(); return;
+    case Actions::File_ShowPreview: toggleItemPreviewVisible(); return;
     case Actions::File_ProcessManager: showProcessManagerDialog(); return;
     case Actions::File_ToggleClipboardStoring: toggleClipboardStoring(); return;
     case Actions::File_Exit: exit(); return;
@@ -194,7 +224,7 @@ void MainWindow::onManagementAction(int id, const QString &tabName,
     case Actions::Edit_CopySelectedItems:
         setClipboard(source->copyIndexes(selected));
         break;
-    case Actions::Item_MoveToClipboard: source->moveToClipboard(selected); break;
+    case Actions::Item_MoveToClipboard: activateCurrentItem(); break;
     case Actions::Item_Remove: {
         QString error;
         source->removeIndexes(selected, &error);
@@ -237,7 +267,109 @@ void MainWindow::onManagementTab(const QString &operation, const QString &name, 
     if (!m_management)
         return;
     const int i = findTabIndexExactMatch(name);
-    if (operation == QLatin1String("create")) {
+    if (operation == QLatin1String("clearHistory")) {
+        if (name != m_options.clipboardTab && !(m_options.clipboardTab.isEmpty() && name == defaultClipboardTabName())) {
+            m_management->setError(tr("Only ordinary clipboard history can be cleared by time."));
+            return;
+        }
+        cleanupHistory(QDateTime::currentMSecsSinceEpoch(), values.value(QStringLiteral("minutes")).toLongLong() * 60000, false);
+    } else if (operation == QLatin1String("renameGroup") || operation == QLatin1String("removeGroup")) {
+        const auto members = values.value(QStringLiteral("members")).toStringList();
+        const auto all = tabs();
+        const auto newName = values.value(QStringLiteral("name")).toString().trimmed();
+        if (members.isEmpty() || (operation == QLatin1String("removeGroup") && members.size() >= all.size())) {
+            m_management->setError(tr("Keep at least one collection."));
+            return;
+        }
+        for (const auto &member : members) {
+            if (!all.contains(member) || (member != name && !member.startsWith(name + '/'))) {
+                m_management->setError(tr("The group changed while the dialog was open. Reopen it before continuing."));
+                return;
+            }
+            const auto target = newName + member.mid(name.size());
+            if (operation == QLatin1String("renameGroup") && (newName.isEmpty()
+                    || (all.contains(target) && target != member))) {
+                m_management->setError(tr("Enter a unique group name."));
+                return;
+            }
+        }
+        if (operation == QLatin1String("renameGroup")) {
+            AppConfig config;
+            Tabs properties;
+            QStringList renamed;
+            for (const auto &member : members) {
+                const int index = findTabIndexExactMatch(member);
+                const auto target = newName + member.mid(name.size());
+                if (member == target)
+                    continue;
+                if (!updateTabName(getPlaceholder(index), target, &config, &properties)) {
+                    for (auto it = renamed.crbegin(); it != renamed.crend(); ++it) {
+                        const auto previousTarget = newName + it->mid(name.size());
+                        const int previousIndex = findTabIndexExactMatch(previousTarget);
+                        if (updateTabName(getPlaceholder(previousIndex), *it, &config, &properties))
+                            ui->tabWidget->setTabName(previousIndex, *it);
+                        else
+                            showError(tr("Unable to restore collection %1 after a failed rename.").arg(*it));
+                    }
+                    properties.save(&config.settings(), tabs());
+                    config.setOption(Config::tabs::name(), tabs());
+                    setManagementSource(ui->tabWidget->tabName(ui->tabWidget->currentIndex()));
+                    m_management->setError(tr("Unable to rename the group. Check its collection files and access permissions."));
+                    return;
+                }
+                ui->tabWidget->setTabName(index, target);
+                renamed.append(member);
+            }
+            properties.save(&config.settings(), tabs());
+            config.setOption(Config::tabs::name(), tabs());
+        } else {
+            for (const auto &member : members)
+                removeTab(false, findTabIndexExactMatch(member));
+        }
+        setManagementSource(ui->tabWidget->tabName(ui->tabWidget->currentIndex()));
+    } else if (operation == QLatin1String("moveGroup") || operation == QLatin1String("sortGroup")) {
+        const auto members = m_management->collectionsInGroup(name);
+        auto names = tabs();
+        if (members.isEmpty())
+            return;
+        int target = names.indexOf(members.first());
+        for (const auto &member : members)
+            names.removeAll(member);
+        auto ordered = members;
+        if (operation == QLatin1String("sortGroup")) {
+            std::stable_sort(ordered.begin(), ordered.end(), [](const QString &a, const QString &b) {
+                return QString::localeAwareCompare(a, b) < 0;
+            });
+        } else {
+            const int slash = name.lastIndexOf('/');
+            const auto prefix = slash < 0 ? QString() : name.left(slash + 1);
+            QStringList siblings;
+            for (const auto &tab : tabs()) {
+                if (!tab.startsWith(prefix) || (!prefix.isEmpty() && tab == prefix.chopped(1)))
+                    continue;
+                const auto sibling = prefix + tab.mid(prefix.size()).section('/', 0, 0);
+                if (!siblings.contains(sibling)) siblings.append(sibling);
+            }
+            const int step = values.value(QStringLiteral("step")).toInt();
+            const int destination = siblings.indexOf(name) + step;
+            if (destination < 0 || destination >= siblings.size()) return;
+            const auto adjacent = m_management->collectionsInGroup(siblings[destination]);
+            if (adjacent.isEmpty()) return;
+            target = step < 0 ? names.indexOf(adjacent.first()) : names.indexOf(adjacent.last()) + 1;
+        }
+        target = qBound(0, target, names.size());
+        for (int n = 0; n < ordered.size(); ++n)
+            names.insert(target + n, ordered[n]);
+        const auto current = m_management->tabName();
+        ui->tabWidget->setTabsOrder(names);
+        setCurrentTab(names.indexOf(current));
+        AppConfig config;
+        doSaveTabPositions(&config);
+        setManagementSource(current);
+    } else if (operation == QLatin1String("icon")) {
+        setTabIcon(name, values.value(QStringLiteral("icon")).toString());
+        setManagementSource(m_management->tabName());
+    } else if (operation == QLatin1String("create")) {
         if (name.trimmed().isEmpty() || i >= 0) {
             m_management->setError(tr("Enter a unique collection name."));
             return;
@@ -280,6 +412,26 @@ void MainWindow::onManagementTab(const QString &operation, const QString &name, 
     }
 }
 
+void MainWindow::cleanupHistory(qint64 now, qint64 duration, bool expired)
+{
+    const auto name = m_options.clipboardTab.isEmpty() ? defaultClipboardTabName() : m_options.clipboardTab;
+    const int i = findTabIndexExactMatch(name);
+    auto placeholder = i >= 0 ? getPlaceholder(i) : nullptr;
+    auto source = placeholder ? placeholder->createBrowser(ClipboardBrowserPlaceholder::AskPassword::Avoid) : nullptr;
+    if (!source || !source->isLoaded()) return;
+    const auto indexes = HistoryPolicy::candidates(source->model(), now, duration,
+        expired ? HistoryPolicy::Cleanup::Expired : duration < 0 ? HistoryPolicy::Cleanup::All : HistoryPolicy::Cleanup::Recent);
+    QModelIndexList removable;
+    for (const auto &index : indexes) {
+        if (index.isValid() && source->canRemoveItems({index}, nullptr))
+            removable.append(index);
+    }
+    if (removable.isEmpty()) return;
+    QString error;
+    source->removeIndexes(removable, &error);
+    if (m_management) m_management->setError(error);
+}
+
 void MainWindow::transferManagementItems(const QString &sourceTab, const QString &targetTab,
         const QList<QPersistentModelIndex> &indexes, bool moveItems, int row, bool *accepted)
 {
@@ -308,6 +460,7 @@ void MainWindow::updateManagementCommands()
     if (!m_managementCommandMenu)
         return;
     interruptMenuCommandFilters(&m_managementMatchCommands);
+    m_managementCommandMenu->setDefaultAction(nullptr);
     for (auto action : m_managementCommandMenu->actions())
         delete action;
     const auto model = m_management->history();
@@ -325,6 +478,10 @@ void MainWindow::updateManagementCommands()
                 if (!used.contains(shortcut)) {
                     shortcuts.append(shortcut);
                     used.append(shortcut);
+                    if (!m_managementCommandMenu->defaultAction()
+                            && shortcut.count() == 1
+                            && (shortcut.matches(Qt::Key_Return) || shortcut.matches(Qt::Key_Enter)))
+                        m_managementCommandMenu->setDefaultAction(action);
                 }
             }
             action->setShortcuts(shortcuts);

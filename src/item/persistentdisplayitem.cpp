@@ -43,8 +43,7 @@ PersistentDisplayItem::PersistentDisplayItem(QAction *action, const QVariantMap 
 bool PersistentDisplayItem::isValid()
 {
     if (m_paletteModel)
-        return m_index.isValid() && m_index == m_paletteModel->selectedIndex()
-            && m_revision == m_paletteModel->displayRevision();
+        return m_paletteModel->isDisplayDataValid(m_index, m_revision);
     return !m_action.isNull() || (
         !m_widget.isNull() && !m_delegate.isNull()
         && !m_delegate->invalidateHidden(m_widget.data()) );

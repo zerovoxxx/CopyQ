@@ -39,6 +39,23 @@ target_compile_definitions(copyq-management-tests PRIVATE ${copyq_DEFINITIONS})
 target_link_libraries(copyq-management-tests PRIVATE ${copyq_LIBRARIES} ${copyq_qt}::Test)
 target_include_directories(copyq-management-tests PRIVATE .)
 
+if(APPLE)
+    set(copyq_test_bundle "${CMAKE_BINARY_DIR}/CopyQ-tests.app/Contents")
+    foreach(test_target copyq-palette-tests copyq-management-tests)
+        add_dependencies(${test_target} ${COPYQ_EXECUTABLE_NAME})
+        add_custom_command(TARGET ${test_target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${copyq_test_bundle}/MacOS"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:${test_target}>" "${copyq_test_bundle}/MacOS/${test_target}")
+        if(COPYQ_QCA_OSSL_PLUGIN)
+            add_custom_command(TARGET ${test_target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${copyq_test_bundle}/PlugIns/crypto"
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${COPYQ_QCA_OSSL_PLUGIN}"
+                    "${copyq_test_bundle}/PlugIns/crypto/libqca-ossl.dylib")
+        endif()
+    endforeach()
+endif()
+
 set(copyq_pkg itemtests)
 set(copyq_plugin_SOURCES
     tests/itemtests/itemtests.cpp

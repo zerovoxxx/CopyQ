@@ -26,6 +26,8 @@ class ClipboardBrowser;
 class ClipboardBrowserPlaceholder;
 class ClipboardPalette;
 class ClipboardManagement;
+class ClipboardSettings;
+class ClipboardCommands;
 class CommandAction;
 class CommandDialog;
 class ConfigurationManager;
@@ -160,6 +162,9 @@ public:
     /** Return browser containing item or nullptr. */
     ClipboardBrowser *browserForItem(const QModelIndex &index);
 
+    void openItemEditor(const QPersistentModelIndex &index, const QString &format,
+                        ClipboardBrowser *source, const QByteArray &content = {}, bool changeClipboard = false);
+
     /**
      * Find tab with given @a name.
      * @return found tab index or -1
@@ -190,6 +195,7 @@ public:
 
     /** Show and focus main window. */
     void showWindow();
+    void cleanupHistory(qint64 now, qint64 duration, bool expired);
     bool togglePalette();
     void showManagement();
     ClipboardManagement *management() const { return m_management.get(); }
@@ -680,7 +686,6 @@ private:
     void activatePaletteItem(const QPersistentModelIndex &index, const QVariantMap &data, bool paste);
     void finishPaletteClipboard(int providerId);
     void openPaletteEditor(const QPersistentModelIndex &index);
-    void openItemEditor(const QPersistentModelIndex &index, const QString &format, ClipboardBrowser *source);
     void setManagementSource(const QString &tabName);
     void updateQuickWindowState();
     void updateManagementCommands();
@@ -710,9 +715,9 @@ private:
         AppConfig *appConfig,
         Tabs *tabs);
 
-    ConfigurationManager *cm;
     std::unique_ptr<ClipboardPalette> m_palette;
     std::unique_ptr<ClipboardManagement> m_management;
+    std::unique_ptr<ClipboardSettings> m_settings;
     QMenu *m_managementCommandMenu = nullptr;
     MenuMatchCommands m_managementMatchCommands;
     QMenu *m_paletteCommandMenu = nullptr;
@@ -757,6 +762,7 @@ private:
     QTimer m_timerUpdatePreview;
     QTimer m_timerSaveTabPositions;
     QTimer m_timerHideWindowIfNotActive;
+    QTimer m_timerHistoryExpiry;
     QTimer m_timerRaiseLastWindowAfterMenuClosed;
 
     bool m_trayMenuDirty = true;
@@ -767,7 +773,7 @@ private:
     QString m_menuTabName;
     int m_menuMaxItemCount;
 
-    QPointer<CommandDialog> m_commandDialog;
+    std::unique_ptr<ClipboardCommands> m_commandDialog;
 
     bool m_wasMaximized = false;
 

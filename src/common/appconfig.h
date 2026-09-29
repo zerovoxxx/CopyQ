@@ -39,6 +39,23 @@ struct maxitems : Config<int> {
     static Value value(Value v) { return qBound(0, v, maxItems); }
 };
 
+struct clipboard_history_types : Config<QStringList> {
+    static QString name() { return QStringLiteral("clipboard_history_types"); }
+    static Value defaultValue() { return {QStringLiteral("text"), QStringLiteral("image"), QStringLiteral("files"), QStringLiteral("other")}; }
+    static const char *description() { return "Types to record in clipboard history: text, image, files, other (one per line)"; }
+};
+
+struct clipboard_history_ignore_apps : Config<QStringList> {
+    static QString name() { return QStringLiteral("clipboard_history_ignore_apps"); }
+    static const char *description() { return "Application identities to ignore (one per line; exact, case-insensitive). Unavailable source identities cannot match this list."; }
+};
+
+struct clipboard_history_max_days : Config<int> {
+    static QString name() { return QStringLiteral("clipboard_history_max_days"); }
+    static Value value(Value value) { return qBound(0, value, 999999); }
+    static const char *description() { return "Days to keep ordinary clipboard history (0 disables expiry). Pinned items and items with unknown or future copy times are kept."; }
+};
+
 struct item_data_threshold : Config<int> {
     static QString name() { return QStringLiteral("item_data_threshold"); }
     static Value defaultValue() { return 1024; }

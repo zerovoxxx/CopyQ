@@ -23,6 +23,7 @@ public:
     bool isEmpty() const;
 
     void setReadOnly(bool readOnly);
+    static QString scriptError(const QString &command);
 
 signals:
     void changed();

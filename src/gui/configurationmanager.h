@@ -67,6 +67,19 @@ public:
 
     /** Return tooltip text for option with given @a name. */
     QString optionToolTip(const QString &name) const;
+    QVariantList optionFields() const;
+    bool setDraftValue(const QString &name, QVariant value);
+    void resetDraft();
+    void applyDraft();
+    QVariantList pluginFields() const;
+    void setPluginEnabled(const QString &id, bool enabled);
+    void movePlugin(const QString &id, int step);
+    QWidget *settingsPage(const QString &page);
+    void initializeLanguages();
+    QVariantList languages() const;
+    QString language() const;
+    void setLanguage(const QString &language);
+    void changeEncryptionPassword();
 
     void setVisible(bool visible) override;
 

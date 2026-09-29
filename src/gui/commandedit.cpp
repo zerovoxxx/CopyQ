@@ -65,8 +65,23 @@ void CommandEdit::setReadOnly(bool readOnly)
 
 void CommandEdit::onPlainTextEditCommandTextChanged()
 {
-    // TODO: Highlight syntax errors!
     const QString command = ui->plainTextEditCommand->toPlainText();
+    const auto error = scriptError(command);
+    ui->labelErrors->setText(error);
+    ui->labelErrors->setVisible(!error.isEmpty());
     emit changed();
     emit commandTextChanged(command);
+}
+
+QString CommandEdit::scriptError(const QString &command)
+{
+    auto script = command.trimmed();
+    if (!script.startsWith(QLatin1String("copyq:")))
+        return {};
+    script.remove(0, 6);
+    QJSEngine engine;
+    // Compile a function body without executing user code or interpolating it.
+    const auto function = engine.globalObject().property(QStringLiteral("Function"));
+    const auto result = function.callAsConstructor({QJSValue(script)});
+    return result.isError() ? result.toString() : QString();
 }

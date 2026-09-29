@@ -5,8 +5,11 @@
 #include "common/common.h"
 #include "common/log.h"
 #include "common/timer.h"
+#include "common/settings.h"
+#include "gui/theme.h"
 
 #include <QCheckBox>
+#include <QVBoxLayout>
 #include <QElapsedTimer>
 #include <QRegularExpression>
 #include <QTextBlock>
@@ -244,6 +247,26 @@ LogDialog::LogDialog(QWidget *parent)
     addFilterCheckBox(LogDebug, &LogDialog::showDebug);
     addFilterCheckBox(LogTrace, &LogDialog::showTrace);
     ui->layoutFilters->addStretch(1);
+
+    ui->verticalLayout->removeWidget(ui->textBrowserLog);
+    ui->verticalLayout->removeItem(ui->layoutFilters);
+    auto filters = new QVBoxLayout;
+    filters->addWidget(new QLabel(tr("Log levels"), this));
+    while (auto item = ui->layoutFilters->takeAt(0)) {
+        if (auto widget = item->widget()) {
+            if (widget == ui->labelLogFileName) ui->verticalLayout->insertWidget(0, widget);
+            else filters->addWidget(widget);
+        }
+        delete item;
+    }
+    filters->addStretch();
+    auto body = new QHBoxLayout;
+    body->addLayout(filters);
+    body->addWidget(ui->textBrowserLog, 1);
+    ui->verticalLayout->insertLayout(0, body, 1);
+    Settings settings;
+    Theme(settings).decorateDialog(this, tr("Application log"), tr("Filter by level, select and copy diagnostics from the live application log."));
+    resize(1000, 640);
 
     updateLog();
 }

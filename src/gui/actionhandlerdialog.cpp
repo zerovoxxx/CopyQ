@@ -4,10 +4,14 @@
 #include "ui_actionhandlerdialog.h"
 
 #include "common/actionhandlerenums.h"
+#include "common/settings.h"
 #include "gui/actionhandler.h"
+#include "gui/theme.h"
 
 #include <QSortFilterProxyModel>
 #include <QSet>
+#include <QLabel>
+#include <QVBoxLayout>
 
 namespace {
 
@@ -44,6 +48,22 @@ ActionHandlerDialog::ActionHandlerDialog(ActionHandler *actionHandler, QAbstract
     , ui(new Ui::ActionHandlerDialog)
 {
     ui->setupUi(this);
+    ui->horizontalLayout->removeWidget(ui->filterLineEdit);
+    ui->horizontalLayout->removeWidget(ui->terminateButton);
+    ui->verticalLayout->removeItem(ui->horizontalLayout);
+    ui->verticalLayout->removeWidget(ui->tableView);
+    auto controls = new QVBoxLayout;
+    controls->addWidget(new QLabel(tr("Find a process"), this));
+    controls->addWidget(ui->filterLineEdit);
+    controls->addWidget(ui->terminateButton);
+    controls->addStretch();
+    auto body = new QHBoxLayout;
+    body->addLayout(controls);
+    body->addWidget(ui->tableView, 1);
+    ui->verticalLayout->insertLayout(0, body, 1);
+    Settings settings;
+    Theme(settings).decorateDialog(this, tr("Running commands"), tr("Inspect command status and output. Terminate only the selected running commands."));
+    resize(1000, 620);
 
     auto proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(model);

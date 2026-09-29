@@ -6,12 +6,14 @@
 #include "common/common.h"
 #include "common/log.h"
 #include "common/mimetypes.h"
+#include "common/historypolicy.h"
 #include "common/textdata.h"
 #include "item/serialize.h"
 #include "platform/platformclipboard.h"
 
 #include <QApplication>
 #include <QClipboard>
+#include <QDateTime>
 
 namespace {
 
@@ -19,12 +21,16 @@ bool hasSameData(const QVariantMap &data, const QVariantMap &lastData)
 {
     for (auto it = lastData.constBegin(); it != lastData.constEnd(); ++it) {
         const auto &format = it.key();
+        if (format == mimeWindowTitle)
+            continue;
         if ( !data.contains(format) )
             return false;
     }
 
     for (auto it = data.constBegin(); it != data.constEnd(); ++it) {
         const auto &format = it.key();
+        if (format == mimeWindowTitle)
+            continue;
         if ( !data[format].toByteArray().isEmpty()
              && data[format] != lastData.value(format) )
         {
@@ -55,6 +61,8 @@ ClipboardMonitor::ClipboardMonitor(const QStringList &formats)
     const AppConfig config;
     m_storeClipboard = config.option<Config::check_clipboard>();
     m_clipboardTab = config.option<Config::clipboard_tab>();
+    m_historyTypes = config.option<Config::clipboard_history_types>();
+    m_ignoredApplications = config.option<Config::clipboard_history_ignore_apps>();
 
     const int ownerUpdateInterval = config.option<Config::update_clipboard_owner_delay_ms>();
     m_ownerMonitor.setUpdateInterval(std::max(ownerUpdateInterval, 0));
@@ -91,19 +99,20 @@ void ClipboardMonitor::startMonitoring()
             this, &ClipboardMonitor::onClipboardChanged);
 }
 
-QString ClipboardMonitor::currentClipboardOwner()
+QPair<QString, QString> ClipboardMonitor::currentClipboardOwner()
 {
-    QString owner;
-    emit fetchCurrentClipboardOwner(&owner);
+    QPair<QString, QString> owner;
+    emit fetchCurrentClipboardOwner(&owner.first, &owner.second);
     return owner;
 }
 
-void ClipboardMonitor::setClipboardOwner(const QString &owner)
+void ClipboardMonitor::setClipboardOwner(const QPair<QString, QString> &owner)
 {
-    if (m_clipboardOwner != owner) {
-        m_clipboardOwner = owner;
+    m_sourceApplication = owner.second;
+    if (m_clipboardOwner != owner.first) {
+        m_clipboardOwner = owner.first;
         m_clipboard->setClipboardOwner(m_clipboardOwner);
-        COPYQ_LOG(QStringLiteral("Clipboard owner: %1").arg(owner));
+        COPYQ_LOG(QStringLiteral("Clipboard owner: %1").arg(owner.first));
     }
 }
 
@@ -147,6 +156,16 @@ void ClipboardMonitor::onClipboardChanged(ClipboardMode mode)
     if (m_storeClipboard) {
 #endif
         setTextData(&data, m_clipboardTab, mimeOutputTab);
+    }
+
+    const bool external = !isClipboardDataSecret(data) && !isClipboardDataHidden(data) && !anySessionOwnsClipboardData(data);
+    if (external) {
+        if (m_sourceApplication.isEmpty()) data.remove(mimeSourceApplication);
+        else data.insert(mimeSourceApplication, m_sourceApplication.toUtf8());
+        if (!HistoryPolicy::accepts(data, m_historyTypes, m_ignoredApplications)) {
+            return;
+        }
+        data.insert(mimeHistoryTime, QByteArray::number(QDateTime::currentMSecsSinceEpoch()));
     }
 
     if (isDataUnchanged) {

@@ -40,12 +40,13 @@ class ClipboardPaletteModel final : public QAbstractListModel
     Q_PROPERTY(QVariantMap preview READ preview NOTIFY previewChanged)
 
 public:
-    enum Role { SummaryRole = Qt::UserRole + 1, TypeRole, SelectedRole, NotesRole, TagsRole, PinnedRole };
+    enum Role { SummaryRole = Qt::UserRole + 1, TypeRole, SelectedRole, NotesRole, TagsRole, PinnedRole, SourceRowRole };
     Q_ENUM(Role)
 
     explicit ClipboardPaletteModel(ItemFactory *factory, QObject *parent = nullptr);
     void setSourceModel(QAbstractItemModel *source, const QString &tabName);
     QAbstractItemModel *sourceModel() const { return m_source; }
+    ItemFactory *itemFactory() const;
     const QString &tabName() const { return m_tabName; }
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -71,6 +72,9 @@ public:
     QVariantMap preview() const;
     QVariantMap displayData() const;
     int displayRevision() const { return m_displayRevision; }
+    Q_INVOKABLE void requestDisplay(int row);
+    void setDisplayEnabled(bool enabled);
+    bool isDisplayDataValid(const QPersistentModelIndex &index, int revision) const;
     void setDisplayData(const QPersistentModelIndex &index, int revision, const QVariantMap &data);
 
 signals:
@@ -80,6 +84,7 @@ signals:
     void previewChanged();
     void selectionInvalidated();
     void itemDisplayRequested(const PersistentDisplayItem &item);
+    void displaysInvalidated();
 
 private:
     void rebuild(bool selectFirst);
@@ -94,12 +99,20 @@ private:
     QPersistentModelIndex m_anchor;
     QList<QPersistentModelIndex> m_selection;
     QVariantMap m_displayData;
+    struct DisplayData {
+        QPersistentModelIndex index;
+        int revision;
+        QVariantMap data;
+    };
+    QList<DisplayData> m_displayItems;
     ItemFilterPtr m_filter;
     QString m_query;
     QString m_tabName;
     QTimer m_timer;
     int m_nextRow = 0;
     int m_displayRevision = 0;
+    int m_nextDisplayRevision = 0;
     int m_previewRevision = 0;
     bool m_selectFirst = true;
+    bool m_displayEnabled = true;
 };

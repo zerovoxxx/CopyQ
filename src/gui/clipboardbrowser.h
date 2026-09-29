@@ -42,6 +42,7 @@ class ClipboardBrowser final : public QListView
          * @return true only if item exists
          */
         bool moveToTop(uint itemHash);
+        bool refreshHistoryMetadata(const QVariantMap &data);
 
         /** Sort selected items. */
         void sortItems(const QModelIndexList &indexes);
@@ -191,6 +192,7 @@ class ClipboardBrowser final : public QListView
         bool isFiltered(int row) const;
 
         bool isLoaded() const;
+        void setQuickFocus(bool focused);
 
         /**
          * Save items to configuration.
@@ -377,6 +379,7 @@ class ClipboardBrowser final : public QListView
         void filterBatch(int filterId, const QPersistentModelIndex &lastIndex);
 
         ItemSaverPtr m_itemSaver;
+        bool m_quickFocused = false;
 
         QString m_tabName;
         int m_maxItemCount = 200;

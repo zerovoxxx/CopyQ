@@ -260,6 +260,23 @@ bool ClipboardBrowser::moveToTop(uint itemHash)
     return true;
 }
 
+bool ClipboardBrowser::refreshHistoryMetadata(const QVariantMap &data)
+{
+    if (!isLoaded() || !data.contains(mimeHistoryTime))
+        return false;
+    const int row = m.findItem(hash(data));
+    if (row < 0)
+        return false;
+    const auto index = m.index(row, 0);
+    auto updated = m_sharedData->itemFactory->data(index);
+    updated.insert(mimeHistoryTime, data.value(mimeHistoryTime));
+    if (data.contains(mimeSourceApplication))
+        updated.insert(mimeSourceApplication, data.value(mimeSourceApplication));
+    else
+        updated.remove(mimeSourceApplication);
+    return m_sharedData->itemFactory->setData(updated, index, &m);
+}
+
 void ClipboardBrowser::closeExternalEditor(QObject *editor, const QModelIndex &index)
 {
     editor->disconnect(this);
@@ -990,7 +1007,16 @@ void ClipboardBrowser::focusOutEvent(QFocusEvent *event)
     QListView::focusOutEvent(event);
 
     if (m_itemSaver)
-        m_itemSaver->setFocus(false);
+        m_itemSaver->setFocus(m_quickFocused);
+}
+
+void ClipboardBrowser::setQuickFocus(bool focused)
+{
+    if (m_quickFocused == focused)
+        return;
+    m_quickFocused = focused;
+    if (m_itemSaver)
+        m_itemSaver->setFocus(focused || hasFocus());
 }
 
 void ClipboardBrowser::dragEnterEvent(QDragEnterEvent *event)
@@ -1715,6 +1741,7 @@ bool ClipboardBrowser::addAndSelect(const QVariantMap &data, int row)
 
 void ClipboardBrowser::addUnique(const QVariantMap &data, ClipboardMode mode)
 {
+    refreshHistoryMetadata(data);
     if ( moveToTop(hash(data)) ) {
         COPYQ_LOG("New item: Moving existing to top");
         return;
@@ -1771,6 +1798,8 @@ bool ClipboardBrowser::loadItems(const QByteArray &itemData)
 
     m.blockSignals(true);
     m_itemSaver = ::loadItems(m_tabName, m, m_sharedData->itemFactory, m_maxItemCount);
+    if (m_itemSaver)
+        m_itemSaver->setFocus(m_quickFocused || hasFocus());
     m.blockSignals(false);
 
     if ( !isLoaded() )

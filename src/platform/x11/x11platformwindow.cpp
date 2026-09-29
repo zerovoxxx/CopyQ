@@ -14,6 +14,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xutil.h>
 #include <X11/keysym.h>
 
 #ifdef HAS_X11TEST
@@ -277,6 +278,19 @@ bool X11PlatformWindow::pasteFromClipboardSafely(const std::function<bool()> &ca
         : sendKeyPress(XK_Shift_L, XK_Insert, config, true, canPaste));
 }
 
+
+QString X11PlatformWindow::getApplicationId() const
+{
+    if (!isValid() || !X11Info::isPlatformX11()) return {};
+    auto display = X11Info::display();
+    if (!display) return {};
+    XClassHint hint{};
+    if (!XGetClassHint(display, m_window, &hint)) return {};
+    const auto identity = QString::fromLocal8Bit(hint.res_class ? hint.res_class : hint.res_name);
+    if (hint.res_class) XFree(hint.res_class);
+    if (hint.res_name) XFree(hint.res_name);
+    return identity;
+}
 
 QString X11PlatformWindow::getTitle()
 {

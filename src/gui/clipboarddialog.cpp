@@ -7,10 +7,12 @@
 #include "common/contenttype.h"
 #include "common/mimetypes.h"
 #include "common/shortcuts.h"
+#include "common/settings.h"
 #include "common/timer.h"
 #include "gui/iconfactory.h"
 #include "gui/icons.h"
 #include "gui/windowgeometryguard.h"
+#include "gui/theme.h"
 #include "platform/platformclipboard.h"
 
 #include <QBuffer>
@@ -19,6 +21,7 @@
 #include <QMovie>
 #include <QScrollBar>
 #include <QUrl>
+#include <QPushButton>
 
 namespace {
 
@@ -212,6 +215,18 @@ void ClipboardDialog::init()
     setWindowIcon(appIcon());
 
     ui->horizontalLayout->setStretchFactor(1, 1);
+    ui->horizontalLayout->setChildrenCollapsible(false);
+    ui->group1->setMinimumWidth(190);
+    ui->verticalLayout_1->setSpacing(12);
+    auto remove = new QPushButton(tr("Remove selected format"), this);
+    ui->verticalLayout_1->addWidget(remove);
+    connect(remove, &QPushButton::clicked, ui->actionRemove_Format, &QAction::trigger);
+    connect(ui->actionRemove_Format, &QAction::changed, remove, [this, remove] {
+        remove->setEnabled(ui->actionRemove_Format->isEnabled());
+    });
+    Settings settings;
+    Theme(settings).decorateDialog(this, tr("Item formats"), tr("Inspect the original MIME data. Removing a format changes only that format of this item."));
+    resize(1000, 650);
 
     WindowGeometryGuard::create(this);
 

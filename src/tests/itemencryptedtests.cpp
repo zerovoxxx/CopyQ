@@ -83,7 +83,7 @@ void ItemEncryptedTests::encryptDecryptItems()
     // Encrypt and add note.
     KEYS("Ctrl+L");
     WAIT_ON_OUTPUT("tab" << tab << "read" << "?" << "0", "application/x-copyq-encrypted\n");
-    KEYS("Shift+F2" << ":NOTE" << "F2");
+    KEYS("Shift+F2" << "focus:palette_editor_text" << ":NOTE" << "F2");
     RUN("tab" << tab << "read" << "application/x-copyq-item-notes" << "0", "NOTE");
 
     // Decrypt and check note and text.

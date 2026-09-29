@@ -56,6 +56,9 @@ public:
     /** Decorate main window. */
     void decorateMainWindow(QWidget *mainWindow) const;
 
+    /** Shared heading, spacing and theme for redesigned auxiliary windows. */
+    void decorateDialog(QWidget *dialog, const QString &title, const QString &description) const;
+
     /** Decorate scroll area (toggle scroll bar). */
     void decorateScrollArea(QAbstractScrollArea *scrollArea) const;
 

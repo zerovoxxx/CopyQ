@@ -5,7 +5,9 @@
 
 #include "common/log.h"
 #include "common/shortcuts.h"
+#include "common/settings.h"
 #include "gui/icons.h"
+#include "gui/theme.h"
 #include "platform/platformnativeinterface.h"
 
 #include <QKeyEvent>
@@ -16,6 +18,9 @@ ShortcutDialog::ShortcutDialog(QWidget *parent)
     , ui(new Ui::ShortcutDialog)
 {
     ui->setupUi(this);
+    Settings settings;
+    Theme(settings).decorateDialog(this, tr("Record a shortcut"), tr("Press the key combination to assign it. Remove Shortcut clears the current binding."));
+    setMinimumWidth(480);
 
     QPushButton *resetButton = ui->buttonBox->button(QDialogButtonBox::Reset);
     Q_ASSERT(resetButton);

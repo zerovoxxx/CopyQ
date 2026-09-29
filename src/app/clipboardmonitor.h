@@ -18,8 +18,8 @@ class ClipboardMonitor final : public QObject
 public:
     explicit ClipboardMonitor(const QStringList &formats);
     void startMonitoring();
-    QString currentClipboardOwner();
-    void setClipboardOwner(const QString &owner);
+    QPair<QString, QString> currentClipboardOwner();
+    void setClipboardOwner(const QPair<QString, QString> &owner);
 
 signals:
     void clipboardChanged(const QVariantMap &data);
@@ -29,10 +29,12 @@ signals:
     void clipboardUnchanged(const QVariantMap &data);
     void saveData(const QVariantMap &data);
     void synchronizeSelection(ClipboardMode sourceMode, uint sourceTextHash, uint targetTextHash);
-    void fetchCurrentClipboardOwner(QString *title);
+    void fetchCurrentClipboardOwner(QString *title, QString *application);
+
+private slots:
+    void onClipboardChanged(ClipboardMode mode);
 
 private:
-    void onClipboardChanged(ClipboardMode mode);
 
     QVariantMap m_clipboardData;
     QVariantMap m_selectionData;
@@ -55,4 +57,7 @@ private:
 #endif
 
     QString m_clipboardOwner;
+    QString m_sourceApplication;
+    QStringList m_historyTypes;
+    QStringList m_ignoredApplications;
 };

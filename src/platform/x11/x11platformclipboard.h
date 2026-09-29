@@ -54,6 +54,7 @@ private:
         bool enabled = true;
         bool cloningData = false;
         long int sequenceNumber = 0;
+        long int lastDataSequenceNumber = 0;
         bool ignoreNext = false;
         int retry = 0;
     };

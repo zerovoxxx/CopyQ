@@ -63,9 +63,11 @@ void CoreTests::keysAndFocusing()
 {
     RUN("disable", "");
     KEYS(clipboardBrowserId << "CTRL+T");
-    WAIT_ON_OUTPUT("currentWindowTitle", appWindowTitle("New Tab"));
+    KEYS(tabDialogLineEditId);
+    WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests','managementState').popupActive", "true\n");
 
     KEYS(tabDialogLineEditId << "ESC");
+    WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests','managementState').popupActive", "false\n");
     WAIT_ON_OUTPUT("currentWindowTitle", appWindowTitle("*Clipboard Storing Disabled*"));
 
     RUN("enable", "");

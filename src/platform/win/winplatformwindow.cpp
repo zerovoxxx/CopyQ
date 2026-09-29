@@ -13,6 +13,7 @@
 #include <QVector>
 #include <QWidget>
 #include <QWindow>
+#include <iterator>
 
 namespace {
 
@@ -187,6 +188,18 @@ bool WinPlatformWindow::matchesWidget(const QWidget *widget) const
 QString WinPlatformWindow::getTitle()
 {
     return windowTitle(m_window);
+}
+
+QString WinPlatformWindow::getApplicationId() const
+{
+    if (!isValid()) return {};
+    const auto process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_processId);
+    if (!process) return {};
+    WCHAR path[32768];
+    DWORD length = DWORD(std::size(path));
+    const bool success = QueryFullProcessImageNameW(process, 0, path, &length);
+    CloseHandle(process);
+    return success ? QString::fromWCharArray(path, int(length)) : QString();
 }
 
 void WinPlatformWindow::raise()

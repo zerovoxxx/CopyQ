@@ -6,6 +6,9 @@
 #include <QAbstractNativeEventFilter>
 #include <QByteArray>
 #include <QTimer>
+#include <QList>
+#include <QPair>
+#include <QString>
 
 class ClipboardMonitor;
 
@@ -26,8 +29,8 @@ public:
 
 private:
     ClipboardMonitor *m_monitor;
-    QString m_lastClipboardOwner;
-    QStringList m_nextClipboardOwners;
+    QPair<QString, QString> m_lastClipboardOwner;
+    QList<QPair<QString, QString>> m_nextClipboardOwners;
     QTimer m_timerSetOwner;
     QTimer m_timerUpdateAfterEvent;
 };

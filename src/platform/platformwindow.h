@@ -4,6 +4,7 @@
 
 
 #include <QByteArray>
+#include <QString>
 #include <functional>
 
 class QString;
@@ -24,6 +25,7 @@ public:
      * Return window title text.
      */
     virtual QString getTitle() = 0;
+    virtual QString getApplicationId() const { return {}; }
 
     /**
      * Raise/focus window.

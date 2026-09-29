@@ -33,11 +33,18 @@ runner="${GITHUB_WORKSPACE}/utils/run-isolated.sh"
 export COPYQ_TESTS_RERUN_FAILED=1
 "$runner" ./copyq-tests "$@"
 "$runner" ./copyq-tests \
-    testCore:managementActions testCore:managementTabs testCore:managementCommands testCore:managementEditor
+    testCore:managementActions testCore:managementTabs testCore:managementGroups testCore:managementCommands testCore:managementEditor testCore:managementHistory testCore:managementHistoryCapture testCore:managementDialogs
+"$runner" ./copyq-tests \
+    testCore:importExportTab testCore:commandConfig testCore:commandLoadTheme testCore:displayCommand \
+    testCore:commandDialogFitsContents testCore:commandNotification testCore:commandScreenshot \
+    testItemImage:savePng testItemTags:searchTags testItemPinned:keepPinnedIfMaxItemsChanges \
+    testItemEncrypted:encryptDecryptData testItemEncrypted:encryptDecryptItems \
+    testItemSync:itemsToFiles testItemSync:filesToItems
 "$runner" ./copyq-palette-tests \
     modelIdentity queryChanges displayCopiesAndPreview sourceDestructionAndReset \
     qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews \
     nativeWindowIdentification pluginEditorAndSettings
 "$runner" ./copyq-management-tests \
     multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay transferAndDeleteProtection \
-    qmlSelectionAndActions nativeDropRoundTrip themeMapping
+    qmlSelectionAndActions nativeDropRoundTrip themeMapping legacyStyleRules pluginPreviewBridge managementGeometry \
+    settingsDraftTransaction commandDraftRoundTrip pluginSettingsDraft allPluginSettings historyTimeAndProtection historyCaptureFilters

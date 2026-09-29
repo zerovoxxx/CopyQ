@@ -16,6 +16,7 @@
 #include "common/log.h"
 #include "common/mimetypes.h"
 #include "common/textdata.h"
+#include "common/settings.h"
 #include "gui/clipboardbrowser.h"
 #include "gui/clipboardmanagement.h"
 #include "gui/filedialog.h"
@@ -29,6 +30,7 @@
 #include "gui/selectiondata.h"
 #include "gui/tabicons.h"
 #include "gui/traymenu.h"
+#include "gui/theme.h"
 #include "gui/windowgeometryguard.h"
 #include "item/serialize.h"
 #include "item/clipboardmodel.h"
@@ -62,6 +64,7 @@
 #include <QMetaType>
 #include <QMimeData>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPaintEvent>
 #include <QPen>
 #include <QPixmap>
@@ -365,6 +368,17 @@ public:
     void paintEvent(QPaintEvent *ev) override
     {
         QLabel::paintEvent(ev);
+        QPainter overlay(this);
+        QPainterPath shade;
+        shade.addRect(rect());
+        if (selectionRect.isValid()) shade.addRect(selectionRect);
+        overlay.fillPath(shade, QColor(0, 0, 0, 120));
+        auto headingFont = font();
+        headingFont.setBold(true);
+        overlay.setFont(headingFont);
+        overlay.setPen(Qt::white);
+        overlay.drawText(rect().adjusted(24, 24, -24, -24), Qt::AlignTop | Qt::AlignHCenter,
+            tr("Drag to select an area · Esc or right-click to finish"));
         if (selectionRect.isValid()) {
             QPainter p(this);
             const auto w = pointsToPixels(1, this);
@@ -374,6 +388,11 @@ public:
 
             p.setPen(QPen(Qt::black, w));
             p.drawRect(selectionRect.adjusted(-w, -w, w, w));
+            const auto size = tr("%1 × %2").arg(selectionRect.width()).arg(selectionRect.height());
+            const auto badge = QRect(selectionRect.topLeft() + QPoint(8, 8), QSize(140, 30));
+            p.fillRect(badge, QColor(0, 0, 0, 190));
+            p.setPen(Qt::white);
+            p.drawText(badge, Qt::AlignCenter, size);
         }
     }
 
@@ -601,24 +620,6 @@ QWidget *createWidget(const QString &name, const QVariant &value, InputDialog *i
 
         return label(Qt::Horizontal, name, createLineEdit(value, parent));
     }
-}
-
-void setGeometryWithoutSave(QWidget *window, QRect geometry)
-{
-    setGeometryGuardBlockedUntilHidden(window, true);
-
-    window->setWindowState(window->windowState() & ~Qt::WindowMaximized);
-
-    const auto pos = (geometry.x() == -1 && geometry.y() == -1)
-            ? QCursor::pos()
-            : geometry.topLeft();
-
-    const int w = pointsToPixels(geometry.width(), window);
-    const int h = pointsToPixels(geometry.height(), window);
-    if (w > 0 && h > 0)
-        window->resize(w, h);
-
-    moveWindowOnScreen(window, pos);
 }
 
 QString tabNotFoundError()
@@ -887,8 +888,10 @@ bool ScriptableProxy::togglePalette()
 bool ScriptableProxy::showWindowAt(QRect rect)
 {
     INVOKE(showWindowAt, (rect));
-    setGeometryWithoutSave(m_wnd, rect);
-    return showWindow();
+    const bool visible = showWindow();
+    if (visible && m_wnd->management())
+        m_wnd->management()->openAt(rect);
+    return visible;
 }
 
 bool ScriptableProxy::pasteToCurrentWindow()
@@ -1044,8 +1047,10 @@ bool ScriptableProxy::showBrowser(const QString &tabName)
 bool ScriptableProxy::showBrowserAt(const QString &tabName, QRect rect)
 {
     INVOKE(showBrowserAt, (tabName, rect));
-    setGeometryWithoutSave(m_wnd, rect);
-    return showBrowser(tabName);
+    const bool visible = showBrowser(tabName);
+    if (visible && m_wnd->management())
+        m_wnd->management()->openAt(rect);
+    return visible;
 }
 
 void ScriptableProxy::action(const QVariantMap &arg1, const Command &arg2)
@@ -1174,13 +1179,19 @@ void ScriptableProxy::browserMoveSelected(int targetRow, const QString &tabName)
 void ScriptableProxy::browserEditRow(const QString &tabName, int row, const QString &format)
 {
     INVOKE2(browserEditRow, (tabName, row, format));
-    BROWSER(tabName, editRow(row, format));
+    auto browser = fetchExistingBrowser(tabName);
+    if (browser && browser->index(row).isValid())
+        m_wnd->openItemEditor(browser->index(row), format, browser);
 }
 
 void ScriptableProxy::browserEditNew(const QString &tabName, const QString &format, const QByteArray &content, bool changeClipboard)
 {
     INVOKE2(browserEditNew, (tabName, format, content, changeClipboard));
-    BROWSER(tabName, editNew(format, content, changeClipboard));
+    auto browser = fetchExistingBrowser(tabName);
+    if (browser && browser->isLoaded() && browser->add(createDataMap(format, content))) {
+        browserSetCurrent(tabName, 0);
+        m_wnd->openItemEditor(browser->index(0), format, browser, content, changeClipboard);
+    }
 }
 
 QStringList ScriptableProxy::tabs()
@@ -1850,6 +1861,17 @@ QString ScriptableProxy::testSelected()
 {
     INVOKE(testSelected, ());
 
+    if (auto management = m_wnd->management(); management && management->isVisible()) {
+        const auto model = management->history();
+        if (model->sourceCount() == 0) return model->tabName();
+        QStringList result{model->selectedIndex().isValid() ? QString::number(model->selectedIndex().row()) : QStringLiteral("_")};
+        QList<int> rows;
+        for (const auto &index : model->selectedIndexes()) rows.append(index.row());
+        std::sort(rows.begin(), rows.end());
+        for (const auto row : rows) result.append(QString::number(row));
+        return model->tabName() + ' ' + result.join(' ');
+    }
+
     ClipboardBrowser *browser = m_wnd->browser();
     if (!browser)
         return QString();
@@ -1948,14 +1970,15 @@ int ScriptableProxy::inputDialog(const NamedValueList &values)
             widgets.append( createWidget(value.name, value.value, &inputDialog) );
     }
 
-    if ( !styleSheet.isEmpty() )
-        dialog.setStyleSheet(styleSheet);
-
     auto buttons = new QDialogButtonBox(
                 QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, &dialog);
     QObject::connect( buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept );
     QObject::connect( buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject );
     dialog.layout()->addWidget(buttons);
+    Settings settings;
+    Theme(settings).decorateDialog(&dialog, dialogTitle.isEmpty() ? tr("Input") : dialogTitle,
+        tr("Complete the requested fields and confirm, or cancel to leave the action unchanged."));
+    if (!styleSheet.isEmpty()) dialog.setStyleSheet(styleSheet);
 
     // Use the contents as the default size before restoring or overriding geometry.
     dialog.adjustSize();
@@ -2231,6 +2254,8 @@ void ScriptableProxy::setTitle(const QString &title)
         m_wnd->setWindowTitle(title);
         m_wnd->setTrayTooltip(title);
     }
+    if (auto management = m_wnd->management())
+        management->setTitle(m_wnd->windowTitle());
 }
 
 void ScriptableProxy::setTitleForData(const QVariantMap &data)
@@ -2248,6 +2273,15 @@ void ScriptableProxy::saveData(const QString &tab, const QVariantMap &data, Clip
     auto c = m_wnd->tab(tab);
     if (c)
         c->addUnique(data, mode);
+}
+
+void ScriptableProxy::refreshHistoryMetadata(const QString &tab, const QVariantMap &data)
+{
+    INVOKE2(refreshHistoryMetadata, (tab, data));
+    const int index = m_wnd->tabs().indexOf(tab);
+    auto browser = index >= 0 ? m_wnd->browser(index) : nullptr;
+    if (browser && browser->refreshHistoryMetadata(data))
+        browser->moveToTop(hash(data));
 }
 
 void ScriptableProxy::showDataNotification(const QVariantMap &data)

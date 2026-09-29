@@ -31,6 +31,8 @@ ClipboardPalette::ClipboardPalette(ItemFactory *factory)
     setTitle(QStringLiteral("QClip — Clipboard Palette"));
     setFlags(Qt::Tool | Qt::FramelessWindowHint);
     setResizeMode(QQuickView::SizeRootObjectToView);
+    m_model.setDisplayEnabled(false);
+    connect(this, &QWindow::visibleChanged, this, [this] { m_model.setDisplayEnabled(isVisible()); });
     engine()->addImageProvider(QStringLiteral("palette"), new PaletteImageProvider(&m_model));
     connect(&m_model, &ClipboardPaletteModel::selectionInvalidated, this, [this]() {
         if (m_busy && !pendingValid())
@@ -53,7 +55,12 @@ ClipboardPalette::ClipboardPalette(ItemFactory *factory)
     });
 }
 
-ClipboardPalette::~ClipboardPalette() = default;
+ClipboardPalette::~ClipboardPalette()
+{
+    disconnect(this, nullptr, this, nullptr);
+    QQuickView::setSource(QUrl());
+    hide();
+}
 
 bool ClipboardPalette::load()
 {

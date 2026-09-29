@@ -194,6 +194,49 @@ public:
 
     void keyClicks(const QString &keys, int delay, int retry)
     {
+        auto quickWindow = QGuiApplication::focusWindow();
+        auto quickFocus = quickWindow ? quickWindow->focusObject() : nullptr;
+        if (!QApplication::activePopupWidget() && !QApplication::activeModalWidget()
+                && quickWindow && quickWindow->isActive() && quickWindow->isVisible()
+                && quickFocus && quickWindow->objectName().startsWith(QLatin1String("clipboard_"))) {
+            const auto name = quickFocus->objectName();
+            const auto address = name + ':' + QString::fromLatin1(quickFocus->metaObject()->className());
+            auto expected = m_expectedWidgetName.pattern();
+            expected.replace(QStringLiteral("^ClipboardBrowser"), QStringLiteral("^management_results"));
+            expected.replace(QStringLiteral("lineEditFilter"), QStringLiteral("management_search"));
+            expected.replace(QStringLiteral("Utils::FilterLineEdit"), QStringLiteral("management_search"));
+            expected.replace(QStringLiteral("lineEditTabName"), QStringLiteral("management_tab_name"));
+            if (!expected.isEmpty() && !QRegularExpression(expected).match(address).hasMatch()) {
+                keyClicksRetry(m_expectedWidgetName, keys, delay, retry);
+                return;
+            }
+            if (keys.startsWith(QLatin1String(":"))) {
+                const QPointer<QWindow> target = quickWindow;
+                runAfterInterval(0, [this, target, keys] {
+                    if (!target || !target->isActive() || !target->isVisible()) {
+                        keyClicksFailed();
+                        return;
+                    }
+                    QKeyEvent press(QEvent::KeyPress, Qt::Key_unknown, Qt::NoModifier, keys.mid(1));
+                    QCoreApplication::sendEvent(target, &press);
+                });
+            } else if (!keys.isEmpty()) {
+                const QKeySequence shortcut(keys, QKeySequence::PortableText);
+                if (shortcut.isEmpty()) { m_status = Failed; return; }
+                const QPointer<QWindow> target = quickWindow;
+                const auto key = shortcut[0];
+                runAfterInterval(0, [this, target, key] {
+                    if (!target || !target->isActive() || !target->isVisible()) {
+                        keyClicksFailed();
+                        return;
+                    }
+                    QTest::keyClick(target, key.key(), key.keyboardModifiers());
+                });
+            }
+            m_status = Success;
+            qCDebug(plugin) << "Sent" << keys << "to Quick focus" << address;
+            return;
+        }
         auto widget = keyClicksTarget();
         if (!widget) {
             keyClicksRetry(m_expectedWidgetName, keys, delay, retry);
@@ -530,7 +573,9 @@ QVariant ItemTestsLoader::scriptCallback(const QVariantList &arguments)
             return QVariantMap();
         if (cmd == QLatin1String("managementState")) {
             QVariantMap state{{QStringLiteral("visible"), window->isVisible()}};
-            for (const auto key : {"error", "tabName", "tabs", "tabProperties", "commands", "monitoring"})
+            if (auto root = window->findChild<QObject *>(QStringLiteral("management_root")))
+                state.insert(QStringLiteral("popupActive"), root->property("popupActive"));
+            for (const auto key : {"error", "tabName", "tabs", "tabTree", "selectedTabPath", "selectedTabIsGroup", "tabProperties", "commands", "monitoring"})
                 state.insert(QString::fromLatin1(key), window->property(key));
             auto history = window->property("history").value<QObject*>();
             if (history) {
@@ -552,8 +597,19 @@ QVariant ItemTestsLoader::scriptCallback(const QVariantList &arguments)
                 return QMetaObject::invokeMethod(window, operation.constData());
             if (operation == "moveTab")
                 return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(int, arguments.value(2).toInt()));
+            if (operation == "clearHistory")
+                return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(int, arguments.value(2).toInt()));
             if (operation == "saveTabProperties")
                 return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(QVariantMap, arguments.value(2).toMap()));
+            if (operation == "renameGroup")
+                return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(QString, value),
+                    Q_ARG(QString, arguments.value(3).toString()), Q_ARG(QStringList, arguments.value(4).toStringList()));
+            if (operation == "removeGroup")
+                return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(QString, value), Q_ARG(QStringList, arguments.value(3).toStringList()));
+            if (operation == "moveGroup")
+                return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(QString, value), Q_ARG(int, arguments.value(3).toInt()));
+            if (operation == "saveIcon")
+                return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(QString, value), Q_ARG(QString, arguments.value(3).toString()));
             return QMetaObject::invokeMethod(window, operation.constData(), Q_ARG(QString, value));
         }
     }

@@ -50,8 +50,8 @@ Rectangle {
                 onTextEdited: root.controller.history.query = text
                 Accessible.name: qsTr("Search clipboard history")
             }
-            Button { text: "×"; onClicked: root.controller.cancel(); Accessible.name: qsTr("Close") }
-            Button { text: qsTr("Manage…"); objectName: "palette_manage"; onClicked: root.controller.showManagement() }
+            ThemeButton { values: root.controller.theme; text: "×"; onClicked: root.controller.cancel(); Accessible.name: qsTr("Close") }
+            ThemeButton { values: root.controller.theme; text: qsTr("Manage…"); objectName: "palette_manage"; onClicked: root.controller.showManagement() }
         }
 
         RowLayout {
@@ -77,6 +77,12 @@ Rectangle {
                         id: row
                         required property int index
                         required property string summary
+                        Component.onCompleted: root.controller.history.requestDisplay(index)
+                        onSummaryChanged: root.controller.history.requestDisplay(index)
+                        Connections {
+                            target: root.controller.history
+                            function onDisplaysInvalidated() { root.controller.history.requestDisplay(row.index) }
+                        }
                         required property string itemType
                         width: ListView.view.width
                         height: 52
@@ -122,44 +128,21 @@ Rectangle {
                 Layout.fillHeight: true
                 Layout.preferredWidth: 330
                 Label { text: root.preview.type || qsTr("Preview"); color: colors.windowText }
-                Image {
-                    id: image
-                    objectName: "palette_preview_image"
+                ClipboardItemPreview {
+                    objectName: "palette_preview"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    visible: root.preview.type === "Image"
-                    source: visible ? root.preview.image : ""
-                    fillMode: Image.PreserveAspectFit
-                    cache: false
-                }
-                Label {
-                    visible: image.visible && image.status === Image.Error
-                    text: qsTr("Unable to load image preview")
-                    color: colors.windowText
-                }
-                ScrollView {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    visible: !image.visible
-                    TextArea {
-                        id: previewText
-                        objectName: "palette_preview"
-                        readOnly: true
-                        selectByMouse: true
-                        wrapMode: TextEdit.Wrap
-                        textFormat: root.preview.html ? TextEdit.RichText : TextEdit.PlainText
-                        text: root.preview.html || root.preview.text || (root.preview.urls || []).join("\n")
-                        onLinkActivated: function(link) { root.controller.openUrl(link) }
-                    }
+                    history: root.controller.history
+                    Accessible.name: root.preview.text || qsTr("Item preview")
                 }
                 RowLayout {
                     visible: (root.preview.urls || []).length > 0
-                    Button { text: qsTr("Open"); onClicked: root.controller.openUrl(root.preview.urls[0]) }
-                    Button { text: qsTr("Preview file"); visible: !!root.preview.filePath; onClicked: root.controller.previewFile() }
+                    ThemeButton { values: root.controller.theme; text: qsTr("Open"); onClicked: root.controller.openUrl(root.preview.urls[0]) }
+                    ThemeButton { values: root.controller.theme; text: qsTr("Preview file"); visible: !!root.preview.filePath; onClicked: root.controller.previewFile() }
                 }
                 RowLayout {
-                    Button { text: qsTr("Edit…"); enabled: !!root.preview.editable && !root.controller.busy; onClicked: root.controller.editItem() }
-                    Button { text: qsTr("Plugin settings…"); onClicked: root.controller.showPluginSettings() }
+                    ThemeButton { values: root.controller.theme; text: qsTr("Edit…"); enabled: !!root.preview.editable && !root.controller.busy; onClicked: root.controller.editItem() }
+                    ThemeButton { values: root.controller.theme; text: qsTr("Plugin settings…"); onClicked: root.controller.showPluginSettings() }
                 }
             }
         }
@@ -182,7 +165,7 @@ Rectangle {
             Layout.fillWidth: true
             Label { text: qsTr("↑↓ Select · Esc Close"); color: colors.windowText; font.pixelSize: 11 }
             Item { Layout.fillWidth: true }
-            Button {
+            ThemeButton { values: root.controller.theme;
                 text: qsTr("Actions…")
                 visible: root.controller.commands.length > 0
                 onClicked: actions.open()
@@ -200,12 +183,12 @@ Rectangle {
                     }
                 }
             }
-            Button {
+            ThemeButton { values: root.controller.theme;
                 text: qsTr("Copy")
                 enabled: !root.controller.busy && !root.controller.history.filtering && root.controller.history.selectedRow >= 0
                 onClicked: root.controller.activate(false)
             }
-            Button {
+            ThemeButton { values: root.controller.theme;
                 text: root.controller.busy ? qsTr("Working…") : root.controller.enterLabel + " ↵"
                 enabled: !root.controller.busy && !root.controller.history.filtering && root.controller.history.selectedRow >= 0
                 onClicked: root.controller.activate()

@@ -11,6 +11,7 @@
 #include <QKeyEvent>
 #include <QListWidget>
 #include <QLineEdit>
+#include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 
@@ -174,6 +175,15 @@ IconSelectDialog::IconSelectDialog(const QString &defaultIcon, QWidget *parent)
     layout->addLayout(buttonLayout);
     buttonLayout->addWidget(browseButton);
     buttonLayout->addWidget(buttonBox);
+    layout->setContentsMargins(24, 20, 24, 20);
+    layout->setSpacing(12);
+    auto heading = new QLabel(tr("Choose an icon"), this);
+    auto headingFont = heading->font();
+    headingFont.setBold(true);
+    heading->setFont(headingFont);
+    layout->insertWidget(0, heading);
+    layout->insertWidget(1, new QLabel(tr("Select a symbol, type to search, or browse for an image."), this));
+    setMinimumSize(560, 440);
 
     m_iconList->setFocus();
 

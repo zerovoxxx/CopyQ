@@ -23,6 +23,7 @@ class ClipboardPalette final : public QQuickView
     Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
     Q_PROPERTY(QVariantList commands READ commands NOTIFY commandsChanged)
     Q_PROPERTY(QString enterLabel READ enterLabel NOTIFY commandsChanged)
+    Q_PROPERTY(QVariantMap theme READ theme NOTIFY themeChanged)
 
 public:
     explicit ClipboardPalette(ItemFactory *factory);
@@ -47,6 +48,8 @@ public:
     void setCommandMenu(QMenu *menu);
     QVariantList commands() const;
     QString enterLabel() const;
+    QVariantMap theme() const { return m_theme; }
+    void setTheme(const QVariantMap &theme) { m_theme = theme; emit themeChanged(); }
     Q_INVOKABLE void activate(bool paste = true, bool plainText = false, bool bypassDefault = false);
     Q_INVOKABLE void cancel();
     Q_INVOKABLE void changeSource(const QString &tabName);
@@ -69,6 +72,7 @@ signals:
     void errorOccurred(const QString &error);
     void commandsChanged();
     void opened();
+    void themeChanged();
 
 protected:
     bool event(QEvent *event) override;
@@ -84,6 +88,7 @@ private:
     QPointer<QMenu> m_commands;
     QStringList m_tabs;
     QString m_error;
+    QVariantMap m_theme;
     bool m_busy = false;
     bool m_wasActive = false;
     quint64 m_activationId = 0;

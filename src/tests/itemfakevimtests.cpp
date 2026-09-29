@@ -3,6 +3,7 @@
 #include "itemfakevimtests.h"
 
 #include "tests/test_utils.h"
+#include "gui/menuitems.h"
 
 #include <QDir>
 
@@ -65,10 +66,22 @@ void ItemFakeVimTests::createItem()
 
     RUN(args << "read" << "0", "ABC\nDEF");
 
-    KEYS("F2" << ":GccXYZ" << "ESC" << "::w" << "ENTER");
+    KEYS("F2" << "focus:palette_editor_text" << ":GccXYZ" << "ESC" << "focus:" << "::w" << "ENTER");
     RUN(args << "read" << "0", "ABC\nXYZ");
     KEYS(":p:wq" << "ENTER");
     RUN(args << "read" << "0", "ABC\nXYZ\nDEF");
+
+    RUN("eval" << QStringLiteral("callPlugin('itemtests','managementAction',%1)").arg(Actions::File_New), "true\n");
+    KEYS("focus:palette_editor_text" << ":iNEW" << "ESC" << "focus:" << "::w" << "ENTER");
+    RUN(args << "size", "2\n");
+    RUN(args << "read" << "0", "NEW");
+    KEYS("focus:palette_editor_text" << ":A tail" << "ESC" << "focus:" << "::w" << "ENTER");
+    RUN(args << "size", "2\n");
+    RUN(args << "read" << "0", "NEW tail");
+    RUN(args << "remove" << "0", "");
+    KEYS("focus:" << "ESC" << "::w" << "ENTER");
+    RUN(args << "size", "1\n");
+    KEYS("focus:" << "ESC" << "::q" << "ENTER");
 }
 
 void ItemFakeVimTests::paletteEditor()

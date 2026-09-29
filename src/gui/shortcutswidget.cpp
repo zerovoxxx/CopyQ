@@ -18,6 +18,8 @@
 #include <QList>
 #include <QPushButton>
 #include <QSettings>
+#include <QListWidget>
+#include <QTabBar>
 
 #include <algorithm>
 
@@ -86,6 +88,19 @@ ShortcutsWidget::ShortcutsWidget(QWidget *parent)
     , ui(new Ui::ShortcutsWidget)
 {
     ui->setupUi(this);
+    auto navigation = new QListWidget(this);
+    navigation->setObjectName(QStringLiteral("shortcut_navigation"));
+    navigation->addItems({tr("Global shortcuts"), tr("Application shortcuts")});
+    navigation->setMaximumWidth(200);
+    ui->tabWidget->tabBar()->hide();
+    ui->verticalLayout->removeWidget(ui->tabWidget);
+    auto body = new QHBoxLayout;
+    body->addWidget(navigation);
+    body->addWidget(ui->tabWidget, 1);
+    ui->verticalLayout->addLayout(body, 1);
+    connect(navigation, &QListWidget::currentRowChanged, ui->tabWidget, &QTabWidget::setCurrentIndex);
+    navigation->setCurrentRow(0);
+    ui->lineEditFilter->setPlaceholderText(tr("Find an action or shortcut…"));
 
     connect(ui->lineEditFilter, &QLineEdit::textChanged,
             this, &ShortcutsWidget::onLineEditFilterTextChanged);

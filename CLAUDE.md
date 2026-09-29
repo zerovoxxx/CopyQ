@@ -254,8 +254,8 @@ SPEC 至少写清：
 首版只设三个实施 SPEC，按 1 → 2 → 3 推进；三个阶段共同满足全界面重做、Alfred 剪贴板完整对齐和 CopyQ 全能力保留，内部阶段产物不能替代完整首版。公共架构与接入契约以 Iteration1 为准。
 
 - [Iteration1_ClipboardPalette_SPEC.md](docs/astack/version/Iteration1_ClipboardPalette_SPEC.md) — **开发中**：核心、快捷面板、插件/输入原型及三端构建测试入口已实现；macOS/Linux 已有聚焦证据，Windows 和剩余实机验收待补。
-- [Iteration2_CopyQCompatibility_SPEC.md](docs/astack/version/Iteration2_CopyQCompatibility_SPEC.md) — **开发中**：I2-1 的 QML 管理、显式多选/命令、单集合和批量操作已有 macOS/Linux 聚焦证据；组级管理与其他页面样板收尾后继续 I2-2，全部界面/历史策略及三端验收待完成。当前开发入口。
+- [Iteration2_CopyQCompatibility_SPEC.md](docs/astack/version/Iteration2_CopyQCompatibility_SPEC.md) — **开发中**：I2-1–I2-3 的集合树/组操作、设置/命令、编辑/辅助承载、八插件桥接、历史策略及 QSS 兼容入口已实施；两端构建/聚焦回归已留证，旧结构 QSS 替代审阅及三端实机/安装包验收仍需完成。当前开发入口。
 - [Iteration3_AlfredDesktopRelease_SPEC.md](docs/astack/version/Iteration3_AlfredDesktopRelease_SPEC.md) — **待实施**：Alfred 增强能力与三端发布，依赖前两阶段。
-- [docs/astack/INDEX.md](docs/astack/INDEX.md) 记录需求/验收归属和 GPT-6 Sol xhigh 执行入口。2026-09-29 已实施 SPEC1 及 SPEC2 首批开发任务；详细验证与未通过边界写在对应 SPEC，三端总验收尚未通过。
+- [docs/astack/INDEX.md](docs/astack/INDEX.md) 记录需求/验收归属和 GPT-6 Sol xhigh 执行入口。2026-09-29 已实施 SPEC1 及 SPEC2 接续开发任务；详细验证与未通过边界写在对应 SPEC，三端总验收尚未通过。
 
 各 SPEC 已包含 3–4 个实施里程碑。执行时先核对当前里程碑的代码接口和相关验证，完成后把结果与交接内容写回所属 SPEC；确有必要再增加局部 PLAN，不默认拆更多 SPEC 或旁路报告。

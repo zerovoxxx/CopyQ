@@ -7,11 +7,13 @@
 #include "common/mimetypes.h"
 #include "common/predefinedcommands.h"
 #include "common/shortcuts.h"
+#include "common/settings.h"
 #include "common/textdata.h"
 #include "item/itemfactory.h"
 #include "gui/iconfactory.h"
 #include "gui/icons.h"
 #include "gui/windowgeometryguard.h"
+#include "gui/theme.h"
 #include "platform/platformnativeinterface.h"
 
 #include <QAbstractListModel>
@@ -69,6 +71,9 @@ AddCommandDialog::AddCommandDialog(const QVector<Command> &pluginCommands, QWidg
     , m_filterModel(new QSortFilterProxyModel(this))
 {
     ui->setupUi(this);
+    Settings settings;
+    Theme(settings).decorateDialog(this, tr("Add a command"), tr("Search available commands and select the ones to add."));
+    resize(760, 560);
 
     connect(ui->lineEditFilter, &QLineEdit::textChanged,
             this, &AddCommandDialog::onLineEditFilterTextChanged);

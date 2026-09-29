@@ -6,6 +6,7 @@
 #include "common/contenttype.h"
 #include "common/mimetypes.h"
 #include "gui/clipboardpalette.h"
+#include "gui/clipboarditempreview.h"
 #include "gui/mainwindow.h"
 #include "item/clipboardmodel.h"
 #include "item/itemfactory.h"
@@ -190,9 +191,15 @@ private slots:
         source.insertItem(textData(QStringLiteral("other")), 1);
         QTRY_VERIFY(!model.filtering());
         model.selectRow(1);
-        QVERIFY(!item.isValid());
+        QVERIFY(item.isValid());
         item.setData(textData(QStringLiteral("stale")));
         QCOMPARE(model.preview().value(QStringLiteral("text")).toString(), QStringLiteral("other"));
+        QCOMPARE(model.data(model.index(0), ClipboardPaletteModel::SummaryRole).toString(), QStringLiteral("stale"));
+        model.setDisplayEnabled(false);
+        QVERIFY(!item.isValid());
+        item.setData(textData(QStringLiteral("closed")));
+        QCOMPARE(source.index(0).data(contentType::data).toMap(), raw);
+        model.setDisplayEnabled(true);
         model.setSourceModel(nullptr, QString());
         QTRY_VERIFY(!model.filtering());
         QVERIFY(!item.isValid());
@@ -387,9 +394,10 @@ private slots:
         source.insertItem({{QStringLiteral("image/png"), QByteArray("invalid image")}}, 4);
         QTRY_VERIFY(!palette.history()->filtering());
         palette.history()->selectRow(4);
-        auto previewImage = palette.rootObject()->findChild<QObject*>(QStringLiteral("palette_preview_image"));
-        QVERIFY(previewImage);
-        QTRY_COMPARE(previewImage->property("status").toInt(), 3); // Image.Error
+        auto preview = palette.rootObject()->findChild<ClipboardItemPreview*>(QStringLiteral("palette_preview"));
+        QVERIFY(preview);
+        QTRY_VERIFY(preview->previewWidget());
+        QCOMPARE(palette.history()->selectedData().value(QStringLiteral("image/png")).toByteArray(), QByteArray("invalid image"));
     }
 
     void nativeWindowIdentification()

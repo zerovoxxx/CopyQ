@@ -24,3 +24,5 @@ const QLatin1String mimeColor(COPYQ_MIME_PREFIX "color");
 const QLatin1String mimeOutputTab(COPYQ_MIME_PREFIX "output-tab");
 const QLatin1String mimeDisplayItemInMenu(COPYQ_MIME_PREFIX "display-item-in-menu");
 const QLatin1String mimeSecret(COPYQ_MIME_PREFIX "secret");
+const QLatin1String mimeHistoryTime(COPYQ_MIME_PRIVATE_PREFIX "history-time");
+const QLatin1String mimeSourceApplication(COPYQ_MIME_PRIVATE_PREFIX "source-application");

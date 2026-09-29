@@ -2,6 +2,8 @@
 
 #include "tabdialog.h"
 #include "ui_tabdialog.h"
+#include "common/settings.h"
+#include "gui/theme.h"
 
 #include <QPushButton>
 
@@ -31,6 +33,9 @@ TabDialog::TabDialog(TabDialog::TabDialogType type, QWidget *parent)
              this, &TabDialog::validate );
 
     validate();
+    Settings settings;
+    Theme(settings).decorateDialog(this, windowTitle(), tr("Enter a collection name. Use / to organize collections into groups."));
+    setMinimumWidth(480);
 }
 
 TabDialog::~TabDialog()

@@ -67,6 +67,8 @@ public:
     int itemCount() const;
 
     bool isItemChecked(int row) const;
+    void setItemChecked(int row, bool checked);
+    void moveTab(int row, int targetRow);
 
     int currentRow() const;
 
@@ -117,8 +119,6 @@ private:
     void onListWidgetItemsCurrentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
     void onListWidgetItemsItemSelectionChanged();
     void onListWidgetItemsItemChanged(QListWidgetItem *item);
-
-    void moveTab(int row, int targetRow);
 
     struct ItemWidgetPair {
         explicit ItemWidgetPair(const ItemPtr &item, bool checked)

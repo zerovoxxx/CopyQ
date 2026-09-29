@@ -3,11 +3,19 @@
 #include "gui/tabpropertieswidget.h"
 #include "ui_tabpropertieswidget.h"
 
+#include <QBoxLayout>
+
 TabPropertiesWidget::TabPropertiesWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::TabPropertiesWidget)
 {
     ui->setupUi(this);
+    ui->verticalLayout->setSpacing(16);
+    for (auto box : findChildren<QBoxLayout *>()) {
+        if (box->direction() == QBoxLayout::LeftToRight)
+            box->setDirection(QBoxLayout::TopToBottom);
+        box->setSpacing(8);
+    }
 
     connect( ui->iconButton, &IconSelectButton::currentIconChanged,
              this, &TabPropertiesWidget::iconNameChanged );

@@ -774,7 +774,8 @@ void X11PlatformClipboard::updateClipboardData(X11PlatformClipboard::ClipboardDa
 
     // In case there is a valid timestamp, omit update if the timestamp and
     // text did not change.
-    if ( newDataTimestamp != 0 && clipboardData->newDataTimestamp == newDataTimestamp ) {
+    const bool notified = clipboardData->lastDataSequenceNumber == clipboardData->sequenceNumber;
+    if ( notified && newDataTimestamp != 0 && clipboardData->newDataTimestamp == newDataTimestamp ) {
         const QVariantMap newData = cloneData(data, {mimeText});
         if (data.isExpired() || newData.value(mimeText) == clipboardData->newData.value(mimeText))
             return;
@@ -793,8 +794,8 @@ void X11PlatformClipboard::updateClipboardData(X11PlatformClipboard::ClipboardDa
         return;
     }
 
-    // Update only if the data changed.
-    if ( clipboardData->data == clipboardData->newData )
+    // A new clipboard event also matters when the same content was copied again.
+    if ( notified && clipboardData->data == clipboardData->newData )
         return;
 
     clipboardData->newDataTimestamp = newDataTimestamp;
@@ -808,6 +809,7 @@ void X11PlatformClipboard::useNewClipboardData(X11PlatformClipboard::ClipboardDa
         << "CHANGED, owner:" << clipboardData->newOwner;
 
     clipboardData->data = clipboardData->newData;
+    clipboardData->lastDataSequenceNumber = clipboardData->sequenceNumber;
     clipboardData->owner = clipboardData->newOwner;
     clipboardData->timerEmitChange.stop();
     if (clipboardData->ignoreNext)

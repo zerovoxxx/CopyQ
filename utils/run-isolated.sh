@@ -8,11 +8,17 @@ fi
 repo=$(cd "$(dirname "$0")/.." && pwd)
 # Keep Unix-domain socket paths below macOS's sockaddr_un limit.
 profile=$(mktemp -d /tmp/qclip.XXXXXX)
-trap 'rm -rf "$profile"' EXIT
+cleanup() {
+    if command -v gpgconf >/dev/null; then gpgconf --homedir "$profile/gnupg" --kill all >/dev/null 2>&1 || true; fi
+    rm -rf "$profile"
+}
+trap cleanup EXIT
 export COPYQ_SESSION_NAME=test
 export COPYQ_SETTINGS_PATH="$profile/config"
 export COPYQ_ITEM_DATA_PATH="$profile/items"
 export COPYQ_STATE_PATH="$profile/state"
+export GNUPGHOME="$profile/gnupg"
+mkdir -m 700 "$GNUPGHOME"
 export COPYQ_PLUGINS="${COPYQ_PLUGINS:-}"
 export COPYQ_DEFAULT_ICON=1
 export COPYQ_SESSION_COLOR='#f90'
@@ -45,5 +51,9 @@ if [[ "$(basename "$1")" == copyq-tests && -z "${COPYQ_TESTS_EXECUTABLE:-}" ]]; 
     if [[ -x "$native_app" ]]; then
         export COPYQ_TESTS_EXECUTABLE="$native_app"
     fi
+fi
+if [[ $(uname -s) == Darwin && $(basename "$1") == copyq-*-tests ]]; then
+    bundled_test="$(cd "$(dirname "$1")" && pwd)/CopyQ-tests.app/Contents/MacOS/$(basename "$1")"
+    if [[ -x "$bundled_test" ]]; then set -- "$bundled_test" "${@:2}"; fi
 fi
 "$@"

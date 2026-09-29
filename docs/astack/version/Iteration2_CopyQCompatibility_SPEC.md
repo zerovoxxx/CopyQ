@@ -108,13 +108,19 @@
 
 ## 实施里程碑
 
+接续的插件呈现采用 `ClipboardItemPreview`：在 GUI 线程用原 ItemFactory 创建预览控件并渲染为带 DPR 的图像，Quick 的绘制线程只读取图像；鼠标、滚轮和只读键盘操作转发给原控件。选中项、显示命令副本或插件配置变化时销毁旧控件，不改 ItemLoaderInterface。管理和面板共用此桥接，未知格式仍保留原 MIME。原 QSS 在插件控件上继续由 Qt 样式引擎执行。
+
+旧主题接续方案：颜色/字体仍映射到 QML；按钮、搜索背景和列表行通过 `ClipboardStyle` 使用原 Qt 样式引擎绘制，并映射 `MainWindow`、工具栏、`searchBar`、`ClipboardBrowser` 的原对象名与模板，保留渐变、图片、边框和状态规则。原 CSS 文本及模板导入/导出不改协议。新增 Theme 的 Quick 间距/行高/圆角字段作为新布局的等价调整入口，保留原字段。任意旧结构选择器在新结构中的语义不能凭保存文本宣称等价：在外观页显示实际覆盖范围，并把无法对应的新布局结构调整列为需审阅的兼容替代；第三方复杂控件绘制与性能也必须实测。
+
+剩余辅助界面保留成熟控制器，但重排实际布局：关于改导航/正文，日志改级别侧栏/正文，进程改筛选/动作侧栏/表格，格式查看改标题/格式侧栏/内容，动作改执行参数/代码两栏，导入导出改范围/集合两栏，快捷键录入改说明/录入/确认。设置中的快捷键改侧栏导航，外观改分组表单和预览，插件设置改说明卡和可滚动表单。涉及对应 `src/gui/*dialog.cpp`、`shortcutswidget.cpp`、`configtabappearance.cpp`、`pluginwidget.cpp`、`actionhandlerdialog.cpp` 与测试；原字段、按钮信号、密码/同步/编辑引擎保持职责。此处的承载改造必须有控件和行为验证，不能只用全局 QSS 代替。
+
 | 顺序 | 本段交付 | 完成条件 |
 |---|---|---|
 | I2-1 功能清单与管理窗口 | 补齐旧入口/配置/命令/插件映射、主题方案，迁移管理和标签/批量操作 | 有可审阅的界面样板和未迁移项列表；管理使用真实历史并通过相关动作测试。 |
 | I2-2 设置、命令、编辑与插件 | 迁移所有设置、脚本编辑/补全、内容编辑及八个插件，完成辅助窗口 | 原入口均有新入口，插件数据/显示/设置/编辑均验证；撤销/取消和显示命令有效。 |
 | I2-3 历史策略与兼容收尾 | 类型/期限/容量/忽略/清理、旧主题/配置/数据往返、三端布局与交互 | P5/P6/P7/P12 全部有对应证据，未覆盖项清零；新 Snippet 功能明确交给 Iteration3。 |
 
-### I2-1 实施决策（2026-09-29）
+### I2-1 初始实施决策（2026-09-29，后续实现以当前实现表为准）
 
 假设来自 SPEC1 代码和交接：ClipboardBrowser 仍拥有 ClipboardModel、ItemSaver 与标签持久化；ClipboardPaletteModel 已支持批次筛选、持久索引及显示命令副本，可直接作为管理视图的适配器。管理与面板各自实例化该适配器，只共享源历史。平台未完成项不阻止此共享实现。
 
@@ -141,32 +147,62 @@
 
 ### 当前实现与后续入口（2026-09-29）
 
-I2-1 首批管理功能已实现，I2-1 与本 SPEC 继续保持开发中；P5/P6/P7/P12 均未通过完整验收。入口清单已登记 49 个内置动作、87 个 AppConfig 配置、24 个主程序 UI 表单、7 个插件 UI 表单、149 个文档 API 名称（含别名）和 8 个正式插件。机械检查仅证明登记覆盖，不证明这些入口全部迁移或行为兼容。
+本轮已实施 I2-1–I2-3 的管理、设置、命令、编辑/辅助界面、插件桥接及历史策略代码，本机可独立实施的开发已落地，当前进入平台与兼容验收。登记清单为 49 个动作、90 项 AppConfig（原 87 项加 3 项历史策略）、24 个主表单、7 个插件表单、149 个文档 API 和八插件。代码入口覆盖与行为、平台、安装包验收分别记录，P5/P6/P7/P12 尚未通过完整三端验收。
 
-- 管理窗口可从面板 Manage 和托盘进入，复用原历史和显示命令；支持独立查询、多选、批量复制/排序/四向移动/删除、单集合增删改/排序/属性、跨集合复制/移动，以及行/集合的原生拖放。拖放和传输保留完整 MIME，固定保护和取消删除不被绕过。
-- 自定义命令收到管理的显式选中项，CLI 选择/查询/当前项/可见状态接入新管理视图。条目编辑沿用原 ItemEditorWidget；纯文本与备注保存保留未编辑的 MIME，新建取消不插入，源条目删除/卸载后保存失败保留输入并提示错误。Linux 已验证真实键盘保存/取消；macOS 前台编辑验收失败，见验证记录。
-- 管理属性表单复用原容量、持久化和密码有效期字段；有效期保留秒单位及原范围，覆盖 172800 秒（两天）的真实 QML 表单输入。源集合在打开表单/删除确认时固定，期间 CLI 切换集合不会修改另一集合。Quick 源可见性接入原卸载判断，强制卸载后选择失效，重新点击原集合可重载。
-- 主题目前复用旧配色和字体，800×520 紧凑布局及 1100×740 布局有实际 QML 窗口截图。原始截图位于本机 `build/spec2-artifacts/management.png`、`build/spec2-artifacts/management-compact.png`；截图和合成输入不能替代真实中文输入法、多屏/DPI 与前台粘贴验收。
+| 里程碑 | 已实施的新入口与数据契约 | 剩余验收 |
+|---|---|---|
+| I2-1 | Quick 管理为 Show/Hide/Toggle/ShowAt 主入口；真正集合树/平铺选项、折叠持久化、图标、组级改名/删除/移动/排序、碰撞与过期快照保护；完整 MIME 的多选、排序、移动、拖放和受保护删除；原生菜单/命令使用实际管理选择。 | 原生 Windows、系统输入法、多屏/DPI、外部前台粘贴。 |
+| I2-2 | Settings 使用原 ConfigurationManager 的 90 项字段、草稿 Apply/Cancel/默认值与插件启用/排序；Commands 保存 23 个可编辑字段及原 InternalId/本地化名称，保留导入导出、内置模板、代码补全和安全语法检查；编辑/CLI 复用 ItemEditorWidget/FakeVim，完整格式栏、搜索、撤销重做、保存/取消及失效源保留输入。 | macOS 当前前台为 loginwindow，服务键盘/辅助对话框焦点仍需可激活桌面；实际安装包八插件加载与旧二进制 ABI。 |
+| I2-2 插件/辅助界面 | 原 ItemFactory 呈现桥接到面板/管理预览，显示命令副本绑定持久索引；七插件表单、外观、快捷键、集合属性保留控制器并重新布局；关于、日志、进程、格式查看、动作、导入导出、密码、图标/快捷键、通知/托盘、脚本输入/截图入口均有新承载。原 ItemSaver 的 Quick 可见集合更新已接续。 | 复杂第三方 QWidget/OpenGL 插件、插件桥接长时性能；富文本和原生辅助窗口的完整三端人工验收。 |
+| I2-3 | 原采集链路的类型/应用忽略/敏感/暂停规则、UTC 时间/来源元数据、重复采集更新、普通历史期限/最近范围清理，遵守固定项/脚本/插件保护；旧配置/主题/数据格式保留，原 QSS 引擎绘制按钮/搜索/行/集合/菜单，提供 Quick 布局参数。 | 任意旧结构选择器与自定义 css_template 无法自动等价；已提供具体映射和布局替代，但 C4 完整结论仍需审阅与实机确认，不能按保存文本宣称通过。 |
 
-| 下一段 | 尚未交付的范围与接入位置 |
-|---|---|
-| I2-1 收尾 | 真正集合树及组级重命名/删除/排序、图标新界面、完整上下文动作、设置/命令/编辑/辅助页面的可审阅样板；当前集合以完整路径平铺。部分按钮仍调用旧设置/图标/辅助窗口，不能据此关闭全界面验收。 |
-| I2-2 | 同一 ConfigurationManager 配置源的所有设置页及 Apply/Cancel/默认值；命令条件/脚本编辑、补全/错误、默认激活命令和外部粘贴；完整富文本/FakeVim 编辑承载、全部插件设置/显示/编辑、辅助窗口。管理基础 CLI 已接入，但 `showAt` 的旧 Widgets 几何、预览/对话框与依赖旧控件的 API 仍待逐项迁移；149 名称登记不等于 149 行为通过。 |
-| I2-3 | 历史类型/时间/来源/忽略/期限/清理的实现、旧主题 QSS 等价能力和数据/配置往返；本轮仅固定时间规则，未新增时间字段或清理逻辑。任意 QSS、第三方插件 ABI、真实加密到期/同步行为不能凭插件加载或配色测试宣称兼容。 |
-| 平台收尾 | Windows 已接入构建/隔离测试脚本，尚无原生运行证据；macOS 前台日志为 `loginwindow - Login`，原生焦点测试失败，提交前另有拖放测试窗口暴露超时；前台编辑、真实输入法、外部粘贴和多屏/DPI 待补。Linux 仅 Debian 12 arm64/Xvfb，QCA/原生通知/音频关闭，Wayland 未验证。 |
+截图由隔离的实际 Quick 窗口产生，路径为本机 `build/spec2-artifacts/management.png` 与 `management-compact.png`。800×520 和正常尺寸布局检查不能替代真实中文输入法、多屏/DPI 或 Windows 前台验收。Linux 当前为 Debian 12 arm64/Xvfb/openbox，关闭 QCA/原生通知/音频，Wayland 未验证；macOS 当前 Qt 依赖的最低系统版本高于 preset 的 macOS 13，不能证明 macOS 13 运行。
 
-继续实施前先核对下节逐项状态与对应测试，不删除旧控制代码。管理窗口状态入口在 `mainwindow_management.cpp`；选择/显示复用 `ClipboardPaletteModel`；编辑保存保护在 `MainWindow::openItemEditor`；Quick 可见源的缓存判断在 `ClipboardBrowserPlaceholder`。新增页面继续复用原配置/插件/脚本数据流，不另建配置或历史。
+后续从本文最新验证记录接续平台/兼容验收；三个里程碑的完整完成条件仍未满足，文档保持开发中。共享接口为 ClipboardManagement/ClipboardPaletteModel、ClipboardSettings/ClipboardCommands、MainWindow::openItemEditor、ClipboardItemPreview/ClipboardStyle 与 HistoryPolicy；成熟 Widgets 仅作为原引擎/插件/原生辅助承载，隐藏旧管理窗口不作为用户入口。SPEC3 复用这些接口，不另建配置或历史。
+
+### 剩余开发接续（2026-09-29）
+
+用户在 `4a6e1843` 提交并推送后要求继续完成本 SPEC 的所有剩余开发。执行顺序和检查点见 [实施计划](../plan/Iteration2_CopyQCompatibility_PLAN.md)。以下假设以已提交代码为依据：源码树和构建目录可复用；本机没有 Windows 实机，macOS 前台可用性不能预设；纯代码和隔离 Linux 验证可以继续，平台缺项不能虚报通过。
+
+历史策略实施补充：新增 `clipboard_history_types`（text/image/files/other，默认全部）、`clipboard_history_ignore_apps`（每行一个稳定身份，大小写不敏感精确匹配）和 `clipboard_history_max_days`（0 不自动到期），继续复用原 maxitems、clipboard_tab 和暂停开关。字段经原 ConfigurationManager 保存，展示在新 History 页。记录使用 `application/x-copyq-private-history-time` 的 ASCII UTC 毫秒和 `application/x-copyq-private-source-application` 的 UTF-8 身份；它们不参与内容哈希，保留在原完整 MIME 记录中。
+
+来源与窗口标题同一次获取并使用同一延迟队列，macOS 为所持 NSRunningApplication 的 bundle ID，Windows 为所持 HWND 进程完整路径，X11 为 WM_CLASS。Wayland/查询失败/脚本覆盖 owner 且未调用原窗口采集时身份为空，不借标题匹配伪造身份。此元数据沿用原窗口 owner 的采样语义，后台程序修改剪贴板或快速切换应用时不能保证识别真实写入者；该边界属于平台验收，忽略名单按实际可用身份执行。
+
+外部采集先检查类型/忽略/敏感标记，允许后才添加时间并触发自动命令/保存；重复事件仅更新已存在记录的时间和来源，不新建记录或重跑自动动作。到期仅处理配置的普通历史集合，每分钟检查，未知/未来时间和固定项保留；先得到持久索引，再复用原删除授权和钩子。最近清理显式确认 5/15/60 分钟、24 小时或全部普通历史，时间计算与候选选择用指定 now 的聚焦测试覆盖。涉及 `clipboardmonitor/clipboardownermonitor`、三端 PlatformWindow、Scriptable/Proxy、`mimetypes/textdata`、新 `common/historypolicy`、ClipboardBrowser、MainWindow/Management 和测试，原因分别为采集前过滤、复用来源、完整数据去重、受保护删除与界面入口。
+
+1. 管理收尾：基于原集合路径构造有展开状态的树，不增加另一套集合持久化。组级增删改/移动在操作前固定受影响集合，逐项调用原接口；避免路径前缀误伤同名集合。图标、上下文动作、默认激活、窗口位置、主窗口/CLI 的 Show/Hide/Toggle/ShowAt 接入实际 Quick 窗口。
+2. 设置：新 QML 设置窗口显示原 ConfigurationManager 的字段与类型、说明、默认值，修改先进入表单草稿，Apply/OK 才走原配置保存/通知；Cancel 不写入。插件设置、主题和快捷键中成熟 Widgets 控件在重新布局的承载窗口中复用，原 ConfigurationManager 对话框不作为新用户入口。插件启用/顺序、语言/自动启动/密码等特殊职责仍走原实现。
+3. 命令与编辑：新命令导航和表单完整保留 Command 字段、导入导出和内置命令；代码编辑保留补全/高亮引擎，富文本/FakeVim 保留成熟编辑引擎，但重做布局、格式入口、保存/取消和失效源提示。辅助窗口逐项重排内容/工具/状态，不以统一 QSS 或保留旧管理窗口代替迁移。
+4. 插件：正式插件设置/排序、显示副本、备注/标签/固定、加密与文件同步都接入真实数据和原插件钩子。第三方 QWidget 插件界面提供重新设计的原生承载；不修改插件虚接口，不宣称未经验证的旧二进制 ABI。
+5. 历史：采集时间和来源信息加入原采集/保存链路；类型/来源/敏感标记在持久化前过滤，年龄/最近范围清理先取得源集合再执行原保护/删除钩子。保留未知时间/未来时间/时钟回拨、固定项与手工集合的边界。
+6. 收尾：旧配置/主题/数据往返和 QML 主题等价映射逐项验证；原生 Qt 文件选择/密码输入保留平台能力但重做承载。代码完成、隔离验证、原生 Windows/macOS/Linux 验收分别记录，不能因平台缺设备就停止可实施的开发。
+
+运行兼容收尾还必须接续 ItemSaver::setFocus：Quick 正在呈现的集合启用原同步器的更新，切换集合、关闭或最小化窗口后撤销；不把焦点伪造到隐藏 QListView。Linux X11 的真实剪贴板序号变化即使内容相同也通知上层，定时轮询未变时不重复通知，以实现本阶段已固定的重复复制时间规则。编辑器搜索回车消耗原按键，不向保存按钮或编辑器转发；管理搜索 Tab 进入结果列表。管理快捷键只匹配集合/管理动作，编辑器专用的 Editor_Save–Editor_Search 留给实际编辑器，避免 Editor_Save 的 F2 抢占 Item_Edit 的 F2；可输入状态使用 Qt 的 ItemAcceptsInputMethod 标志，不把带 text 属性的按钮误当成文本输入。
+
+编辑器分别接续 save 与 invalidate：FakeVim 的 :w 保存并继续编辑，:wq 及普通保存快捷键保存后退出；新建首次保存后保持同一持久条目身份，后续保存不重复插入。CLI/窗口重新编辑需等待实际编辑控件取得焦点，旧数据断言保留。
+
+窗口析构先断开自身可见性/状态回调、释放 QML 根对象并隐藏窗口，再销毁成员模型，避免 QWindow 基类析构回调访问已销毁模型。工具栏通过原 QToolButton 绘制保留实际 QSS 文字/按下/悬停状态，并补 Quick 键盘焦点框；像素断言分别检查主窗口主题开启和关闭时的前景色。
+
+显示命令副本按已呈现条目的持久索引缓存：可见 delegate 与选中预览共用同一副本，普通插入/移动不能重复执行同一条目的显示脚本。源数据修改、删除、筛选变化、源切换及窗口关闭使对应旧请求失效；不把未选中的行限制为原数据摘要。涉及 ClipboardPaletteModel、PersistentDisplayItem、两份 QML delegate 与生命周期/服务回归，不改变显示命令协议或源 MIME。
+
+| 操作 | 接续文件 / 组件 | 原因 |
+|---|---|---|
+| MODIFY | ClipboardManagement、ManagementWindow.qml、mainwindow_management.cpp、ScriptableProxy、MainWindow | 集合树/组操作、主界面入口及显式动作/几何完整接入。 |
+| NEW / MODIFY | ClipboardSettings、Settings.qml、ConfigurationManager、Option、各设置/插件表单 | 新设置 UI 与原配置草稿、成熟插件控件的新承载、保存/取消/默认值验证。 |
+| NEW / MODIFY | ClipboardCommands、Commands.qml、CommandDialog/CommandEdit/CommandWidget、编辑与辅助窗口 | 完整命令表单、代码编辑器复用、内容/辅助界面重排。 |
+| NEW / MODIFY | 历史策略、AppConfig、MIME 常量、ClipboardMonitor/PlatformClipboard/PlatformWindow、Scriptable/saveData、ClipboardBrowser | 原采集链路的来源/时间、采集前过滤及保护清理；不另建存储。 |
+| MODIFY | Theme、QML 共用组件、插件呈现、针对性测试、CMake/CI、本文/INDEX | 统一主题及兼容校验、资源打包、逐段新鲜证据和交接。 |
 
 ### I2-1 逐项兼容基线
 
-本清单的“待迁移”表示新入口尚未通过行为验证；旧入口仍可用于对照。`python3 utils/check-compatibility.py` 核对源码入口与本文登记的集合，不能替代运行验收。配置与 API 按名称逐项登记，旧参数、错误和输出继续以原实现为准。
+以下清单登记实际新入口；“入口已迁移”不等于该行所有平台/边界均通过。`python3 utils/check-compatibility.py` 核对源码入口与本文登记的集合，不能替代运行验收。配置与 API 按名称逐项登记，旧参数、错误和输出继续以原实现为准。
 
 | 范围 | 登记数 | 当前职责 |
 |---|---|---|
 | 菜单/编辑动作 | 49 | I2-1 登记，I2-2/I2-3 逐项验证 |
 | 主工程表单 | 24 | I2-1 登记，I2-2/I2-3 逐项验证 |
 | 插件设置表单 | 7 | I2-1 登记，I2-2/I2-3 逐项验证 |
-| AppConfig 配置 | 87 | I2-1 登记，I2-2/I2-3 逐项验证 |
+| AppConfig 配置 | 90 | I2-1 登记，I2-2/I2-3 逐项验证 |
 | 文档化脚本函数（重载合并，包含同声明别名） | 149 | I2-1 登记，I2-2/I2-3 逐项验证 |
 | 内置插件 | 8 | I2-1 登记，I2-2/I2-3 逐项验证 |
 
@@ -177,207 +213,210 @@ I2-1 首批管理功能已实现，I2-1 与本 SPEC 继续保持开发中；P5/P
 | `action:Edit_PasteItems` | ManagementWindow 粘贴到集合 / managementActions | macOS/Linux 已通过 |
 | `action:Edit_ReverseSelectedItems` | 原 reverseItems 语义 / managementActions | macOS/Linux 已通过 |
 | `action:Edit_SortSelectedItems` | 原 sortItems 语义 / managementActions | macOS/Linux 已通过 |
-| `action:Editor_Background` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Bold` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Cancel` | 共用 ItemEditorWidget 承载窗口 / managementEditor | Linux 保存/取消通过；完整编辑迁移待 I2-2 |
-| `action:Editor_EraseStyle` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Font` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Foreground` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Italic` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Redo` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Save` | 合并编辑 MIME、失效时保留输入 / managementEditor | Linux 已通过；macOS 前台焦点未通过 |
-| `action:Editor_Search` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Strikethrough` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Underline` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:Editor_Undo` | 重新设计的编辑承载窗口 / editorRoundTrip | 待迁移 |
-| `action:File_Commands` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:File_Exit` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:File_Export` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:File_Import` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:File_New` | 管理新建编辑窗口 / managementEditor | Linux 保存/取消通过；完整编辑迁移待 I2-2 |
-| `action:File_Preferences` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:File_ProcessManager` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:File_ShowClipboardContent` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:File_ShowPreview` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:File_ToggleClipboardStoring` | 管理暂停/恢复 / managementActions | macOS/Linux 已通过；类型/期限/忽略待 I2-3 |
-| `action:Help_About` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:Help_Help` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:Help_ShowLog` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `action:ItemMenu` | 管理 Actions 菜单及原自定义命令 / managementCommands | 显式多选和 matchCmd 通过；键位/菜单定制待补 |
-| `action:Item_Action` | ManagementWindow → ClipboardManagement 显式选择动作 / managementActions | 待迁移 |
-| `action:Item_Edit` | 共用 ItemEditorWidget、其他 MIME 保留 / managementEditor | Linux 已通过；完整编辑/FakeVim 待 I2-2 |
+| `action:Editor_Background` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Bold` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Cancel` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_EraseStyle` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Font` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Foreground` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Italic` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Redo` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Save` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Search` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Strikethrough` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Underline` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:Editor_Undo` | 新编辑窗口完整格式栏、原 ItemEditorWidget 动作 / managementEditor | 入口已迁移；Linux 键盘保存/取消/搜索/撤销重做，格式引擎保留；macOS 前台待验收 |
+| `action:File_Commands` | Commands 全字段/模板/导入导出 / commandDraftRoundTrip | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:File_Exit` | 原退出行为 / managementActions | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:File_Export` | 新导出范围/集合窗口 / importExportTab | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:File_Import` | 新导入范围/集合窗口 / importExportTab | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:File_New` | 管理新建编辑窗口 / managementEditor | Linux 保存/取消通过；macOS 前台待验收 |
+| `action:File_Preferences` | Settings 草稿表单与重新布局的原生页 / settingsDraftTransaction/allPluginSettings | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:File_ProcessManager` | 进程筛选侧栏/动作表格 / managementDialogs | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:File_ShowClipboardContent` | 原始 MIME 格式侧栏/内容窗口 / managementDialogs | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:File_ShowPreview` | ItemFactory 真实插件预览及原显示副本 / pluginPreviewBridge | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:File_ToggleClipboardStoring` | 管理暂停/恢复 / managementActions | macOS/Linux 已通过；类型/期限/忽略见历史回归 |
+| `action:Help_About` | 关于导航/正文窗口 / managementDialogs | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:Help_Help` | 原帮助网页入口 / 原实现保留 | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:Help_ShowLog` | 日志级别侧栏/内容 / managementDialogs | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:ItemMenu` | 管理 Actions 菜单及原自定义命令 / managementCommands | 显式多选和 matchCmd 通过；原快捷键已接入；菜单/QSS 三端验收待补 |
+| `action:Item_Action` | 动作参数/代码承载，显式选中数据 / managementDialogs | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:Item_Edit` | 共用 ItemEditorWidget、其他 MIME 保留 / managementEditor | Linux 已通过；FakeVim 指定回归见最新记录 |
 | `action:Item_EditNotes` | 备注独立合并保存 / managementEditor | Linux 已通过；macOS 前台焦点未通过 |
-| `action:Item_EditWithEditor` | ManagementWindow → ClipboardManagement 显式选择动作 / managementActions | 待迁移 |
+| `action:Item_EditWithEditor` | 原外部编辑器，显式选中条目；CLI 回退新编辑窗口 / managementEditor | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
 | `action:Item_MoveDown` | 原 move / managementActions | macOS/Linux 已通过 |
 | `action:Item_MoveToBottom` | 原 move / managementActions | macOS/Linux 已通过 |
-| `action:Item_MoveToClipboard` | 原 moveToClipboard 显式选择 / managementActions、qmlSelectionAndActions | 复制/置顶通过；默认动作及外部粘贴待 I2-2 |
+| `action:Item_MoveToClipboard` | 原 moveToClipboard 显式选择 / managementActions、qmlSelectionAndActions | 复制/置顶通过；默认动作已接入；外部粘贴实机待补 |
 | `action:Item_MoveToTop` | 原 move / managementActions | macOS/Linux 已通过 |
 | `action:Item_MoveUp` | 原 move / managementActions | macOS/Linux 已通过 |
 | `action:Item_Remove` | 原 removeIndexes 及插件/脚本保护 / managementActions、transferAndDeleteProtection | macOS/Linux 已通过 |
-| `action:Item_ShowContent` | ManagementWindow → ClipboardManagement 显式选择动作 / managementActions | 待迁移 |
-| `action:Tabs_ChangeTabIcon` | ManagementWindow → ClipboardManagement 显式选择动作 / managementActions | 待迁移 |
-| `action:Tabs_NewTab` | QML 集合表单、原 createTab / managementTabs | 增改删/路径式分组通过；组级交互待补 |
+| `action:Item_ShowContent` | 原始格式查看，显式条目数据 / managementDialogs | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:Tabs_ChangeTabIcon` | 新图标搜索/文件/默认图标 / managementGroups | 入口已迁移；相关行为见最新验证，完整三端验收待补 |
+| `action:Tabs_NewTab` | QML 集合表单、原 createTab / managementTabs | 增改删/路径式分组通过；组级管理见 managementGroups |
 | `action:Tabs_NextTab` | 原 nextTab / managementTabs | macOS/Linux 已通过 |
 | `action:Tabs_PreviousTab` | 原 previousTab / managementTabs | macOS/Linux 已通过 |
-| `action:Tabs_RemoveTab` | QML 确认、原 removeTab / managementTabs | 单集合删除通过；组级删除待补 |
-| `action:Tabs_RenameTab` | QML 来源快照、原 renameTab / managementTabs、qmlSelectionAndActions | 单集合更名通过；组级更名待补 |
-| `form:src/ui/aboutdialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/actiondialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/actionhandlerdialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/addcommanddialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/clipboarddialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/commanddialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/commandedit.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/commandwidget.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/configtabappearance.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/configtabgeneral.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/configtabhistory.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/configtablayout.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/configtabnotifications.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/configtabtray.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/configurationmanager.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/importexportdialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/itemorderlist.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/logdialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/mainwindow.ui` | ManagementWindow、共享真实历史 / managementActions、managementTabs、managementCommands | 核心管理通过；其余入口仍待 I2-2 |
-| `form:src/ui/pluginwidget.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/shortcutdialog.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/shortcutswidget.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `form:src/ui/tabdialog.ui` | QML 创建/更名/删除确认 / managementTabs、qmlSelectionAndActions | 单集合通过；组级/图标对话框待补 |
-| `form:src/ui/tabpropertieswidget.ui` | QML 集合容量/存盘/密码期限 / managementTabs、qmlSelectionAndActions | 保存/重载、跨来源确认通过；密码过期实测待补 |
-| `plugin-form:plugins/itemencrypted/itemencryptedsettings.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `plugin-form:plugins/itemfakevim/itemfakevimsettings.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `plugin-form:plugins/itemimage/itemimagesettings.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `plugin-form:plugins/itemnotes/itemnotessettings.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `plugin-form:plugins/itemsync/itemsyncsettings.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `plugin-form:plugins/itemtags/itemtagssettings.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
-| `plugin-form:plugins/itemtext/itemtextsettings.ui` | I2-2 对应设置/命令/编辑/辅助页面；I2-3 主题往返 | 待迁移 |
+| `action:Tabs_RemoveTab` | QML 确认、原 removeTab / managementTabs | 单集合删除通过；组级删除/快照保护见 managementGroups |
+| `action:Tabs_RenameTab` | QML 来源快照、原 renameTab / managementTabs、qmlSelectionAndActions | 单集合更名通过；组级更名/碰撞保护见 managementGroups |
+| `form:src/ui/aboutdialog.ui` | 关于导航/正文窗口；managementDialogs | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/actiondialog.ui` | 动作参数/代码两栏；managementDialogs | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/actionhandlerdialog.ui` | 进程筛选侧栏/动作表格；managementDialogs | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/addcommanddialog.ui` | 内置命令选择/Commands 模板入口；commandDraftRoundTrip | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/clipboarddialog.ui` | 原始格式侧栏/内容窗口；managementDialogs | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/commanddialog.ui` | Commands 列表/条件/脚本；commandDraftRoundTrip | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/commandedit.ui` | 重排的 CommandEdit 代码承载；commandDraftRoundTrip | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/commandwidget.ui` | Commands 全字段草稿与代码承载；commandDraftRoundTrip | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/configtabappearance.ui` | 外观分组卡片/预览/Quick 布局；allPluginSettings、legacyStyleRules | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/configtabgeneral.ui` | Settings General/原语言与密码入口；settingsDraftTransaction | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/configtabhistory.ui` | Settings History；settingsDraftTransaction、historyTimeAndProtection、managementHistoryCapture | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/configtablayout.ui` | Settings Layout；settingsDraftTransaction、managementGeometry | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/configtabnotifications.ui` | Settings Notifications；settingsDraftTransaction | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/configtabtray.ui` | Settings Tray；settingsDraftTransaction | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/configurationmanager.ui` | Settings 原字段/保存控制器；settingsDraftTransaction | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/importexportdialog.ui` | 导入导出范围/集合两栏；importExportTab | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/itemorderlist.ui` | Plugins 启用/优先级；settingsDraftTransaction、allPluginSettings | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/logdialog.ui` | 日志级别侧栏/内容；managementDialogs | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/mainwindow.ui` | ManagementWindow 为主入口；managementActions/managementTabs/managementGroups/managementCommands | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/pluginwidget.ui` | 插件说明卡/可滚动表单；pluginSettingsDraft、allPluginSettings | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/shortcutdialog.ui` | 快捷键说明/录入/确认新承载；allPluginSettings | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/shortcutswidget.ui` | 快捷键侧栏导航/原表格；allPluginSettings | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/tabdialog.ui` | QML 集合/组改名及新建；managementTabs/managementGroups/qmlSelectionAndActions | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `form:src/ui/tabpropertieswidget.ui` | QML 容量/持久化/密码期限与重排原生页；managementTabs/qmlSelectionAndActions | 入口已迁移；保留原引擎，完整三端验收待补 |
+| `plugin-form:plugins/itemencrypted/itemencryptedsettings.ui` | Settings Plugins → 重新布局的原生配置承载 / pluginSettingsDraft、allPluginSettings | 原字段/加载/取消/应用均接入；实际安装包与三端验收待补 |
+| `plugin-form:plugins/itemfakevim/itemfakevimsettings.ui` | Settings Plugins → 重新布局的原生配置承载 / pluginSettingsDraft、allPluginSettings | 原字段/加载/取消/应用均接入；实际安装包与三端验收待补 |
+| `plugin-form:plugins/itemimage/itemimagesettings.ui` | Settings Plugins → 重新布局的原生配置承载 / pluginSettingsDraft、allPluginSettings | 原字段/加载/取消/应用均接入；实际安装包与三端验收待补 |
+| `plugin-form:plugins/itemnotes/itemnotessettings.ui` | Settings Plugins → 重新布局的原生配置承载 / pluginSettingsDraft、allPluginSettings | 原字段/加载/取消/应用均接入；实际安装包与三端验收待补 |
+| `plugin-form:plugins/itemsync/itemsyncsettings.ui` | Settings Plugins → 重新布局的原生配置承载 / pluginSettingsDraft、allPluginSettings | 原字段/加载/取消/应用均接入；实际安装包与三端验收待补 |
+| `plugin-form:plugins/itemtags/itemtagssettings.ui` | Settings Plugins → 重新布局的原生配置承载 / pluginSettingsDraft、allPluginSettings | 原字段/加载/取消/应用均接入；实际安装包与三端验收待补 |
+| `plugin-form:plugins/itemtext/itemtextsettings.ui` | Settings Plugins → 重新布局的原生配置承载 / pluginSettingsDraft、allPluginSettings | 原字段/加载/取消/应用均接入；实际安装包与三端验收待补 |
 
 | 原配置（名称保持） | 新入口 / 验证归属 | 当前状态 |
 |---|---|---|
-| `option:activate_closes` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:activate_focuses` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:activate_item_with_single_click` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:activate_pastes` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:always_on_top` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:autocompletion` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:autostart` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:check_clipboard` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:check_selection` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:clipboard_mime_size_limit` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:clipboard_notification_lines` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:clipboard_tab` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:close_on_unfocus` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:close_on_unfocus_delay_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:close_on_unfocus_extra_delay_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:command_history_size` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:confirm_exit` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:copy_clipboard` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:copy_selection` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:disable_tray` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:edit_ctrl_return` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:editor` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:encrypt_tabs` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:expire_encrypted_tab_seconds` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:expire_tab` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:filter_case_insensitive` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:filter_regular_expression` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:frameless_window` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:hide_main_window` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:hide_main_window_in_task_bar` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:hide_tabs` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:hide_toolbar` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:hide_toolbar_labels` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:item_data_threshold` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:item_popup_interval` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:max_process_manager_rows` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:maxitems` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:move` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:native_menu_bar` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:native_notifications` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:native_tray_menu` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:navigation_style` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:notification_horizontal_offset` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:notification_maximum_height` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:notification_maximum_width` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:notification_position` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:notification_vertical_offset` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:number_search` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:open_windows_on_current_screen` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:prevent_screen_capture` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:restore_geometry` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:row_index_from_one` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:run_selection` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:save_delay_ms_on_item_added` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:save_delay_ms_on_item_edited` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:save_delay_ms_on_item_modified` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:save_delay_ms_on_item_moved` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:save_delay_ms_on_item_removed` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:save_filter_history` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:save_on_app_deactivated` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:script_paste_delay_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:show_advanced_command_settings` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:show_simple_items` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:show_tab_item_count` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:style` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tab_tree` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tabs` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:terminate_action_timeout_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:text_tab_width` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:text_wrap` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:transparency` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:transparency_focused` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tray_commands` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tray_images` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tray_item_paste` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tray_items` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tray_menu_open_on_left_click` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tray_tab` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:tray_tab_is_current` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:update_clipboard_owner_delay_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:use_key_store` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:window_key_press_time_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:window_paste_with_ctrl_v_regex` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:window_wait_after_raised_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:window_wait_before_raise_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:window_wait_for_modifier_released_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
-| `option:window_wait_raised_ms` | I2-2 设置及原 config() / commandConfig；I2-3 保存/取消/默认值比对 | 待迁移 |
+| `option:activate_closes` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:activate_focuses` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:activate_item_with_single_click` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:activate_pastes` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:always_on_top` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:autocompletion` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:autostart` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:check_clipboard` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:clipboard_history_types` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig；历史策略见 historyCaptureFilters/historyTimeAndProtection/managementHistoryCapture | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:clipboard_history_ignore_apps` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig；历史策略见 historyCaptureFilters/historyTimeAndProtection/managementHistoryCapture | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:clipboard_history_max_days` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig；历史策略见 historyCaptureFilters/historyTimeAndProtection/managementHistoryCapture | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:check_selection` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:clipboard_mime_size_limit` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:clipboard_notification_lines` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:clipboard_tab` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:close_on_unfocus` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:close_on_unfocus_delay_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:close_on_unfocus_extra_delay_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:command_history_size` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:confirm_exit` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:copy_clipboard` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:copy_selection` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:disable_tray` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:edit_ctrl_return` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:editor` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:encrypt_tabs` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:expire_encrypted_tab_seconds` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:expire_tab` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:filter_case_insensitive` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:filter_regular_expression` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:frameless_window` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:hide_main_window` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:hide_main_window_in_task_bar` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:hide_tabs` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:hide_toolbar` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:hide_toolbar_labels` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:item_data_threshold` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:item_popup_interval` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:max_process_manager_rows` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:maxitems` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:move` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:native_menu_bar` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:native_notifications` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:native_tray_menu` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:navigation_style` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:notification_horizontal_offset` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:notification_maximum_height` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:notification_maximum_width` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:notification_position` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:notification_vertical_offset` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:number_search` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:open_windows_on_current_screen` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:prevent_screen_capture` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:restore_geometry` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:row_index_from_one` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:run_selection` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:save_delay_ms_on_item_added` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:save_delay_ms_on_item_edited` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:save_delay_ms_on_item_modified` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:save_delay_ms_on_item_moved` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:save_delay_ms_on_item_removed` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:save_filter_history` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:save_on_app_deactivated` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:script_paste_delay_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:show_advanced_command_settings` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:show_simple_items` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:show_tab_item_count` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:style` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tab_tree` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tabs` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:terminate_action_timeout_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:text_tab_width` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:text_wrap` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:transparency` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:transparency_focused` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tray_commands` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tray_images` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tray_item_paste` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tray_items` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tray_menu_open_on_left_click` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tray_tab` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:tray_tab_is_current` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:update_clipboard_owner_delay_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:use_key_store` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:window_key_press_time_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:window_paste_with_ctrl_v_regex` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:window_wait_after_raised_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:window_wait_before_raise_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:window_wait_for_modifier_released_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
+| `option:window_wait_raised_ms` | Settings 原名称/类型/范围/默认值及 config() / settingsDraftTransaction、commandConfig | 已纳入同一配置草稿；字段/事务验证见最新记录，逐平台生效语义待验收 |
 
 | 原脚本 API（名称及参数保持） | 新入口 / 验证归属 | 当前状态 |
 |---|---|---|
-| `api:abort`、`api:action`、`api:add`、`api:addCommands`、`api:afterMilliseconds`、`api:change`、`api:clearClipboardData`、`api:clipboard` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:clipboardFormatsToSave`、`api:commands`、`api:config`、`api:copy`、`api:copySelection`、`api:count`、`api:currentItem`、`api:currentPath` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:data`、`api:dataFormats`、`api:dateString`、`api:dialog`、`api:disable`、`api:edit`、`api:editItem`、`api:env` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:escapeHtml`、`api:eval`、`api:execute`、`api:exit`、`api:exportData`、`api:exportTab`、`api:fail`、`api:filter` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:focusPrevious`、`api:focused`、`api:forceUnload`、`api:fromBase64`、`api:fromUnicode`、`api:getItem`、`api:hasClipboardFormat`、`api:hasData` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:hasSelectionFormat`、`api:help`、`api:hide`、`api:hideDataNotification`、`api:iconColor`、`api:iconTag`、`api:iconTagColor`、`api:ignore` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:importData`、`api:importTab`、`api:info`、`api:input`、`api:insert`、`api:isClipboard`、`api:loadTheme`、`api:logs` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:md5sum`、`api:menu`、`api:menuItems`、`api:monitorClipboard`、`api:monitoring`、`api:move`、`api:next`、`api:notification` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:onClipboardChanged`、`api:onClipboardUnchanged`、`api:onExit`、`api:onHiddenClipboardChanged`、`api:onItemsAdded`、`api:onItemsChanged`、`api:onItemsLoaded`、`api:onItemsRemoved` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:onOwnClipboardChanged`、`api:onSecretClipboardChanged`、`api:onStart`、`api:onTabSelected`、`api:open`、`api:pack`、`api:palette`、`api:paste` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:playSound`、`api:pointerPosition`、`api:popup`、`api:preview`、`api:previous`、`api:print`、`api:provideClipboard`、`api:provideSelection` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:queryKeyboardModifiers`、`api:read`、`api:remove`、`api:removeData`、`api:removeTab`、`api:renameTab`、`api:runAutomaticCommands`、`api:saveData` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:screenNames`、`api:screenshot`、`api:screenshotSelect`、`api:select`、`api:selectItems`、`api:selectedItemData`、`api:selectedItems`、`api:selectedItemsData` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:selectedTab`、`api:selection`、`api:separator`、`api:serverLog`、`api:setClipboardData`、`api:setCommands`、`api:setCurrentTab`、`api:setData` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:setEnv`、`api:setItem`、`api:setPointerPosition`、`api:setSelectedItemData`、`api:setSelectedItemsData`、`api:setTitle`、`api:settings`、`api:sha1sum` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:sha256sum`、`api:sha512sum`、`api:show`、`api:showAt`、`api:showDataNotification`、`api:sleep`、`api:source`、`api:stats` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:str`、`api:styles`、`api:synchronizeFromSelection`、`api:synchronizeToSelection`、`api:tab`、`api:tabIcon`、`api:toBase64`、`api:toUnicode` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:toggle`、`api:toggleConfig`、`api:unload`、`api:unpack`、`api:updateClipboardData`、`api:updateTitle`、`api:version`、`api:visible` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
-| `api:write` | 原 Scriptable/Proxy；I2-1 显式动作快照，I2-2 命令编辑/补全；针对性 CLI 验证 | 实现保留，新界面接入待验证 |
+| `api:abort`、`api:action`、`api:add`、`api:addCommands`、`api:afterMilliseconds`、`api:change`、`api:clearClipboardData`、`api:clipboard` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:clipboardFormatsToSave`、`api:commands`、`api:config`、`api:copy`、`api:copySelection`、`api:count`、`api:currentItem`、`api:currentPath` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:data`、`api:dataFormats`、`api:dateString`、`api:dialog`、`api:disable`、`api:edit`、`api:editItem`、`api:env` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:escapeHtml`、`api:eval`、`api:execute`、`api:exit`、`api:exportData`、`api:exportTab`、`api:fail`、`api:filter` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:focusPrevious`、`api:focused`、`api:forceUnload`、`api:fromBase64`、`api:fromUnicode`、`api:getItem`、`api:hasClipboardFormat`、`api:hasData` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:hasSelectionFormat`、`api:help`、`api:hide`、`api:hideDataNotification`、`api:iconColor`、`api:iconTag`、`api:iconTagColor`、`api:ignore` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:importData`、`api:importTab`、`api:info`、`api:input`、`api:insert`、`api:isClipboard`、`api:loadTheme`、`api:logs` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:md5sum`、`api:menu`、`api:menuItems`、`api:monitorClipboard`、`api:monitoring`、`api:move`、`api:next`、`api:notification` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:onClipboardChanged`、`api:onClipboardUnchanged`、`api:onExit`、`api:onHiddenClipboardChanged`、`api:onItemsAdded`、`api:onItemsChanged`、`api:onItemsLoaded`、`api:onItemsRemoved` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:onOwnClipboardChanged`、`api:onSecretClipboardChanged`、`api:onStart`、`api:onTabSelected`、`api:open`、`api:pack`、`api:palette`、`api:paste` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:playSound`、`api:pointerPosition`、`api:popup`、`api:preview`、`api:previous`、`api:print`、`api:provideClipboard`、`api:provideSelection` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:queryKeyboardModifiers`、`api:read`、`api:remove`、`api:removeData`、`api:removeTab`、`api:renameTab`、`api:runAutomaticCommands`、`api:saveData` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:screenNames`、`api:screenshot`、`api:screenshotSelect`、`api:select`、`api:selectItems`、`api:selectedItemData`、`api:selectedItems`、`api:selectedItemsData` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:selectedTab`、`api:selection`、`api:separator`、`api:serverLog`、`api:setClipboardData`、`api:setCommands`、`api:setCurrentTab`、`api:setData` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:setEnv`、`api:setItem`、`api:setPointerPosition`、`api:setSelectedItemData`、`api:setSelectedItemsData`、`api:setTitle`、`api:settings`、`api:sha1sum` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:sha256sum`、`api:sha512sum`、`api:show`、`api:showAt`、`api:showDataNotification`、`api:sleep`、`api:source`、`api:stats` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:str`、`api:styles`、`api:synchronizeFromSelection`、`api:synchronizeToSelection`、`api:tab`、`api:tabIcon`、`api:toBase64`、`api:toUnicode` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:toggle`、`api:toggleConfig`、`api:unload`、`api:unpack`、`api:updateClipboardData`、`api:updateTitle`、`api:version`、`api:visible` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
+| `api:write` | 原 Scriptable/Proxy；实际 Quick 窗口/显式选择，新命令编辑/补全；针对性 CLI 验证 | 原接口保留；相关 CLI/窗口/选择回归见最新记录，非 149 API 穷尽验证 |
 | `api:enable`、`api:index`、`api:length`、`api:size` | 原 API 同声明别名；继续使用原参数/返回语义；managementActions / managementTabs 验证 size | 实现保留，别名逐项回归待补 |
 
 | 内置插件 | 原接口 → 新入口 / 验证归属 | 当前状态 |
 |---|---|---|
-| `plugin:itemencrypted` | ItemLoaderInterface 呈现/匹配/数据/保存/编辑/设置/命令 → 管理预览、编辑窗口、插件设置；验证见“八个插件”表 | 全能力待迁移 |
-| `plugin:itemfakevim` | ItemLoaderInterface 呈现/匹配/数据/保存/编辑/设置/命令 → 管理预览、编辑窗口、插件设置；验证见“八个插件”表 | 全能力待迁移 |
-| `plugin:itemimage` | ItemLoaderInterface 呈现/匹配/数据/保存/编辑/设置/命令 → 管理预览、编辑窗口、插件设置；验证见“八个插件”表 | 全能力待迁移 |
-| `plugin:itemnotes` | ItemLoaderInterface 呈现/匹配/数据/保存/编辑/设置/命令 → 管理预览、编辑窗口、插件设置；验证见“八个插件”表 | 全能力待迁移 |
-| `plugin:itempinned` | ItemLoaderInterface 呈现/匹配/数据/保存/编辑/设置/命令 → 管理预览、编辑窗口、插件设置；验证见“八个插件”表 | 全能力待迁移 |
-| `plugin:itemsync` | ItemLoaderInterface 呈现/匹配/数据/保存/编辑/设置/命令 → 管理预览、编辑窗口、插件设置；验证见“八个插件”表 | 全能力待迁移 |
-| `plugin:itemtags` | ItemLoaderInterface 呈现/匹配/数据/保存/编辑/设置/命令 → 管理预览、编辑窗口、插件设置；验证见“八个插件”表 | 全能力待迁移 |
-| `plugin:itemtext` | ItemLoaderInterface 呈现/匹配/数据/保存/编辑/设置/命令 → 管理预览、编辑窗口、插件设置；验证见“八个插件”表 | 全能力待迁移 |
+| `plugin:itemencrypted` | 原 ItemLoaderInterface → ClipboardItemPreview、新编辑/命令和 Settings Plugins；指定插件回归见最新记录 | 呈现/设置/数据/编辑/保存接口保持；源码接口未改，旧 ABI 和实际安装包待验收 |
+| `plugin:itemfakevim` | 原 ItemLoaderInterface → ClipboardItemPreview、新编辑/命令和 Settings Plugins；指定插件回归见最新记录 | 呈现/设置/数据/编辑/保存接口保持；源码接口未改，旧 ABI 和实际安装包待验收 |
+| `plugin:itemimage` | 原 ItemLoaderInterface → ClipboardItemPreview、新编辑/命令和 Settings Plugins；指定插件回归见最新记录 | 呈现/设置/数据/编辑/保存接口保持；源码接口未改，旧 ABI 和实际安装包待验收 |
+| `plugin:itemnotes` | 原 ItemLoaderInterface → ClipboardItemPreview、新编辑/命令和 Settings Plugins；指定插件回归见最新记录 | 呈现/设置/数据/编辑/保存接口保持；源码接口未改，旧 ABI 和实际安装包待验收 |
+| `plugin:itempinned` | 原 ItemLoaderInterface → ClipboardItemPreview、新编辑/命令和 Settings Plugins；指定插件回归见最新记录 | 呈现/设置/数据/编辑/保存接口保持；源码接口未改，旧 ABI 和实际安装包待验收 |
+| `plugin:itemsync` | 原 ItemLoaderInterface → ClipboardItemPreview、新编辑/命令和 Settings Plugins；指定插件回归见最新记录 | 呈现/设置/数据/编辑/保存接口保持；源码接口未改，旧 ABI 和实际安装包待验收 |
+| `plugin:itemtags` | 原 ItemLoaderInterface → ClipboardItemPreview、新编辑/命令和 Settings Plugins；指定插件回归见最新记录 | 呈现/设置/数据/编辑/保存接口保持；源码接口未改，旧 ABI 和实际安装包待验收 |
+| `plugin:itemtext` | 原 ItemLoaderInterface → ClipboardItemPreview、新编辑/命令和 Settings Plugins；指定插件回归见最新记录 | 呈现/设置/数据/编辑/保存接口保持；源码接口未改，旧 ABI 和实际安装包待验收 |
 
-非 .ui 辅助入口还包括 IconSelectDialog、密码/加密提示、ActionHandlerDialog、ActionHandler 进度、Notification、TrayMenu、ScriptableProxy 的 dialog()/input()/screenshotSelect()、FileDialog 和错误/确认提示；全部交给 I2-2 的独立入口迁移，不能以统一 QSS 代替完成。第三方插件源码接口保持，旧二进制 ABI 尚未验证。
+非 .ui 辅助入口还包括 IconSelectDialog、密码/加密提示、ActionHandlerDialog、ActionHandler 进度、Notification、TrayMenu、ScriptableProxy 的 dialog()/input()/screenshotSelect()、FileDialog 和错误/确认提示；均已接入重新设计的承载。平台系统的文件/字体/颜色/确认对话框保留原生交互；密码、动作、输入和截图的内容布局实际重排，完整三端视觉仍待验收。第三方插件源码接口保持，旧二进制 ABI 尚未验证。
 
 ## 验收标准
 
@@ -395,7 +434,7 @@ I2-1 首批管理功能已实现，I2-1 与本 SPEC 继续保持开发中；P5/P
 
 文档阶段执行 Iteration1 中的三项公共文档命令，lint 目标为整个 docs/astack/version，预期 0 errors/0 warnings。
 
-I2-1 本机 macOS 的配置与指定测试命令如下；每次运行通过隔离 runner 创建临时 session/config/data/state，测试保存/恢复系统剪贴板，不使用日常历史。QML lint 与同目录构建顺序执行，避免并发修改 Ninja 元数据：
+本机 macOS 的配置与指定测试命令如下；每次运行通过隔离 runner 创建临时 session/config/data/state/GNUPGHOME，测试保存/恢复系统剪贴板，不使用日常历史。QML lint 与同目录构建顺序执行，避免并发修改 Ninja 元数据：
 
 ~~~bash
 CMAKE_PREFIX_PATH='/opt/homebrew/opt/qt;/opt/homebrew/opt/qca;/opt/homebrew/opt/qtkeychain' \
@@ -405,17 +444,24 @@ cmake --build build/copyq/macOS-13-m1 -j 6
 cmake --build build/copyq/macOS-13-m1 --target copyq-palette-ui_qmllint
 utils/run-isolated.sh build/copyq/macOS-13-m1/copyq-management-tests \
   multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay \
-  transferAndDeleteProtection qmlSelectionAndActions nativeDropRoundTrip themeMapping
+  transferAndDeleteProtection qmlSelectionAndActions nativeDropRoundTrip themeMapping \
+  legacyStyleRules pluginPreviewBridge managementGeometry settingsDraftTransaction \
+  commandDraftRoundTrip pluginSettingsDraft allPluginSettings historyTimeAndProtection historyCaptureFilters
 utils/run-isolated.sh build/copyq/macOS-13-m1/copyq-tests \
-  testCore:managementActions testCore:managementTabs testCore:managementCommands \
-  testCore:configPath testCore:paletteSearchAndCopy testCore:paletteMimeAndDisplayCommands
-utils/run-isolated.sh build/copyq/macOS-13-m1/copyq-tests testCore:managementEditor
+  testCore:managementActions testCore:managementTabs testCore:managementGroups testCore:managementCommands \
+  testCore:managementHistory testCore:managementHistoryCapture testCore:configPath \
+  testCore:importExportTab testCore:commandConfig testCore:commandLoadTheme testCore:displayCommand \
+  testCore:commandNotification testCore:commandScreenshot testItemImage:savePng \
+  testItemPinned:keepPinnedIfMaxItemsChanges testItemEncrypted:encryptDecryptData \
+  testItemSync:itemsToFiles testItemSync:filesToItems
+utils/run-isolated.sh build/copyq/macOS-13-m1/copyq-tests \
+  testCore:managementEditor testCore:managementDialogs
 utils/run-isolated.sh build/copyq/macOS-13-m1/copyq-palette-tests \
   modelIdentity queryChanges displayCopiesAndPreview sourceDestructionAndReset \
-  qmlKeyboardAndIme explicitCommands standardPreviews nativeWindowIdentification pluginEditorAndSettings
+  qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews pluginEditorAndSettings
 ~~~
 
-最后两条包含真实前台输入/激活，当前环境有失败记录，不能用其余通过项代替。管理的 IME 测试发送真实 QInputMethodEvent，但不启动系统输入法。
+macOS 的 managementEditor/managementDialogs 和另行指定的 nativeWindowIdentification 包含真实前台输入/激活，当前 loginwindow 会话有失败记录，不能用其余通过项代替。管理和面板的 IME 测试发送真实 QInputMethodEvent，但不启动系统输入法。
 
 本机 Linux 复用 Iteration1 的 Colima `qclip-spec1-linux` 容器；先启动容器内 Xvfb :99 与 openbox，再执行下列命令。若它们已运行则复用现有显示会话，不并发启动第二个 :99。容器关闭缺失依赖不改变 CI 默认配置：
 
@@ -429,18 +475,28 @@ docker exec qclip-spec1-linux cmake --build /workspace/build/linux --target copy
 docker exec -e DISPLAY=:99 -e QT_QUICK_BACKEND=software qclip-spec1-linux \
   /workspace/utils/run-isolated.sh /workspace/build/linux/copyq-management-tests \
   multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay \
-  transferAndDeleteProtection qmlSelectionAndActions nativeDropRoundTrip themeMapping
+  transferAndDeleteProtection qmlSelectionAndActions nativeDropRoundTrip themeMapping \
+  legacyStyleRules pluginPreviewBridge managementGeometry settingsDraftTransaction \
+  commandDraftRoundTrip pluginSettingsDraft allPluginSettings historyTimeAndProtection historyCaptureFilters
 docker exec -e DISPLAY=:99 -e QT_QUICK_BACKEND=software qclip-spec1-linux \
   /workspace/utils/run-isolated.sh /workspace/build/linux/copyq-tests \
-  testCore:managementActions testCore:managementTabs testCore:managementCommands testCore:managementEditor \
-  testCore:configPath testCore:paletteSearchAndCopy testCore:paletteMimeAndDisplayCommands testCore:paletteEditor
+  testCore:managementActions testCore:managementTabs testCore:managementGroups testCore:managementCommands \
+  testCore:managementEditor testCore:managementHistory testCore:managementHistoryCapture testCore:managementDialogs \
+  testCore:configPath testCore:searchItemsAndCopy testCore:keysAndFocusing testCore:importExportTab \
+  testCore:commandConfig testCore:commandLoadTheme testCore:displayCommand testCore:commandDialog \
+  testCore:commandDialogFitsContents testCore:commandDialogRestoreGeometry testCore:commandDialogCloseOnDisconnect \
+  testCore:commandNotification testCore:commandScreenshot testItemImage:savePng testItemTags:searchTags \
+  testItemPinned:keepPinnedIfMaxItemsChanges testItemEncrypted:encryptDecryptData testItemEncrypted:encryptDecryptItems \
+  testItemFakeVim:paletteEditor testItemFakeVim:undoGroupsInsertSession testItemSync:itemsToFiles testItemSync:filesToItems \
+  testCore:clipboardUriList testCore:paletteSearchAndCopy testCore:paletteCommands testCore:paletteClipboardFailure \
+  testCore:paletteEditor testCore:palettePaste testCore:paletteMimeAndDisplayCommands testItemFakeVim:createItem
 docker exec -e DISPLAY=:99 -e QT_QUICK_BACKEND=software qclip-spec1-linux \
   /workspace/utils/run-isolated.sh /workspace/build/linux/copyq-palette-tests \
   modelIdentity queryChanges displayCopiesAndPreview sourceDestructionAndReset \
-  qmlKeyboardAndIme explicitCommands standardPreviews nativeWindowIdentification pluginEditorAndSettings
+  qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews nativeWindowIdentification pluginEditorAndSettings
 ~~~
 
-本批入口机械检查为 `python3 utils/check-compatibility.py`。新增测试目标要求指定函数；CI 使用上述管理函数，不直接运行全套。Windows runner 与新测试可执行文件已接入现有工作流和部署脚本，配置检查不等于 Windows 实机测试。
+本批入口机械检查为 `python3 utils/check-compatibility.py`。新增测试目标要求指定函数；CI 使用上述 16 个管理函数和指定服务/插件兼容函数，不直接运行全套。Windows runner 与新测试可执行文件已接入现有工作流和部署脚本，配置检查不等于 Windows 实机测试。
 
 产品构建与原生隔离入口复用 Iteration1，按本段修改范围运行测试。以下是已存在的可执行测试选择；运行前必须完成 CLAUDE 的全部环境与显示会话准备：
 
@@ -457,10 +513,30 @@ build/copyq-tests "testItemEncrypted:encryptDecryptItems" "testItemFakeVim:undoG
 
 ## 验证记录
 
+以下最新记录针对本轮工作；其后的初始开发和 `4a6e1843` 提交前记录用于保留失败与修正过程，不能替代新鲜验证。pass 总数包含 initTestCase/cleanupTestCase。本机日志位于忽略的 build 目录，不随源码提交。
+
 | 日期 | 命令 / 检查 | 结果与证据边界 |
 |---|---|---|
-| 2026-09-29 | 全部改动提交前：两平台 `cmake --build ... -j 6` 与 `copyq-palette-ui_qmllint`，Linux 隔离 runner 的本文 7 个 management 函数及 SPEC1 12 个服务函数加 managementActions/managementTabs/managementCommands/managementEditor | 构建/lint 均退出 0；Linux 管理 9 passed / 0 failed、服务 18 passed / 0 failed（含 init/cleanup），完整 MIME、选择保护、真实键盘编辑/取消/失效源及相关面板回归通过。日志 `build/ship-linux-management.log`、`build/ship-linux-server.log`。用户本轮明确授权全部本地修改提交并推送 `origin/master`；SPEC1/SPEC2 保持开发中，不等于发布或完整验收。 |
-| 2026-09-29 | 提交前 macOS 隔离 runner 的本文 7 个 management 函数 | 8 passed / 1 failed / 0 skipped：`nativeDropRoundTrip` 在 `QTest::qWaitForWindowExposed(&window)` 超时，尚未进入拖放断言；其余选择、保护、QML 操作、主题函数通过，5 万条全选/插入恢复 98ms。停止该平台 GUI 验收并保留 `build/ship-mac-management.log`，没有重试到通过或删改断言；先前通过记录不能替代本次结果。 |
+| 2026-09-29 | 最终编辑/键盘收尾后：两平台 `cmake --build ... -j 6` 和 `copyq-palette-ui_qmllint`；本文管理/面板指定函数 | 构建/lint 退出 0；管理两端均 18 passed，面板 macOS 11 passed、Linux 12 passed，均 0 failed/0 skipped。日志 `build/spec2-last2-{mac,linux}-{build,qmllint}.log`、`build/spec2-last-{mac,linux}-{management,palette}.log`。同目录 build/lint 保持串行；已有 macOS minOS/元数据警告仍保留，未外推平台通过。 |
+| 2026-09-29 | 本文 Linux `copyq-tests` 最终指定 38 个服务/插件函数 | 40 passed / 0 failed / 0 skipped，退出 0，日志 `build/spec2-complete-linux-service.log`。在原 30 个兼容用例之外补 clipboardUriList、面板查询/命令/失败保持/编辑/原生粘贴/MIME 显示副本和 FakeVim createItem，确保新管理主入口不破坏 SPEC1。createItem 保留全部原断言，并新增 Quick 新建条目 :w 连续保存只更新同一条目、删除源后保存不重新插入的断言。 |
+| 2026-09-29 | macOS `copyq-tests testCore:paletteSearchAndCopy testCore:paletteCommands testCore:paletteClipboardFailure testCore:paletteMimeAndDisplayCommands` | 6 passed / 0 failed / 0 skipped，退出 0，日志 `build/spec2-ship-mac-palette-service.log`。面板中文合成输入/复制、命令、错误保持与完整 MIME/显示副本通过；先前 TEST_SELECTED 读取隐藏 Widgets 的失败由实际管理选择读取修复。不是系统输入法或外部前台粘贴验收。 |
+| 2026-09-29 | 旧 FakeVim 新建/再次编辑补查及修正 | 首测 F2 未打开编辑器，保留 `build/spec2-ship-linux-palette-service.log`（9 passed / 1 failed）；等待实际编辑控件仍超时。定位为按管理快捷键时先匹配到 Editor_Save 的 F2，已仅在管理上下文排除编辑器专用动作。随后接续 save/invalidate，使 :w 保存后继续编辑、:wq/普通保存退出，并以持久索引和首次创建状态保护重复保存/源删除。失效源判断使用 document 的 modified 状态，不能用含有效 index 前提的 hasChanges。FakeVim 状态栏 Ex 输入以 Esc 返回正常模式后继续；保留原数据断言，最终 38 用例全部通过。临时诊断输出已移除。 |
+| 2026-09-29 | 本文两平台 `cmake --build ... -j 6` 与 `copyq-palette-ui_qmllint` 最终校验 | 均退出 0；QML 规则 0 warnings。日志 `build/spec2-ship-{mac,linux}-{build,qmllint}.log`。macOS 仍有依赖 minOS 高于 13、重复静态库及 Ninja 元数据自动恢复警告；串行后仍出现元数据警告，原因未定位，不能证明 macOS 13 运行。Linux Qt 6.4.2/GCC 12.2、macOS Qt 6.11.2/AppleClang 21。 |
+| 2026-09-29 | 本文 `copyq-management-tests` 指定 16 个函数，两平台隔离执行 | macOS/Linux 均 18 passed / 0 failed / 0 skipped。覆盖选择身份/5 万条批量、源/显示副本失效、删除保护/完整 MIME/拖放、真实 QML 操作/IME 事件、主题与 QSS 像素、几何、90 项设置草稿、命令完整往返、八插件设置、历史过滤/时间/序列化/加密/保护。5 万条全选加插入恢复：macOS 68ms、Linux 15ms，仅模型耗时。日志 `build/spec2-ship-{mac,linux}-management.log`；截图 `build/spec2-artifacts/management{,-compact}.png` 已检查，工具栏前景正确。 |
+| 2026-09-29 | 本文 `copyq-palette-tests` 指定函数 | macOS 9 函数共 11 passed；Linux 10 函数共 12 passed；均 0 failed/0 skipped。覆盖共享模型/显示副本/源销毁、键盘/IME 事件、动作取消/命令、文本/图片/HTML/文件/损坏图片预览与原编辑/设置；Linux 额外通过 nativeWindowIdentification。日志 `build/spec2-ship-{mac,linux}-palette.log`。macOS 原生窗口激活仍保留历史失败，未用其他通过项替代。 |
+| 2026-09-29 | 本文 Linux `copyq-tests` 指定 30 个服务/插件函数 | 32 passed / 0 failed / 0 skipped，日志 `build/spec2-ship-linux-service.log`。真实服务验证集合/组/动作/命令、富文本格式/搜索/撤销/保存/取消/失效源、类型/来源/敏感/暂停/重复采集/自动命令、最近范围清理/固定与手工集合保护、辅助布局、原脚本对话框几何/取消/断开、通知/截图、原配置/旧主题/旧数据、标签/图片/加密备注/FakeVim/双向文件同步。Xvfb/openbox 不等价于原生 Windows/macOS 前台验收。 |
+| 2026-09-29 | 本文 macOS `copyq-tests` 指定 18 个服务/插件函数 | 19 passed / 1 failed / 0 skipped，退出 1；17 个实际用例通过，commandScreenshot 的 `screenshot().size() > 0` 返回 false，前台记录仍为 loginwindow，原因未完全确认；没有重试或放宽断言。管理/组/命令/采集/清理、配置/主题/旧数据、显示命令/通知、图片/固定、加密数据与双向同步通过；仍需可激活桌面补截图、编辑/辅助焦点和 FakeVim。日志 `build/spec2-ship-mac-service.log`。 |
+| 2026-09-29 | `python3 utils/check-compatibility.py`；harness；目录级 SPEC lint；`git diff --check`；修改 shell 的 `bash -n`；PowerShell Parser；Windows 工作流 YAML 解析 | 均退出 0；登记 49 个动作/90 项配置/24 主表单/7 插件表单/149 API/8 插件，harness 全项通过，三份 SPEC errors=0/warnings=0。三端 CI 已加入 16 管理函数及指定兼容服务/插件函数；配置/语法通过不表示 Windows 构建或运行已通过。 |
+| 2026-09-29 | 接续兼容回归发现的问题及针对性修正 | 组移至根路径曾触发 QString::chopped 的空前缀断言，已修复并通过 managementGroups。显示副本随插入重复执行脚本曾递归添加、Qt 6.4 崩溃（`build/spec2-display-core.log`）；改为持久索引缓存及关闭/查询/源数据失效后，displayCommand 和生命周期回归通过。Quick 可见性未接续 ItemSaver::setFocus 导致 filesToItems 失败，修复后两端双向同步通过。窗口析构可见性回调访问已销毁模型的 SIGABRT 经 gdb 定位（`build/spec2-palette-core.log`），先断开/销毁根/隐藏窗口后两端预览与关闭回归通过。 |
+| 2026-09-29 | 测试承载与夹具修正 | macOS QCA provider 仅在安装阶段复制，构建态真实应用/单元测试找不到 provider；现在复制到产品 bundle 和独立 CopyQ-tests.app，真实八插件/加密断言通过。隔离 runner 的 GNUPGHOME 与 gpgconf 清理避免接触个人密钥。原备注用例按键先于编辑器取得焦点，补等待实际 palette_editor_text 后原加解密/备注断言通过（`build/spec2-encrypted-linux.log`，3 passed）。损坏图片预览从旧 Image.status 断言改为实际插件桥接/原始损坏 MIME 保留断言。工具栏黑字改为原 QToolButton 实际绘制；主题开启/关闭前景像素断言和截图均通过。 |
+| 2026-09-29 | 历史策略初次编译及指定测试 | owner 改为标题/身份同队列后旧日志仍传 pair，受保护清理使用枚举需完整限定，均已修正并重新配置 GLOB 新源文件。两平台随后构建退出 0。Linux `historyTimeAndProtection` 与新增字段后的 `settingsDraftTransaction` 通过；过滤测试的受控 owner 回调把手动设置的忽略身份重置为允许身份，已改为同一可变采样身份，不修改产品过滤规则，复测待记。Qt 6.4 的 QVariantMap 属性 lint 通过 QML var 适配，保持数据字段不变。 |
+| 2026-09-29 | 接续：两平台构建及 `copyq-palette-ui_qmllint`；隔离 `settingsDraftTransaction`、`commandDraftRoundTrip`、`pluginSettingsDraft`；macOS `testCore:managementGroups testCore:managementTabs` | 构建/lint 退出 0；设置 3 passed、命令/插件草稿 4 passed、macOS 集合服务 4 passed（均含 init/cleanup）。覆盖全部原配置名称、23 个可编辑命令字段和保留的本地化/InternalId、命令取消/保存/导入导出、语法检查不执行脚本、插件设置取消/应用。首次设置测试使用 QObject 查找未找到 Repeater 的视觉子项，改为等待并遍历实际 QQuickItem 树；原 INI 只保存 regex pattern，测试使用原格式支持的内联选项，没有修改存储格式。 |
+| 2026-09-29 | Quick 主入口切换后的 Linux 服务回归 | `managementGroups/managementTabs/managementCommands` 通过；`managementActions` 的默认聚焦暴露了隐藏面板被记成粘贴目标的问题，失败记录 `build/spec2-entry-linux-test.log`。已修正目标采集也排除仍存活的隐藏自身 Quick 窗口，停止该段验收并安排复测。 |
+| 2026-09-29 | 接续 I2-1 首次 macOS/Linux 编译 | 新 QFont QML 属性的 MOC 编译失败，缺完整类型头；停止该段验收并补充 QFont include，后续新鲜结果另记。 |
+| 2026-09-29 | 接续 I2-1 `testCore:managementGroups` 首测 | 发现 CLI 新建非当前集合后侧栏仍保留旧列表，两平台均失败；已在原 createTab 完成后通知 Quick 集合列表，仅刷新列表，不重新加载源或改变选择/查询。后续复测另记。 |
+| 2026-09-29 | 新设置窗口接入编译 | QML 注册类的 AppConfig 指针信号和设置根对象 QQuickItem 需要完整类型，已补相应头，停止该段验收并复测。组测试计数断言发现原生 QList 长度的脚本输出含换行，已修正测试预期，不改变产品输出。 |
+| 2026-09-29 | `4a6e1843` 提交前（首批 I2-1）：两平台 `cmake --build ... -j 6` 与 `copyq-palette-ui_qmllint`，Linux 隔离 runner 的本文 7 个 management 函数及 SPEC1 12 个服务函数加 managementActions/managementTabs/managementCommands/managementEditor | 构建/lint 均退出 0；Linux 管理 9 passed / 0 failed、服务 18 passed / 0 failed（含 init/cleanup），完整 MIME、选择保护、真实键盘编辑/取消/失效源及相关面板回归通过。日志 `build/ship-linux-management.log`、`build/ship-linux-server.log`。用户本轮明确授权全部本地修改提交并推送 `origin/master`；SPEC1/SPEC2 保持开发中，不等于发布或完整验收。 |
+| 2026-09-29 | `4a6e1843` 提交前 macOS 隔离 runner 的首批 7 个 management 函数 | 8 passed / 1 failed / 0 skipped：`nativeDropRoundTrip` 在 `QTest::qWaitForWindowExposed(&window)` 超时，尚未进入拖放断言；其余选择、保护、QML 操作、主题函数通过，5 万条全选/插入恢复 98ms。停止该平台 GUI 验收并保留 `build/ship-mac-management.log`，没有重试到通过或删改断言；先前通过记录不能替代本次结果。 |
 | 2026-09-29 | `cmake --build build/copyq/macOS-13-m1 -j 6` 首次 I2-1 编译 | 失败：新管理控制文件缺 PlatformClipboard 完整类型 include，命令快捷键 QStringList 需要转换 QKeySequence；已停止验收并修复，后续新鲜结果另记。 |
 | 2026-09-29 | I2-1 聚焦测试接入编译 | 发现 BROWSER 宏重复声明局部变量、新增 GLOB 测试文件需重新配置；已修复变量并重新运行原 macOS preset。首次 QML lint 的 3 条布局尺寸 warning 已修正。 |
 | 2026-09-29 | `copyq-management-tests multiSelectionIdentity sourceLifetimeAndDisplay transferAndDeleteProtection qmlSelectionAndActions themeMapping` 首测 | 多选/生命周期/传输/实际 QML 点击及 IME 断言通过；主题断言错误地把 QQuickPalette 转成 QPalette，已改为检查真实 Quick palette.text。退出时发现 QML 绑定晚于模型析构，已在管理析构中先释放 QML 根对象；需复测。 |
@@ -479,5 +555,6 @@ build/copyq-tests "testItemEncrypted:encryptDecryptItems" "testItemFakeVim:undoG
 
 | 日期 | 作者 | 内容 |
 |---|---|---|
+| 2026-09-29 | zerovoxxx | 接续落实 I2-1–I2-3 的集合树与主入口、90 项配置草稿、完整命令、编辑/辅助布局、插件呈现、历史过滤/时间/保护清理、旧主题映射和指定 CI；补齐显示副本生命周期、同步可见性与 macOS QCA provider，平台/复杂主题验收仍保持未完成。 |
 | 2026-09-29 | zerovoxxx | 开始 I2-1，实现共享源的 QML 管理首批功能、显式多选/动作/命令/CLI、集合和传输、编辑数据保护及聚焦回归；登记完整入口清单，固定历史时间设计并明确尚未迁移界面和平台失败。SPEC/I2-1 保持开发中。 |
 | 2026-09-28 | zerovoxxx | 从原总 SPEC 分出第二阶段，明确全界面和八插件保留、历史策略/主题兼容、三个实施里程碑及 P5/P6/P7/P12 的唯一归属。 |

@@ -169,7 +169,9 @@ NotificationBasicWidget::NotificationBasicWidget(NotificationBasic *parent)
     : m_parent(parent)
 {
     m_layout = new QGridLayout(this);
-    m_layout->setContentsMargins({8,8,8,8});
+    m_layout->setContentsMargins({16,14,16,14});
+    m_layout->setHorizontalSpacing(12);
+    m_layout->setVerticalSpacing(10);
 
     m_iconLabel = new QLabel(this);
     m_iconLabel->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
@@ -197,8 +199,8 @@ void NotificationBasicWidget::setTitle(const QString &title)
         m_titleLabel->setText(title);
 
         m_layout->addWidget(m_iconLabel, 0, 0);
-        m_layout->addWidget(m_titleLabel, 0, 1, Qt::AlignCenter);
-        m_layout->addWidget(m_msgLabel, 1, 0, 1, 2);
+        m_layout->addWidget(m_titleLabel, 0, 1, Qt::AlignLeft);
+        m_layout->addWidget(m_msgLabel, 1, 1);
     } else {
         if (m_titleLabel) {
             m_titleLabel->deleteLater();

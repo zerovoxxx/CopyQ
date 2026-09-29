@@ -302,6 +302,14 @@ void TabWidget::setTabItemCount(const QString &tabName, int itemCount)
     updateTabItemCount(tabName);
 }
 
+QVariantMap TabWidget::itemCounts() const
+{
+    QVariantMap result;
+    for (int i = 0; i < count(); ++i)
+        result.insert(tabName(i), m_tabItemCounters.value(widget(i), -1));
+    return result;
+}
+
 void TabWidget::setTabsOrder(const QStringList &tabs)
 {
     if (this->tabs() == tabs)

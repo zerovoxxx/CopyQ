@@ -14,6 +14,10 @@
 #include "item/itemstore.h"
 #include "item/itemwidget.h"
 #include "item/serialize.h"
+#include "common/settings.h"
+#include "gui/mainwindow.h"
+#include "gui/theme.h"
+#include "gui/windowgeometryguard.h"
 #include "gui/clipboardbrowsershared.h"
 
 #include <QCoreApplication>
@@ -74,6 +78,10 @@ QByteArray loadPasswordFromKeychain()
 
 void activateWindow(QWidget *parent)
 {
+    if (auto mainWindow = qobject_cast<MainWindow *>(parent)) {
+        mainWindow->showWindow();
+        return;
+    }
     parent->show();
     parent->activateWindow();
     parent->raise();
@@ -118,8 +126,17 @@ Encryption::SecureArray getStoredPassword(PasswordSource prompt)
 Encryption::SecureArray getPassword(
     QWidget *parent, const QString &title, const QString &label, bool *ok = nullptr)
 {
-    const Encryption::Cleared<QString> str(QInputDialog::getText(
-        parent, title, label, QLineEdit::Password, QString(), ok));
+    QInputDialog dialog(parent);
+    dialog.setWindowTitle(title);
+    dialog.setLabelText(label);
+    dialog.setTextEchoMode(QLineEdit::Password);
+    Settings settings;
+    Theme(settings).decorateDialog(&dialog, title, QObject::tr("Enter the password requested below."));
+    dialog.setMinimumWidth(480);
+    const bool accepted = dialog.exec() == QDialog::Accepted;
+    if (ok) *ok = accepted;
+    const Encryption::Cleared<QString> str(accepted ? dialog.textValue() : QString());
+    dialog.setTextValue(QString());
     const Encryption::Cleared<QByteArray> ba(str.value().toUtf8());
     return Encryption::SecureArray(ba.value());
 }
@@ -138,11 +155,15 @@ void getPasswordAsync(
     dialog->setTextValue(QString());
     dialog->setModal(true);
     dialog->setWindowModality(Qt::ApplicationModal);
+    Settings settings;
+    Theme(settings).decorateDialog(dialog, title, QObject::tr("Password input is hidden. Cancel leaves the encrypted data unchanged."));
+    dialog->setMinimumWidth(480);
     QObject::connect(dialog, &QInputDialog::finished, dialog, [dialog, callback = std::move(callback)](int result) mutable {
         const Encryption::Cleared<QByteArray> ba(dialog->textValue().toUtf8());
         callback(Encryption::SecureArray(ba.value()), result == QDialog::Accepted);
     });
     dialog->open();
+    raiseWindow(dialog);
 }
 
 void promptForNewDefaultPasswordAttemptAsync(
@@ -465,6 +486,9 @@ bool reencryptTabs(
         parent
     );
     progress.setWindowModality(Qt::WindowModal);
+    progress.setWindowTitle(QObject::tr("Encryption"));
+    progress.setMinimumWidth(520);
+    sharedData->theme.decorateMainWindow(&progress);
     progress.setMinimumDuration(500);  // Show after 500ms if not done
     progress.setValue(0);
 

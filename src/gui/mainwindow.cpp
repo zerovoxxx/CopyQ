@@ -31,13 +31,17 @@
 #include "gui/clipboarddialog.h"
 #include "gui/clipboardpalette.h"
 #include "gui/clipboardmanagement.h"
+#include "gui/clipboardsettings.h"
+#include "gui/clipboardcommands.h"
+#include "common/historypolicy.h"
+#include <QDateTime>
+#include <QQuickItem>
 #include "gui/commandaction.h"
 #include "gui/commanddialog.h"
 #include "gui/configurationmanager.h"
 #include "gui/encryptionpassword.h"
 #include "gui/geometry.h"
 #include "gui/importexportdialog.h"
-#include "gui/iconfactory.h"
 #include "gui/iconfactory.h"
 #include "gui/iconselectdialog.h"
 #include "gui/icons.h"
@@ -363,6 +367,11 @@ bool isAnyApplicationWindowActive()
     for ( auto window : qApp->topLevelWidgets() ) {
         const auto ownWindow = platform->getWindow( window->winId() );
         if ( ownWindow && currentWindowTitle == ownWindow->getTitle() )
+            return true;
+    }
+
+    for (auto window : QGuiApplication::topLevelWindows()) {
+        if (window->isVisible() && currentWindow->matchesWindow(window))
             return true;
     }
 
@@ -759,7 +768,6 @@ private:
 
 MainWindow::MainWindow(const ClipboardBrowserSharedPtr &sharedData, QWidget *parent)
     : QMainWindow(parent)
-    , cm(nullptr)
     , ui(new Ui::MainWindow)
     , m_menuItem(nullptr)
     , m_trayMenu( new TrayMenu(this) )
@@ -769,7 +777,6 @@ MainWindow::MainWindow(const ClipboardBrowserSharedPtr &sharedData, QWidget *par
     , m_wasEncrypted(AppConfig().option<Config::encrypt_tabs>())
     , m_menu( new TrayMenu(this) )
     , m_menuMaxItemCount(-1)
-    , m_commandDialog(nullptr)
     , m_clipboard(platformNativeInterface()->clipboard())
 {
     ui->setupUi(this);
@@ -1282,6 +1289,11 @@ void MainWindow::setItemPreviewVisible(bool visible)
         return;
 
     m_showItemPreview = visible;
+    if (m_management) {
+        auto options = m_management->options();
+        options.insert(QStringLiteral("preview"), visible);
+        m_management->setOptions(options);
+    }
     updateItemPreviewAfterMs(0);
 }
 
@@ -1321,8 +1333,8 @@ QVariant MainWindow::callPlugin(const QVariantList &arguments)
 
 void MainWindow::onAboutToQuit()
 {
-    if (cm)
-        cm->close();
+    if (m_settings)
+        m_settings->cancel();
 
     saveMainWindowState( objectName(), saveState() );
     hideWindow();
@@ -1344,6 +1356,10 @@ void MainWindow::onAboutToQuit()
 
 void MainWindow::onItemCommandActionTriggered(CommandAction *commandAction, const QString &triggeredShortcut)
 {
+    if (m_management && m_management->isVisible()) {
+        runManagementCommand(commandAction->command(), triggeredShortcut);
+        return;
+    }
     COPYQ_LOG( QString("Trigger: %1").arg(commandAction->text()) );
     auto c = getPlaceholder()->createBrowser();
     if (!c)
@@ -1488,6 +1504,9 @@ void MainWindow::onBrowserCreated(ClipboardBrowser *browser)
              this, &MainWindow::onItemDoubleClicked );
     connect( browser, &ClipboardBrowser::itemCountChanged,
              ui->tabWidget, &TabWidget::setTabItemCount );
+    connect(browser, &ClipboardBrowser::itemCountChanged, this, [this] {
+        if (m_management) m_management->setTabCounts(ui->tabWidget->itemCounts());
+    });
     connect( browser, &ClipboardBrowser::showContextMenu,
              this, &MainWindow::showContextMenuAt );
     connect( browser, &ClipboardBrowser::itemSelectionChanged,
@@ -1503,7 +1522,10 @@ void MainWindow::onBrowserCreated(ClipboardBrowser *browser)
     connect( browser, &ClipboardBrowser::searchShowRequest,
              this, &MainWindow::onSearchShowRequest );
     connect( browser, &ClipboardBrowser::itemWidgetCreated,
-             this, &MainWindow::onItemWidgetCreated );
+             this, [this](const PersistentDisplayItem &item) {
+                 if (!m_management && !m_palette)
+                     onItemWidgetCreated(item);
+             });
 
     connect( browser, &ClipboardBrowser::runOnRemoveItemsHandler,
              browser, [this, browser](const QList<QPersistentModelIndex> &indexes, bool *canRemove) {
@@ -1777,6 +1799,9 @@ ClipboardBrowserPlaceholder *MainWindow::createTab(const QString &name, TabNameM
 
     placeholder->setMaxItemCount(maxItemCount);
 
+    if (m_management)
+        m_management->setTabs(this->tabs());
+
     return placeholder;
 }
 
@@ -1786,7 +1811,13 @@ QAction *MainWindow::createAction(Actions::Id id, MainWindowActionSlot<SlotRetur
     QAction *act = parent
         ? actionForMenuItem(id, parent, Qt::WidgetWithChildrenShortcut)
         : actionForMenuItem(id, this, Qt::WindowShortcut);
-    connect(act, &QAction::triggered, this, slot, Qt::UniqueConnection);
+    disconnect(act, &QAction::triggered, this, nullptr);
+    connect(act, &QAction::triggered, this, [this, id, slot] {
+        if (m_management && m_management->isVisible())
+            m_management->triggerAction(id);
+        else
+            (this->*slot)();
+    });
     if (menu)
         menu->addAction(act);
     return act;
@@ -1803,7 +1834,14 @@ template <typename Receiver, typename ReturnType>
 QAction *MainWindow::addItemAction(Actions::Id id, Receiver *receiver, ReturnType (Receiver::* slot)())
 {
     QAction *act = actionForMenuItem(id, getPlaceholder(), Qt::WidgetWithChildrenShortcut);
-    connect( act, &QAction::triggered, receiver, slot, Qt::UniqueConnection );
+    disconnect(act, &QAction::triggered, nullptr, nullptr);
+    const QPointer<Receiver> target = receiver;
+    connect(act, &QAction::triggered, this, [this, id, target, slot] {
+        if (m_management && m_management->isVisible())
+            m_management->triggerAction(id);
+        else if (target)
+            (target.data()->*slot)();
+    });
     m_menuItem->addAction(act);
     return act;
 }
@@ -1830,7 +1868,9 @@ void MainWindow::addCommandsToItemMenu(ClipboardBrowser *c)
         return;
     }
 
-    auto data = selectionData(*c);
+    auto data = m_management && m_management->isVisible() && m_management->history()->sourceModel() == c->model()
+        ? managementSelectionData()
+        : selectionData(*c);
     const auto commands = commandsForMenu(data, c->tabName(), m_menuCommands);
 
     for (const auto &command : commands) {
@@ -2082,6 +2122,8 @@ void MainWindow::setTrayEnabled(bool enable)
 
 bool MainWindow::isWindowVisible() const
 {
+    if (m_management)
+        return m_management->isVisible() && m_management->visibility() != QWindow::Minimized && m_management->isActive();
     return !isMinimized() && isVisible() && m_isActiveWindow;
 }
 
@@ -2413,7 +2455,7 @@ QVariantMap MainWindow::exportTabData(const QString &tab, const Tabs &tabProps, 
 bool MainWindow::canImport(const ImportSelection &sel)
 {
     // Configuration dialog shouldn't be open.
-    if (!sel.configuration.isEmpty() && cm) {
+    if (!sel.configuration.isEmpty() && m_settings) {
         log("Failed to import configuration while configuration dialog is open", LogError);
         return false;
     }
@@ -2445,8 +2487,7 @@ void MainWindow::importSelected(const ImportSelection &sel)
 
         // Re-create command dialog again later.
         if (m_commandDialog) {
-            m_commandDialog->deleteLater();
-            m_commandDialog = nullptr;
+            m_commandDialog.release()->deleteLater();
         }
 
         Settings settings(configurationFilePath("-commands.ini"));
@@ -2758,7 +2799,9 @@ void MainWindow::enableHideWindowOnUnfocus()
 
 void MainWindow::hideWindowIfNotActive()
 {
-    if ( isVisible() && !hasDialogOpen(this) && !isAnyApplicationWindowActive() ) {
+    if ( (isVisible() || (m_management && m_management->isVisible()))
+            && !hasDialogOpen(this) && !(m_settings && m_settings->isVisible())
+            && !(m_commandDialog && m_commandDialog->isVisible()) && !isAnyApplicationWindowActive() ) {
         COPYQ_LOG("Auto-hiding unfocused main window");
         hideWindow();
     }
@@ -2884,6 +2927,18 @@ bool MainWindow::eventFilter(QObject *object, QEvent *ev)
     auto *event = static_cast<QKeyEvent *>(ev);
     const int key = event->key();
     const Qt::KeyboardModifiers modifiers = event->modifiers();
+
+    if (object->objectName() == QLatin1String("item_editor_search")
+            && (key == Qt::Key_Return || key == Qt::Key_Enter)) {
+        event->accept();
+        if (type == QEvent::KeyPress) {
+            const auto search = qobject_cast<Utils::FilterLineEdit *>(object);
+            const auto editor = search->window()->findChild<ItemEditorWidget *>(QStringLiteral("palette_editor_text"));
+            editor->search(search->filter());
+            editor->setFocus();
+        }
+        return true;
+    }
 
     // Navigation styles can override shortcuts with Ctrl, because of some
     // conflict with default shortcuts.
@@ -3177,14 +3232,27 @@ void MainWindow::loadSettings(QSettings &settings, AppConfig *appConfig)
                                                       : Qt::ToolButtonTextUnderIcon);
 
     m_options.closeOnUnfocus = appConfig->option<Config::close_on_unfocus>();
+    m_timerHistoryExpiry.stop();
+    m_timerHistoryExpiry.disconnect(this);
+    const auto historyDays = appConfig->option<Config::clipboard_history_max_days>();
+    if (historyDays > 0) {
+        const qint64 duration = qint64(historyDays) * 86400000;
+        connect(&m_timerHistoryExpiry, &QTimer::timeout, this, [this, duration]() {
+            cleanupHistory(QDateTime::currentMSecsSinceEpoch(), duration, true);
+        });
+        m_timerHistoryExpiry.start(60000);
+        QTimer::singleShot(0, this, [this]() {
+            if (m_timerHistoryExpiry.isActive())
+                cleanupHistory(QDateTime::currentMSecsSinceEpoch(),
+                    qint64(AppConfig().option<Config::clipboard_history_max_days>()) * 86400000, true);
+        });
+    }
 
     WindowFlags flags(this);
     const bool alwaysOnTop = appConfig->option<Config::always_on_top>();
     flags.set(Qt::WindowStaysOnTopHint, alwaysOnTop);
     if (m_commandDialog) {
-        WindowFlags dialogFlags(m_commandDialog.data());
-        dialogFlags.set(Qt::WindowStaysOnTopHint, alwaysOnTop);
-        dialogFlags.apply();
+        m_commandDialog->setFlag(Qt::WindowStaysOnTopHint, alwaysOnTop);
     }
     flags.set(Qt::Tool, appConfig->option<Config::hide_main_window_in_task_bar>());
     flags.set(Qt::FramelessWindowHint, appConfig->option<Config::frameless_window>());
@@ -3246,6 +3314,14 @@ void MainWindow::loadSettings(QSettings &settings, AppConfig *appConfig)
     if (m_management) {
         m_management->setTheme(theme().quickTheme());
         m_management->setActions(m_sharedData->menuItems);
+        m_management->setOptions({{QStringLiteral("hideTabs"), m_options.hideTabs},
+            {QStringLiteral("hideToolbar"), hideToolbar}, {QStringLiteral("hideToolbarLabels"), hideToolBarLabels},
+            {QStringLiteral("singleClick"), m_singleClickActivate}, {QStringLiteral("navigationStyle"), int(m_options.navigationStyle)},
+            {QStringLiteral("treeMode"), appConfig->option<Config::tab_tree>()},
+            {QStringLiteral("showTabCounts"), appConfig->option<Config::show_tab_item_count>()},
+            {QStringLiteral("rowIndexFromOne"), m_sharedData->rowIndexFromOne},
+            {QStringLiteral("historyTab"), m_options.clipboardTab.isEmpty() ? defaultClipboardTabName() : m_options.clipboardTab},
+            {QStringLiteral("preview"), m_showItemPreview}});
         if (m_management->isVisible())
             setManagementSource(getPlaceholder()->tabName());
     }
@@ -3275,45 +3351,24 @@ void MainWindow::openHelp()
 
 void MainWindow::showWindow()
 {
-    if (m_management && m_management->isVisible()) {
-        m_management->open();
-        return;
-    }
-    if ( isWindowVisible() )
-        return;
-
     m_trayMenu->close();
     m_menu->close();
-
-    updateFocusWindows();
-
-    moveToCurrentWorkspace(this);
-
-    if ( !isGeometryGuardBlockedUntilHidden(this) && (m_wasMaximized || isMaximized()) )
-        showMaximized();
-    else
-        showNormal();
-
-    ensureWindowOnScreen(this);
-
-    auto c = browser();
-    if (c) {
-        if ( !c->isInternalEditorOpen() )
-            c->scrollTo( c->currentIndex() );
-        c->setFocus();
-    }
-
-    raiseWindow(this);
+    showManagement();
 }
 
 void MainWindow::hideWindow()
 {
-    if (m_management)
-        m_management->hide();
-    if ( closeMinimizes() )
-        minimizeWindow();
-    else
-        hide();
+    if (m_management) {
+        if (closeMinimizes())
+            m_management->showMinimized();
+        else
+            m_management->hide();
+        if (!m_management->history()->query().isEmpty()) {
+            m_management->history()->setQuery(QString());
+            m_management->history()->select(0);
+        }
+    }
+    hide();
 
     // It can be unexpected to have search active or random items selected when
     // reopening main window. This resets search and selection after the window
@@ -3329,9 +3384,11 @@ void MainWindow::hideWindow()
 void MainWindow::minimizeWindow()
 {
     if (m_options.hideMainWindow)
-        hide();
+        hideWindow();
+    else if (m_management)
+        m_management->showMinimized();
     else
-        showMinimized();
+        hide();
 }
 
 bool MainWindow::toggleVisible()
@@ -3347,7 +3404,7 @@ bool MainWindow::toggleVisible()
 
 void MainWindow::toggleVisibleFromTray()
 {
-    if (!isMinimized() && isVisible()) {
+    if (m_management && m_management->isVisible() && m_management->visibility() != QWindow::Minimized) {
         hideWindow();
     } else {
         showWindow();
@@ -3890,6 +3947,7 @@ bool MainWindow::togglePalette()
             break;
         }
     }
+    m_palette->setTheme(theme().quickTheme());
     m_palette->open(source->model(), source->tabName(), tabs(), target);
     if (m_palette->status() != QQuickView::Ready)
         showError(m_palette->error());
@@ -4101,13 +4159,14 @@ void MainWindow::openPaletteEditor(const QPersistentModelIndex &index)
     }
 }
 
-void MainWindow::openItemEditor(const QPersistentModelIndex &index, const QString &format, ClipboardBrowser *browser)
+void MainWindow::openItemEditor(const QPersistentModelIndex &index, const QString &format,
+                              ClipboardBrowser *browser, const QByteArray &content, bool changeClipboard)
 {
     const bool isNew = !index.isValid();
     const auto data = isNew ? QVariantMap() : m_sharedData->itemFactory->data(index);
     if (!isNew && data.isEmpty())
         return;
-    if (!isNew && format == mimeText && !data.contains(mimeText) && !data.contains(mimeHtml))
+    if (!isNew && content.isNull() && format == mimeText && !data.contains(mimeText) && !data.contains(mimeHtml))
         return;
     const QPointer<ClipboardBrowser> source = browser;
     if (!source || (!isNew && source->model() != index.model()))
@@ -4118,49 +4177,106 @@ void MainWindow::openItemEditor(const QPersistentModelIndex &index, const QStrin
     dialog->setWindowTitle(tr("QClip — Edit clipboard item"));
     dialog->resize(640, 420);
     auto layout = new QVBoxLayout(dialog);
+    layout->setContentsMargins(24, 20, 24, 20);
+    layout->setSpacing(12);
+    auto heading = new QLabel(isNew ? tr("New clipboard item") : tr("Edit clipboard item"), dialog);
+    auto headingFont = theme().font(QStringLiteral("font"));
+    headingFont.setBold(true);
+    heading->setFont(headingFont);
+    layout->addWidget(heading);
+    auto details = new QLabel(tr("Collection: %1 · Format: %2").arg(source->tabName(), format), dialog);
+    details->setWordWrap(true);
+    layout->addWidget(details);
     auto editor = new ItemEditorWidget(index, format, dialog);
     editor->setObjectName(QStringLiteral("palette_editor_text"));
-    if (format == mimeText && data.contains(mimeHtml))
+    if (!content.isNull())
+        editor->setPlainText(QString::fromUtf8(content));
+    else if (format == mimeText && data.contains(mimeHtml))
         editor->setHtml(getTextData(data, mimeHtml));
     else
         editor->setPlainText(getTextData(data, format));
     editor->setFont(theme().editorFont());
     editor->setPalette(theme().editorPalette());
+    editor->setSaveOnReturnKey(m_sharedData->saveOnReturnKey);
     layout->addWidget(editor->createToolbar(dialog, m_sharedData->menuItems));
+    auto searchBar = new QWidget(dialog);
+    auto searchLayout = new QHBoxLayout(searchBar);
+    searchLayout->setContentsMargins(0, 0, 0, 0);
+    auto search = new Utils::FilterLineEdit(searchBar);
+    search->setObjectName(QStringLiteral("item_editor_search"));
+    search->installEventFilter(this);
+    search->setPlaceholderText(tr("Find in this item…"));
+    searchLayout->addWidget(search, 1);
+    auto previous = new QPushButton(tr("Previous"), searchBar);
+    auto next = new QPushButton(tr("Next"), searchBar);
+    previous->setAutoDefault(false);
+    next->setAutoDefault(false);
+    searchLayout->addWidget(previous);
+    searchLayout->addWidget(next);
+    layout->addWidget(searchBar);
+    searchBar->hide();
+    connect(editor, &ItemEditorWidget::searchRequest, searchBar, [searchBar, search] {
+        searchBar->show();
+        search->setFocus();
+        search->selectAll();
+    });
+    search->loadSettings();
+    connect(search, &Utils::FilterLineEdit::filterChanged, editor, [editor, search] { editor->search(search->filter()); });
+    connect(search, &QLineEdit::returnPressed, editor, [editor] { editor->findNext(); editor->setFocus(); });
+    connect(previous, &QPushButton::clicked, editor, &ItemEditorWidget::findPrevious);
+    connect(next, &QPushButton::clicked, editor, &ItemEditorWidget::findNext);
     layout->addWidget(editor);
     auto error = new QLabel(dialog);
     error->setWordWrap(true);
     error->hide();
     layout->addWidget(error);
     auto buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, dialog);
+    buttons->button(QDialogButtonBox::Save)->setAutoDefault(false);
+    buttons->button(QDialogButtonBox::Cancel)->setAutoDefault(false);
     layout->addWidget(buttons);
-    const auto save = [this, source, index, editor, dialog, error, isNew, format]() {
+    theme().decorateMainWindow(dialog);
+    const auto editedItem = std::make_shared<QPair<QPersistentModelIndex, bool>>(index, isNew);
+    const auto save = [this, source, editedItem, editor, error, format, changeClipboard]() {
+        const auto &currentIndex = editedItem->first;
         bool saved = false;
-        if (source && source->isLoaded() && (isNew || (index.isValid() && source->model() == index.model()))) {
-            if (isNew) {
+        if (source && source->isLoaded()
+                && (editedItem->second || (currentIndex.isValid() && source->model() == currentIndex.model()))) {
+            if (editedItem->second) {
                 saved = source->add(editor->data());
+                if (saved) {
+                    editedItem->first = source->index(0);
+                    editedItem->second = false;
+                }
             } else {
-                auto data = m_sharedData->itemFactory->data(index);
+                auto data = m_sharedData->itemFactory->data(currentIndex);
                 if (!data.isEmpty()) {
                     const auto edited = editor->data();
                     if (format == mimeText && !edited.contains(mimeHtml))
                         data.remove(mimeHtml);
                     for (auto it = edited.cbegin(); it != edited.cend(); ++it)
                         data.insert(it.key(), it.value());
-                    saved = m_sharedData->itemFactory->setData(data, index, source->model());
+                    saved = m_sharedData->itemFactory->setData(data, currentIndex, source->model());
                 }
             }
         }
         if (!saved) {
             error->setText(tr("The item could not be saved. Its collection may have been removed, unloaded or locked. Your edits are still available here."));
             error->show();
-            return;
+            editor->setHasChanges(true);
+            return false;
         }
-        dialog->accept();
+        editor->setHasChanges(false);
+        error->hide();
+        if (changeClipboard)
+            emit source->changeClipboard(source->copyIndex(currentIndex));
+        return true;
     };
-    connect(buttons, &QDialogButtonBox::accepted, dialog, save);
+    connect(buttons, &QDialogButtonBox::accepted, dialog, [dialog, save] { if (save()) dialog->accept(); });
     connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
     connect(editor, &ItemEditorWidget::save, dialog, save);
+    connect(editor, &ItemEditorWidget::invalidate, dialog, [dialog, editor] {
+        if (!editor->document()->isModified()) dialog->accept();
+    });
     connect(editor, &ItemEditorWidget::cancel, dialog, &QDialog::reject);
     if (m_palette)
         m_palette->cancel();
@@ -4171,53 +4287,10 @@ void MainWindow::openItemEditor(const QPersistentModelIndex &index, const QStrin
 
 void MainWindow::openPalettePluginSettings()
 {
-    if (cm) {
-        m_palette->complete(tr("Close Preferences before opening plugin settings."));
-        return;
-    }
-    if (auto existing = findChild<QDialog*>(QStringLiteral("palette_plugin_settings"))) {
-        m_palette->cancel();
-        existing->raise();
-        existing->activateWindow();
-        return;
-    }
-    auto dialog = new QDialog(this);
-    dialog->setObjectName(QStringLiteral("palette_plugin_settings"));
-    dialog->setAttribute(Qt::WA_DeleteOnClose);
-    dialog->setWindowTitle(tr("QClip — Plugin settings"));
-    dialog->resize(640, 420);
-    auto layout = new QVBoxLayout(dialog);
-    auto tabs = new QTabWidget(dialog);
-    layout->addWidget(tabs);
-    ItemLoaderList loaders;
-    for (const auto &loader : m_sharedData->itemFactory->loaders()) {
-        // Plugin loaders retain their settings widget; don't open two copies at once.
-        if (!loader->isEnabled())
-            continue;
-        auto widget = loader->createSettingsWidget(tabs);
-        if (widget) {
-            tabs->addTab(widget, loader->name());
-            loaders.append(loader);
-        }
-    }
-    auto buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, dialog);
-    layout->addWidget(buttons);
-    connect(buttons, &QDialogButtonBox::accepted, dialog, [dialog, loaders]() {
-        Settings settings;
-        settings.beginGroup(QStringLiteral("Plugins"));
-        for (const auto &loader : loaders) {
-            settings.beginGroup(loader->id());
-            loader->applySettings(settings);
-            settings.endGroup();
-        }
-        settings.endGroup();
-        settings.sync();
-        dialog->accept();
-    });
-    connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
     m_palette->cancel();
-    dialog->show();
-    raiseWindow(dialog);
+    openPreferences();
+    if (m_settings && m_settings->rootObject())
+        m_settings->rootObject()->setProperty("section", QStringLiteral("Plugins"));
 }
 
 void MainWindow::activateCurrentItem()
@@ -4233,10 +4306,14 @@ void MainWindow::activateCurrentItem()
 
 void MainWindow::activateCurrentItemHelper()
 {
+    const bool quick = m_management && m_management->isVisible();
+    if (quick && (m_management->history()->filtering() || m_management->history()->selectedIndexes().isEmpty()))
+        return;
+    const auto menu = quick ? m_managementCommandMenu : m_menuItem;
     if ( QApplication::queryKeyboardModifiers() == Qt::NoModifier
-         && isItemMenuDefaultActionValid() )
+         && menu && menu->defaultAction() && menu->defaultAction()->isEnabled() )
     {
-        m_menuItem->defaultAction()->trigger();
+        menu->defaultAction()->trigger();
         return;
     }
 
@@ -4252,7 +4329,13 @@ void MainWindow::activateCurrentItemHelper()
     // Copy current item or selection to clipboard.
     // While clipboard is being set (in separate process)
     // activate target window for pasting.
-    c->moveToClipboard();
+    if (quick) {
+        QModelIndexList indexes;
+        for (const auto &index : m_management->history()->selectedIndexes())
+            indexes.append(index);
+        c->moveToClipboard(indexes);
+    } else
+        c->moveToClipboard();
 
     if ( m_options.activateCloses() )
         hideWindow();
@@ -4494,7 +4577,7 @@ void MainWindow::updateFocusWindows()
 
     // Quick windows and editor/settings dialogs must not replace an external paste target.
     for (auto window : QGuiApplication::topLevelWindows()) {
-        if (window != windowHandle() && window->isVisible() && lastWindow->matchesWindow(window))
+        if (window != windowHandle() && lastWindow->matchesWindow(window))
             return;
     }
 
@@ -4680,28 +4763,18 @@ void MainWindow::openPreferences()
 {
     if ( !isEnabled() )
         return;
-
-    if (cm) {
-        cm->activateWindow();
-        return;
+    if (!m_settings) {
+        if (auto dialog = findChild<QDialog*>(QStringLiteral("palette_plugin_settings")))
+            delete dialog;
+        m_settings = std::make_unique<ClipboardSettings>(m_sharedData);
+        connect(m_settings.get(), &ClipboardSettings::configurationChanged,
+                this, &MainWindow::configurationChanged);
+        connect(m_settings.get(), &ClipboardSettings::finished, this, [this]() {
+            if (m_settings)
+                m_settings.release()->deleteLater();
+        });
     }
-
-    // Loaders retain pointers to their settings widgets; only one settings host may exist.
-    if (auto dialog = findChild<QDialog*>(QStringLiteral("palette_plugin_settings")))
-        delete dialog;
-
-    ConfigurationManager configurationManager(m_sharedData, this);
-    WindowGeometryGuard::create(&configurationManager);
-
-    // notify window if configuration changes
-    connect( &configurationManager, &ConfigurationManager::configurationChanged,
-             this, &MainWindow::configurationChanged );
-    connect( &configurationManager, &ConfigurationManager::error,
-             this, &MainWindow::showError );
-
-    cm = &configurationManager;
-    configurationManager.exec();
-    cm = nullptr;
+    m_settings->open();
 }
 
 void MainWindow::openCommands()
@@ -4709,26 +4782,17 @@ void MainWindow::openCommands()
     if ( !isEnabled() )
         return;
 
-    if (m_commandDialog) {
-        m_commandDialog->show();
-        m_commandDialog->activateWindow();
-    } else {
-        const QVector<Command> pluginCommands = m_sharedData->itemFactory->commands();
-        QStringList formats = m_sharedData->itemFactory->formatsToSave();
-        formats.prepend(mimeText);
-        formats.removeDuplicates();
-
-        QWidget *parent = this;
-        if (cm)
-            parent = cm;
-
-        m_commandDialog = openDialog<CommandDialog>(pluginCommands, formats, parent);
-        connect(this, &QObject::destroyed, m_commandDialog.data(), &QWidget::close);
-        connect(m_commandDialog.data(), &CommandDialog::commandsSaved, this, &MainWindow::updateEnabledCommands);
+    if (!m_commandDialog) {
+        m_commandDialog = std::make_unique<ClipboardCommands>(m_sharedData);
+        connect(m_commandDialog.get(), &ClipboardCommands::commandsSaved, this, &MainWindow::updateEnabledCommands);
+        connect(m_commandDialog.get(), &ClipboardCommands::clipboardRequested, this,
+            [this](const QVariantMap &data) { setClipboard(data); });
+        connect(m_commandDialog.get(), &ClipboardCommands::finished, this, [this]() {
+            if (m_commandDialog)
+                m_commandDialog.release()->deleteLater();
+        });
     }
-
-    if (cm && cm->isVisible())
-        m_commandDialog->setWindowModality(Qt::ApplicationModal);
+    m_commandDialog->open();
 }
 
 ClipboardBrowser *MainWindow::browser(int index)
@@ -4779,10 +4843,7 @@ void MainWindow::editNewItem()
         return;
 
     showWindow();
-    if ( !c->isInternalEditorOpen() ) {
-        c->setFocus();
-        c->editNew(mimeText, {});
-    }
+    openItemEditor({}, mimeText, c);
 }
 
 void MainWindow::pasteItems()
@@ -5286,6 +5347,8 @@ void MainWindow::forceUnloadTab(const QString &tabName)
 
 MainWindow::~MainWindow()
 {
+    m_commandDialog.reset();
+    m_settings.reset();
     m_management.reset();
     m_palette.reset();
     delete ui;

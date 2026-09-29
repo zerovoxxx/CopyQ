@@ -308,6 +308,11 @@ bool MacPlatformWindow::pasteFromClipboardSafely(const std::function<bool()> &ca
 }
 
 
+QString MacPlatformWindow::getApplicationId() const
+{
+    return m_runningApplication ? QString::fromNSString([m_runningApplication bundleIdentifier]) : QString();
+}
+
 QString MacPlatformWindow::getTitle()
 {
     QString appTitle;

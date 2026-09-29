@@ -10,6 +10,9 @@
 #include "gui/iconfont.h"
 #include "gui/theme.h"
 
+#include <QHBoxLayout>
+#include <QListWidget>
+
 namespace {
 
 QString helpUrl(const char *url)
@@ -72,7 +75,23 @@ AboutDialog::AboutDialog(const Theme &theme, QWidget *parent)
     , ui(new Ui::AboutDialog)
 {
     ui->setupUi(this);
-    ui->textBrowser->setText( aboutPage(theme) );
+    ui->textBrowser->setText(QStringLiteral("<a name='overview'></a>") + aboutPage(theme));
+    auto navigation = new QListWidget(this);
+    navigation->setObjectName(QStringLiteral("about_navigation"));
+    navigation->setMaximumWidth(170);
+    navigation->addItems({tr("Overview"), tr("Contributors and licenses"), tr("Diagnostics")});
+    auto body = new QHBoxLayout;
+    ui->verticalLayout->removeWidget(ui->textBrowser);
+    body->addWidget(navigation);
+    body->addWidget(ui->textBrowser, 1);
+    ui->verticalLayout->insertLayout(0, body, 1);
+    connect(navigation, &QListWidget::currentRowChanged, this, [this](int row) {
+        ui->textBrowser->scrollToAnchor(row == 1 ? QStringLiteral("credits")
+            : row == 2 ? QStringLiteral("diagnostics") : QStringLiteral("overview"));
+    });
+    navigation->setCurrentRow(0);
+    theme.decorateDialog(this, tr("About QClip"), tr("Built on CopyQ. Application information, licenses and diagnostics."));
+    resize(900, 640);
 }
 
 AboutDialog::~AboutDialog()
@@ -135,7 +154,7 @@ QString AboutDialog::aboutPage(const Theme &theme)
             +
         "</p>"
 
-        + helpLibColumns(2, {
+        + "<a name='credits'></a>" + helpLibColumns(2, {
             helpLib("Qt Framework",
                     "The Qt Company and other contributors",
                     "https://www.qt.io/development/qt-framework"),

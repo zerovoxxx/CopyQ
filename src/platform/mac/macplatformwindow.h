@@ -29,6 +29,7 @@ public:
      * On OS X, this gets the title of the application instead of the window.
      */
     QString getTitle() override;
+    QString getApplicationId() const override;
 
     void raise() override;
     bool pasteFromClipboard() override;

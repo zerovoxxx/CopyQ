@@ -31,6 +31,8 @@ public:
 
     /** Return current value. */
     QVariant value() const;
+    QVariant defaultValue() const { return m_default_value; }
+    QObject *object() const { return m_obj; }
 
     /** Set current value. */
     bool setValue(const QVariant &value);

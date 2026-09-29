@@ -266,6 +266,7 @@ public slots:
     void setTitle(const QString &title);
     void setTitleForData(const QVariantMap &data);
     void saveData(const QString &tab, const QVariantMap &data, ClipboardMode mode);
+    void refreshHistoryMetadata(const QString &tab, const QVariantMap &data);
     void showDataNotification(const QVariantMap &data);
 
     bool enableMenuItem(int actionId, int currentRun, int menuItemMatchCommandIndex, const QVariantMap &menuItem);

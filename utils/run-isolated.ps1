@@ -8,7 +8,7 @@ $profile = Join-Path ([IO.Path]::GetTempPath()) ('qclip-' + [guid]::NewGuid().To
 $names = @('COPYQ_SESSION_NAME','COPYQ_SETTINGS_PATH','COPYQ_ITEM_DATA_PATH','COPYQ_STATE_PATH',
     'COPYQ_PLUGINS','COPYQ_DEFAULT_ICON','COPYQ_SESSION_COLOR','COPYQ_THEME_PREFIX',
     'COPYQ_PASSWORD','COPYQ_LOG_LEVEL','QT_LOGGING_RULES','QT_QPA_PLATFORM','QSG_RENDER_LOOP',
-    'QTEST_FUNCTION_TIMEOUT','COPYQ_TESTS_EXECUTABLE','XDG_RUNTIME_DIR')
+    'QTEST_FUNCTION_TIMEOUT','COPYQ_TESTS_EXECUTABLE','XDG_RUNTIME_DIR','GNUPGHOME')
 $previous = @{}
 foreach ($name in $names) { $previous[$name] = [Environment]::GetEnvironmentVariable($name) }
 try {
@@ -17,6 +17,9 @@ try {
     $env:COPYQ_SETTINGS_PATH = Join-Path $profile 'config'
     $env:COPYQ_ITEM_DATA_PATH = Join-Path $profile 'items'
     $env:COPYQ_STATE_PATH = Join-Path $profile 'state'
+    $env:GNUPGHOME = Join-Path $profile 'gnupg'
+    New-Item -ItemType Directory -Path $env:GNUPGHOME -Force | Out-Null
+    if (-not $IsWindows) { & chmod 700 $env:GNUPGHOME }
     if (-not $env:COPYQ_PLUGINS) { $env:COPYQ_PLUGINS = '' }
     $env:COPYQ_DEFAULT_ICON = '1'
     $env:COPYQ_SESSION_COLOR = '#f90'
@@ -45,9 +48,14 @@ try {
         $nativeApp = Join-Path (Split-Path -Parent (Resolve-Path $Executable)) 'CopyQ.app/Contents/MacOS/CopyQ'
         if (Test-Path -LiteralPath $nativeApp) { $env:COPYQ_TESTS_EXECUTABLE = $nativeApp }
     }
+    if ($IsMacOS -and (Split-Path -Leaf $Executable) -in @('copyq-palette-tests','copyq-management-tests')) {
+        $bundledTest = Join-Path (Split-Path -Parent (Resolve-Path $Executable)) ('CopyQ-tests.app/Contents/MacOS/' + (Split-Path -Leaf $Executable))
+        if (Test-Path -LiteralPath $bundledTest) { $Executable = $bundledTest }
+    }
     & $Executable @Arguments
     $result = $LASTEXITCODE
 } finally {
+    if (Get-Command gpgconf -ErrorAction SilentlyContinue) { & gpgconf --homedir (Join-Path $profile 'gnupg') --kill all 2>$null }
     foreach ($name in $names) { [Environment]::SetEnvironmentVariable($name, $previous[$name]) }
     if (Test-Path -LiteralPath $profile) { Remove-Item -LiteralPath $profile -Recurse -Force }
 }

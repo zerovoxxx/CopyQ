@@ -2,6 +2,11 @@
 
 #include "theme.h"
 
+#include <QBoxLayout>
+#include <QGridLayout>
+#include <QLabel>
+#include <QSpinBox>
+
 #include "ui_configtabappearance.h"
 
 #include "common/config.h"
@@ -347,7 +352,53 @@ QVariantMap Theme::quickTheme() const
     result.insert(QStringLiteral("font"), font(QStringLiteral("font")));
     result.insert(QStringLiteral("edit_font"), editorFont());
     result.insert(QStringLiteral("find_font"), searchFont());
+    result.insert(QStringLiteral("num_font"), rowNumberFont());
+    result.insert(QStringLiteral("num_fg"), color(QStringLiteral("num_fg")));
+    result.insert(QStringLiteral("show_number"), showRowNumber());
+    result.insert(QStringLiteral("show_scrollbars"), value(QStringLiteral("show_scrollbars")));
+    for (const auto name : {"quick_spacing", "quick_margin", "quick_row_height", "quick_radius"})
+        result.insert(QLatin1String(name), value(QLatin1String(name)));
+    result.insert(QStringLiteral("main_css"), getStyleSheet(isMainWindowThemeEnabled()
+        ? value(QStringLiteral("css_template_main_window")).toString() : QStringLiteral("main_window_simple")));
+    result.insert(QStringLiteral("items_css"), getStyleSheet(value(QStringLiteral("css_template_items")).toString()));
+    result.insert(QStringLiteral("menu_css"), getMenuStyleSheet());
     return result;
+}
+
+void Theme::decorateDialog(QWidget *dialog, const QString &title, const QString &description) const
+{
+    decorateMainWindow(dialog);
+    auto layout = dialog->layout();
+    if (!layout || dialog->findChild<QWidget *>(QStringLiteral("dialog_heading"))) return;
+    layout->setContentsMargins(24, 20, 24, 20);
+    layout->setSpacing(12);
+    auto header = new QWidget(dialog);
+    header->setObjectName(QStringLiteral("dialog_heading"));
+    auto headerLayout = new QVBoxLayout(header);
+    headerLayout->setContentsMargins(0, 0, 0, 8);
+    auto heading = new QLabel(title, header);
+    auto headingFont = font(QStringLiteral("font"));
+    headingFont.setBold(true);
+    headingFont.setPointSizeF(qMax(14.0, headingFont.pointSizeF() + 4));
+    heading->setFont(headingFont);
+    headerLayout->addWidget(heading);
+    auto detail = new QLabel(description, header);
+    detail->setWordWrap(true);
+    headerLayout->addWidget(detail);
+    if (auto box = qobject_cast<QBoxLayout *>(layout)) box->insertWidget(0, header);
+    else if (auto grid = qobject_cast<QGridLayout *>(layout)) {
+        struct Cell { QLayoutItem *item; int row; int column; int rows; int columns; };
+        QList<Cell> cells;
+        while (grid->count()) {
+            Cell cell{};
+            grid->getItemPosition(0, &cell.row, &cell.column, &cell.rows, &cell.columns);
+            cell.item = grid->takeAt(0);
+            cells.append(cell);
+        }
+        for (const auto &cell : cells)
+            grid->addItem(cell.item, cell.row + 1, cell.column, cell.rows, cell.columns);
+        grid->addWidget(header, 0, 0, 1, qMax(1, grid->columnCount()));
+    }
 }
 
 void Theme::decorateItemPreview(QAbstractScrollArea *itemPreview) const
@@ -526,6 +577,11 @@ void Theme::resetTheme()
     m_theme["use_system_icons"] = Option(false, "checked", ui ? ui->checkBoxSystemIcons : nullptr);
     m_theme["font_antialiasing"] = Option(true, "checked", ui ? ui->checkBoxAntialias : nullptr);
     m_theme["style_main_window"] = Option(false, "checked", ui ? ui->checkBoxStyleMainWindow : nullptr);
+    for (const auto &field : QList<QPair<QString,int>>{
+            {QStringLiteral("quick_spacing"), 12}, {QStringLiteral("quick_margin"), 20},
+            {QStringLiteral("quick_row_height"), 64}, {QStringLiteral("quick_radius"), 6}})
+        m_theme[field.first] = Option(field.second, "value",
+            ui ? ui->scrollAreaThemeContents->findChild<QSpinBox *>(field.first) : nullptr);
 
     const int iconSize = iconFontSizePixels();
     m_theme["icon_size"] = Option( QString::number(iconSize) );

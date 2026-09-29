@@ -37,6 +37,7 @@ if (WITH_QCA_ENCRYPTION)
     set(QCA_OSSL_PLUGIN_FOUND FALSE)
     foreach(QCA_PLUGIN_PATH ${QCA_PLUGIN_SEARCH_PATHS})
         if(EXISTS "${QCA_PLUGIN_PATH}/libqca-ossl.dylib")
+            set(COPYQ_QCA_OSSL_PLUGIN "${QCA_PLUGIN_PATH}/libqca-ossl.dylib")
             install(FILES "${QCA_PLUGIN_PATH}/libqca-ossl.dylib"
                 DESTINATION "${COPYQ_EXECUTABLE_NAME}.app/Contents/PlugIns/crypto"
                 COMPONENT Runtime)

@@ -16,6 +16,7 @@ public:
     explicit X11PlatformWindow(quintptr winId);
 
     QString getTitle() override;
+    QString getApplicationId() const override;
 
     void raise() override;
 

@@ -12,6 +12,10 @@ list(REMOVE_ITEM copyq_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardpalette.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardpalettemodel.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardmanagement.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardsettings.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardcommands.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboarditempreview.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardstyle.cpp"
 )
 
 file(GLOB copyq_FORMS
@@ -142,12 +146,17 @@ qt_add_qml_module(copyq-palette-ui
     URI QClip
     VERSION 1.0
     STATIC
+    DEPENDENCIES QtQuick
     RESOURCE_PREFIX /copyq
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/QClip"
-    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Theme.qml
+    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Settings.qml gui/qml/Commands.qml gui/qml/Theme.qml gui/qml/ThemeButton.qml gui/qml/ThemeMenu.qml gui/qml/ThemeMenuItem.qml
     SOURCES gui/clipboardpalette.h gui/clipboardpalette.cpp
             gui/clipboardpalettemodel.h gui/clipboardpalettemodel.cpp
             gui/clipboardmanagement.h gui/clipboardmanagement.cpp
+            gui/clipboardsettings.h gui/clipboardsettings.cpp
+            gui/clipboardcommands.h gui/clipboardcommands.cpp
+            gui/clipboarditempreview.h gui/clipboarditempreview.cpp
+            gui/clipboardstyle.h gui/clipboardstyle.cpp
 )
 target_include_directories(copyq-palette-ui PRIVATE . gui)
 target_link_libraries(copyq-palette-ui PRIVATE ${copyq_LIBRARIES})
@@ -227,6 +236,14 @@ else()
     set_target_properties(${COPYQ_EXECUTABLE_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/../shared/Info.plist")
     set_target_properties(${COPYQ_EXECUTABLE_NAME} PROPERTIES
         INSTALL_RPATH "@executable_path/../Frameworks")
+
+    if(COPYQ_QCA_OSSL_PLUGIN)
+        add_custom_command(TARGET ${COPYQ_EXECUTABLE_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_BUNDLE_DIR:${COPYQ_EXECUTABLE_NAME}>/Contents/PlugIns/crypto"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${COPYQ_QCA_OSSL_PLUGIN}"
+                "$<TARGET_BUNDLE_DIR:${COPYQ_EXECUTABLE_NAME}>/Contents/PlugIns/crypto/libqca-ossl.dylib")
+    endif()
 
     set(BUNDLE "\${CMAKE_INSTALL_PREFIX}/${COPYQ_EXECUTABLE_NAME}.app")
 

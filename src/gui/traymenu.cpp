@@ -14,11 +14,13 @@
 #include <QAction>
 #include <QApplication>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QModelIndex>
 #include <QPixmap>
 #include <QRegularExpression>
 #include <QLoggingCategory>
 #include <QWindow>
+#include <QWidgetAction>
 
 namespace {
 
@@ -65,6 +67,15 @@ TrayMenu::TrayMenu(QWidget *parent)
     , m_omitPaste(false)
     , m_numberSearch(false)
 {
+    auto heading = new QWidgetAction(this);
+    auto label = new QLabel(tr("QClip · Clipboard"), this);
+    label->setContentsMargins(16, 12, 16, 12);
+    auto headingFont = font();
+    headingFont.setBold(true);
+    label->setFont(headingFont);
+    heading->setDefaultWidget(label);
+    heading->setEnabled(false);
+    addAction(heading);
     m_clipboardItemActionsSeparator = addSeparator();
     m_customActionsSeparator = addSeparator();
     initSingleShotTimer( &m_timerUpdateActiveAction, 0, this, &TrayMenu::doUpdateActiveAction );

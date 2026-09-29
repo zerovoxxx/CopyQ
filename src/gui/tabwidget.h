@@ -77,6 +77,7 @@ public:
     void setTabBarHidden(bool hidden);
     void setTreeModeEnabled(bool enabled);
     void setTabItemCount(const QString &tabName, int itemCount);
+    QVariantMap itemCounts() const;
 
     void setTabsOrder(const QStringList &tabs);
     void reorderTabs(const QStringList &tabs);

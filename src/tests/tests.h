@@ -36,8 +36,12 @@ private slots:
     void paletteMimeAndDisplayCommands();
     void managementActions();
     void managementTabs();
+    void managementGroups();
     void managementCommands();
     void managementEditor();
+    void managementHistory();
+    void managementHistoryCapture();
+    void managementDialogs();
     void readLog();
     void rotateLog();
     void pluginsDisabled();

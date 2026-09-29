@@ -1847,6 +1847,7 @@ QJSValue Scriptable::currentWindowTitle()
     m_skipArguments = 0;
     if ( isGuiApplication() ) {
         PlatformWindowPtr window = platformNativeInterface()->getCurrentWindow();
+        m_currentApplicationId = window ? window->getApplicationId() : QString();
         return window ? window->getTitle() : QString();
     }
     return m_proxy->currentWindowTitle();
@@ -2605,6 +2606,9 @@ void Scriptable::onMonitorOwnClipboardChanged(const QVariantMap &data)
 
 void Scriptable::onMonitorClipboardUnchanged(const QVariantMap &data)
 {
+    const auto outputTab = getTextData(data, mimeOutputTab);
+    if (data.contains(mimeHistoryTime) && !outputTab.isEmpty())
+        m_proxy->refreshHistoryMetadata(outputTab, copyWithoutInternalData(data));
     COPYQ_LOG("onOwnClipboardUnchanged");
     m_proxy->runInternalAction(data, "copyq onClipboardUnchanged");
 }
@@ -2626,11 +2630,13 @@ void Scriptable::onSynchronizeSelection(ClipboardMode sourceMode, uint sourceTex
 #endif
 }
 
-void Scriptable::onFetchCurrentClipboardOwner(QString *owner)
+void Scriptable::onFetchCurrentClipboardOwner(QString *owner, QString *application)
 {
+    m_currentApplicationId.clear();
     const QJSValue result = call(QStringLiteral("currentClipboardOwner"));
     if ( !result.isError() )
         *owner = toString(result);
+    *application = m_currentApplicationId;
 
     clearExceptions();
 }

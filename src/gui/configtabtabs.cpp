@@ -11,6 +11,7 @@
 
 #include <QSettings>
 #include <QVBoxLayout>
+#include <QLabel>
 
 Q_DECLARE_METATYPE(TabProperties)
 
@@ -75,6 +76,9 @@ ConfigTabTabs::ConfigTabTabs(QWidget *parent)
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
+    auto description = new QLabel(tr("Select a collection to change its storage, capacity, icon and lock expiry. Drag collections to reorder them."), this);
+    description->setWordWrap(true);
+    layout->addWidget(description);
     layout->addWidget(m_list);
 
     const Tabs tabs;
