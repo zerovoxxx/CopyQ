@@ -129,7 +129,7 @@ jobs:
       - name: Create macOS bundle
         working-directory: '${{github.workspace}}/build/copyq/${{ matrix.cmake_preset }}'
         # Retry cpack due to frequent errors: "hdiutil: create failed - Resource busy"
-        run: (cpack || cpack || cpack) && mv -v copyq-*.dmg "CopyQ-${APP_VERSION}${BUNDLE_SUFFIX}.dmg"
+        run: (cpack || cpack || cpack) && mv -v QClip-*.dmg "QClip-${APP_VERSION}${BUNDLE_SUFFIX}.dmg"
         env:
           APP_VERSION: ${{ steps.version.outputs.version }}
           BUNDLE_SUFFIX: ${{ matrix.bundle_suffix }}
@@ -137,8 +137,8 @@ jobs:
       - name: Upload macOS bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: 'CopyQ-${{ steps.version.outputs.version }}${{ matrix.bundle_suffix }}.dmg'
-          path: '${{github.workspace}}/build/copyq/${{ matrix.cmake_preset }}/CopyQ-${{ steps.version.outputs.version }}${{ matrix.bundle_suffix }}.dmg'
+          name: 'QClip-${{ steps.version.outputs.version }}${{ matrix.bundle_suffix }}.dmg'
+          path: '${{github.workspace}}/build/copyq/${{ matrix.cmake_preset }}/QClip-${{ steps.version.outputs.version }}${{ matrix.bundle_suffix }}.dmg'
           archive: false
 
       - name: Test
@@ -152,3 +152,12 @@ jobs:
           name: 'crash-reports${{ matrix.bundle_suffix }}'
           path: '~/Library/Logs/DiagnosticReports/*'
           if-no-files-found: ignore
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: 'release-evidence${{ matrix.bundle_suffix }}'
+          path: |
+            build/copyq/${{ matrix.cmake_preset }}/QClip-source.tar.gz
+            build/copyq/${{ matrix.cmake_preset }}/release-audit.json

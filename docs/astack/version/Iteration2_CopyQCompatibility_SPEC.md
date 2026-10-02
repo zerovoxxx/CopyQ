@@ -558,3 +558,5 @@ build/copyq-tests "testItemEncrypted:encryptDecryptItems" "testItemFakeVim:undoG
 | 2026-09-29 | zerovoxxx | 接续落实 I2-1–I2-3 的集合树与主入口、90 项配置草稿、完整命令、编辑/辅助布局、插件呈现、历史过滤/时间/保护清理、旧主题映射和指定 CI；补齐显示副本生命周期、同步可见性与 macOS QCA provider，平台/复杂主题验收仍保持未完成。 |
 | 2026-09-29 | zerovoxxx | 开始 I2-1，实现共享源的 QML 管理首批功能、显式多选/动作/命令/CLI、集合和传输、编辑数据保护及聚焦回归；登记完整入口清单，固定历史时间设计并明确尚未迁移界面和平台失败。SPEC/I2-1 保持开发中。 |
 | 2026-09-28 | zerovoxxx | 从原总 SPEC 分出第二阶段，明确全界面和八插件保留、历史策略/主题兼容、三个实施里程碑及 P5/P6/P7/P12 的唯一归属。 |
+
+SPEC3 新增脚本入口 `api:snippets`：打开 Snippet 浏览/编辑窗口，沿用现有代理及 CLI。实现与验证归属 SPEC3。

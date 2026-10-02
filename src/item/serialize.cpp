@@ -788,3 +788,31 @@ qint64 estimateDataSize(const QVariantMap &data)
     }
     return totalSize;
 }
+
+bool materializeData(QVariantMap *data, const QString &sourceRoot,
+                     const QHash<QString, QString> &sourceFiles, QString *error)
+{
+    for (auto it = data->begin(); it != data->end(); ++it) {
+        auto file = it.value().value<DataFile>();
+        if (!file.path().isEmpty()) {
+            auto path = QFileInfo(file.path()).canonicalFilePath();
+            if (path.isEmpty() || !path.startsWith(sourceRoot + QLatin1Char('/'))) {
+                auto storedPath = file.path();
+                storedPath.replace(QLatin1Char('\\'), QLatin1Char('/'));
+                path = QFileInfo(sourceFiles.value(storedPath.section(QLatin1Char('/'), -4))).canonicalFilePath();
+            }
+            if (path.isEmpty() || !path.startsWith(sourceRoot + QLatin1Char('/'))) {
+                *error = QStringLiteral("Missing or external data file in selected CopyQ profile: %1").arg(file.path());
+                return false;
+            }
+            file.setPath(path);
+            const auto bytes = file.readAll();
+            if (bytes.isEmpty() && QFileInfo(path).size() > 0) {
+                *error = QStringLiteral("Unable to read/decrypt CopyQ data file: %1").arg(path);
+                return false;
+            }
+            it.value() = bytes;
+        }
+    }
+    return true;
+}

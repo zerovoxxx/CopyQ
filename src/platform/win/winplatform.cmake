@@ -2,6 +2,7 @@
 set(copyq_RC copyq.rc)
 
 file(GLOB copyq_SOURCES ${copyq_SOURCES}
+    platform/win/winplatforminput.cpp
     platform/win/winplatform.cpp
     platform/win/winplatformclipboard.cpp
     platform/win/winplatformwindow.cpp
@@ -22,3 +23,5 @@ list(APPEND copyq_COMPILE
 if (MSVC)
     set(copyq_LINK_FLAGS ${copyq_LINK_FLAGS} "/ENTRY:mainCRTStartup")
 endif()
+
+list(APPEND copyq_LIBRARIES imm32)

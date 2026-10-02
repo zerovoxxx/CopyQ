@@ -15,6 +15,7 @@ concurrency:
 env:
   common_packages: >-
     ninja-build
+    libicu-dev
 
     libxfixes-dev
     libxtst-dev
@@ -241,7 +242,7 @@ jobs:
 
       - name: Set up test environment
         run: |
-          echo "COPYQ_TESTS_EXECUTABLE=${{github.workspace}}/_install/copyq/${{ matrix.cmake_preset }}/bin/copyq" >> "$GITHUB_ENV"
+          echo "COPYQ_TESTS_EXECUTABLE=${{github.workspace}}/_install/copyq/${{ matrix.cmake_preset }}/bin/qclip" >> "$GITHUB_ENV"
           echo "COPYQ_TESTS_SKIP_WEBP=${{ !matrix.has_webp && 1 || 0 }}" >> "$GITHUB_ENV"
 
       - name: Set up AppImage tools
@@ -315,32 +316,43 @@ jobs:
           export QML_IMPORT_PATH="$GITHUB_WORKSPACE/build/copyq/${{ matrix.cmake_preset }}/src"
 
           linuxdeploy --appdir "$DESTDIR" \
-            --desktop-file "$DESTDIR/usr/share/applications/com.github.hluk.copyq.desktop" \
-            --icon-file "$DESTDIR/usr/share/icons/hicolor/scalable/apps/copyq.svg" \
-            --executable "$DESTDIR/usr/bin/copyq" \
+            --desktop-file "$DESTDIR/usr/share/applications/io.github.zerovoxxx.QClip.desktop" \
+            --icon-file "$DESTDIR/usr/share/icons/hicolor/scalable/apps/qclip.svg" \
+            --executable "$DESTDIR/usr/bin/qclip" \
             "${deps_only_flags[@]}" \
             --plugin qt \
             --output appimage
+          python3 utils/package-source.py QClip-source.tar.gz
+          python3 utils/check-release.py --platform linux --standalone --root "$DESTDIR" --source QClip-source.tar.gz --output release-audit-linux.json
+
+      - name: Upload release evidence
+        if: always() && matrix.appimage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-evidence-linux
+          path: |
+            QClip-source.tar.gz
+            release-audit-linux.json
 
       - name: Upload AppImage
         if: matrix.appimage
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          path: CopyQ-*.AppImage
+          path: QClip-*.AppImage
           archive: false
 
       - name: Smoke-test AppImage
         if: matrix.appimage
         run: '"$APPIMAGE" --version'
         env:
-          APPIMAGE: ${{github.workspace}}/CopyQ-${{ steps.version.outputs.version }}-x86_64.AppImage
+          APPIMAGE: ${{github.workspace}}/QClip-${{ steps.version.outputs.version }}-x86_64.AppImage
 
       - name: Set up AppImage for tests
         if: matrix.appimage
         run: |
           echo "COPYQ_TESTS_EXECUTABLE=$APPIMAGE" >> "$GITHUB_ENV"
         env:
-          APPIMAGE: ${{github.workspace}}/CopyQ-${{ steps.version.outputs.version }}-x86_64.AppImage
+          APPIMAGE: ${{github.workspace}}/QClip-${{ steps.version.outputs.version }}-x86_64.AppImage
 
       - name: Test on GNOME
         working-directory: >-

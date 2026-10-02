@@ -15,6 +15,7 @@ void addDocumentation(AddDocumentationCallback addDocumentation)
     addDocumentation("showAt", "showAt(x, y, width, height, tabName)", "Shows tab with given geometry.");
     addDocumentation("hide", "hide()", "Hides main window.");
     addDocumentation("toggle", "toggle() -> bool", "Shows or hides main window.");
+    addDocumentation("snippets", "snippets()", "Open the QClip Snippet browser and editor.");
     addDocumentation("palette", "palette() -> bool", "Shows or hides the clipboard palette for the current history tab.");
     addDocumentation("menu", "menu()", "Opens context menu.");
     addDocumentation("menu", "menu(tabName, [maxItemCount, [x, y]])", "Shows context menu for given tab.");

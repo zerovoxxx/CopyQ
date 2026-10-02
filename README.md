@@ -1,3 +1,13 @@
+# QClip
+
+QClip is a GPL-3.0-or-later fork of [CopyQ](https://github.com/hluk/CopyQ), rebuilding the desktop interface with Qt Quick and adding persistent Snippets, dynamic templates, automatic expansion and double-copy merging. The implementation and verified platform boundaries are tracked in [the active specifications](docs/astack/INDEX.md). The first release has not passed all platform acceptance gates yet.
+
+The executable is `qclip` on Windows/Linux and `QClip.app` on macOS. QClip uses its own configuration, sessions and IPC endpoints; CopyQ profiles are imported explicitly from an isolated source directory. The `COPYQ_*` environment variables, scripting API and plugin interfaces remain compatible.
+
+[QClip source and issues](https://github.com/zerovoxxx/CopyQ) · [Build and release](RELEASE.md) · [Project instructions](CLAUDE.md)
+
+The upstream documentation and attribution follow.
+
 # CopyQ
 
 [![Documentation Status](https://readthedocs.org/projects/copyq/badge/?version=latest)](https://copyq.readthedocs.io/en/latest/?badge=latest)

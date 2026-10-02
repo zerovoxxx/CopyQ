@@ -2,6 +2,10 @@
 
 #pragma once
 
+#include "common/snippets.h"
+#include "common/clipboardmerge.h"
+#include <QElapsedTimer>
+
 
 #include "common/clipboardmode.h"
 #include "common/command.h"
@@ -69,10 +73,16 @@ enum class ImportOptions {
     All
 };
 
+class SnippetStore;
+class ClipboardSnippets;
+class PlatformInput;
+
 struct ImportSelection {
     QStringList tabs;
     QVariantMap configuration;
     QVariantList commands;
+    QByteArray snippets;
+    QVariantMap files;
 };
 
 struct MainWindowOptions {
@@ -198,6 +208,9 @@ public:
     void cleanupHistory(qint64 now, qint64 duration, bool expired);
     bool togglePalette();
     void showManagement();
+    SnippetStore *snippetStore();
+    bool showSnippets();
+    void importCopyQProfile(const QString &directory);
     ClipboardManagement *management() const { return m_management.get(); }
     bool isBrowserVisibleInQuickWindow(const ClipboardBrowser *browser) const;
     QVariantMap managementSelectionData() const;
@@ -446,6 +459,7 @@ public:
     QVariant callPlugin(const QVariantList &arguments);
 
 signals:
+    void snippetMerged();
     /** Request clipboard change. */
     void changeClipboard(const QVariantMap &data, ClipboardMode mode);
 
@@ -628,6 +642,15 @@ private:
 
     QVector<Command> commandsForMenu(const QVariantMap &data, const QString &tabName, const QVector<Command> &allCommands);
     void addCommandsToItemMenu(ClipboardBrowser *c);
+    void loadSnippetSettings();
+    void resetSnippetInput();
+    void onSnippetInput(const QString &text, int key, Qt::KeyboardModifiers modifiers);
+    bool allowedSnippetTarget(const PlatformWindowPtr &target) const;
+    SnippetContext snippetContext();
+    void saveHistorySnippet(const QPersistentModelIndex &index);
+    void writeSnippetOutput(const QVariantMap &data, int cursor, int kind, const PlatformWindowPtr &target, int erase);
+    void finishSnippetClipboard(int providerId);
+    void runSnippetCommand(const QString &name, const QVariantMap &data, const PlatformWindowPtr &target, int erase);
     void addCommandsToTrayMenu(const QVariantMap &clipboardData, QList<QAction*> *actions);
     void addMenuMatchCommand(MenuMatchCommands *menuMatchCommands, const QString &matchCommand, QAction *act);
     void runMenuCommandFilters(MenuMatchCommands *menuMatchCommands, QVariantMap &data);
@@ -663,7 +686,7 @@ private:
     QVariantMap exportTabData(const QString &tab, const Tabs &tabProps, bool *ok);
 
     bool canImport(const ImportSelection &importSelection);
-    void importSelected(const ImportSelection &importSelection);
+    bool importSelected(const ImportSelection &importSelection);
     bool importDataV2(QDataStream *in);
     bool importDataV3(QDataStream *in, ImportOptions options);
     bool importDataV4(QDataStream *in, ImportOptions options);
@@ -715,6 +738,27 @@ private:
         AppConfig *appConfig,
         Tabs *tabs);
 
+    std::unique_ptr<SnippetStore> m_snippetStore;
+    std::unique_ptr<ClipboardSnippets> m_snippets;
+    std::unique_ptr<PlatformInput> m_platformInput;
+    ClipboardMerge m_clipboardMerge;
+    QElapsedTimer m_snippetClock;
+    QTimer m_snippetClipboardTimer;
+    QString m_snippetInput = QStringLiteral("_");
+    PlatformWindowPtr m_snippetInputTarget;
+    PlatformWindowPtr m_snippetTarget;
+    QVariantMap m_snippetData;
+    QVariantMap m_snippetClipboardBackup;
+    QVariantMap m_snippetCopyClipboard;
+    quint64 m_snippetGeneration = 0;
+    quint64 m_snippetPendingGeneration = 0;
+    quint64 m_clipboardGeneration = 0;
+    int m_snippetProviderId = -1;
+    int m_snippetKind = 0;
+    int m_snippetErase = 0;
+    int m_snippetCursor = -1;
+    struct SnippetAction { PlatformWindowPtr target; quint64 generation; };
+    QHash<int, SnippetAction> m_snippetActions;
     std::unique_ptr<ClipboardPalette> m_palette;
     std::unique_ptr<ClipboardManagement> m_management;
     std::unique_ptr<ClipboardSettings> m_settings;

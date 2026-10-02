@@ -127,12 +127,12 @@ ClipboardServer::ClipboardServer(QApplication *app, const QString &sessionName)
     m_server = new Server(clipboardServerName(sessionName), this);
 
     if ( m_server->isListening() ) {
-        log( QStringLiteral("Starting server: CopyQ %1").arg(versionString) );
+        log( QStringLiteral("Starting server: QClip %1").arg(versionString) );
         App::installTranslator();
         qApp->setLayoutDirection(QLocale().textDirection());
     } else {
         App::installTranslator();
-        log( tr("CopyQ server is already running."), LogWarning );
+        log( tr("QClip server is already running."), LogWarning );
         exit(0);
         return;
     }
@@ -144,11 +144,11 @@ ClipboardServer::ClipboardServer(QApplication *app, const QString &sessionName)
     cleanUpLogFilesTimer();
 
     if ( sessionName.isEmpty() ) {
-        QGuiApplication::setApplicationDisplayName(QStringLiteral("CopyQ"));
+        QGuiApplication::setApplicationDisplayName(QStringLiteral("QClip"));
     } else {
         log( QStringLiteral("Session: %1").arg(sessionName) );
         QGuiApplication::setApplicationDisplayName(
-            QStringLiteral("CopyQ-%1").arg(sessionName));
+            QStringLiteral("QClip-%1").arg(sessionName));
     }
 
     QApplication::setQuitOnLastWindowClosed(false);

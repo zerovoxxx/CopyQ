@@ -89,13 +89,13 @@ log "Extracted changelog ($(echo "$changelog_body" | wc -l) lines)"
 # Create source tarball (skip if exists)
 # ---------------------------------------------------------------------------
 
-source_tarball="$workdir/CopyQ-$version.tar.gz"
+source_tarball="$workdir/QClip-$version.tar.gz"
 if [[ -f "$source_tarball" ]]; then
     log "Source tarball already exists: $source_tarball"
 else
     log "Creating source tarball ..."
     git -C "$repo_root" archive --format=tar.gz \
-        --prefix="CopyQ-$version/" --output="$source_tarball" "$tag"
+        --prefix="QClip-$version/" --output="$source_tarball" "$tag"
 fi
 
 # ---------------------------------------------------------------------------
@@ -103,11 +103,11 @@ fi
 # ---------------------------------------------------------------------------
 
 expected_assets=(
-    "CopyQ-${version}-x86_64.AppImage"
-    "CopyQ-${version}-macos-12-m1.dmg"
-    "CopyQ-${version}-macos-13.dmg"
-    "copyq-${version}-setup.exe"
-    "copyq-${version}.zip"
+    "QClip-${version}-x86_64.AppImage"
+    "QClip-${version}-macos-13-m1.dmg"
+    "QClip-${version}-macos-13.dmg"
+    "qclip-${version}-setup.exe"
+    "qclip-${version}.zip"
 )
 
 # Resolve the workflow run ID for a given workflow file.
@@ -192,7 +192,7 @@ fi
 # ---------------------------------------------------------------------------
 
 all_assets=(
-    "CopyQ-${version}.tar.gz"
+    "QClip-${version}.tar.gz"
     "${expected_assets[@]}"
 )
 
@@ -250,4 +250,4 @@ log "Remaining manual steps:"
 log "  - Review the draft release on GitHub and publish it"
 log "  - Upload packages to SourceForge"
 log "  - Update Flathub package"
-log "  - Write release announcement to CopyQ group"
+log "  - Review QClip release announcement and publication destinations"

@@ -102,8 +102,8 @@ QString restoreSessionName(const QString &sessionId)
     const QSettings settings(
         QSettings::IniFormat,
         QSettings::UserScope,
-        QStringLiteral("copyq"),
-        QStringLiteral("copyq_no_session"));
+        QStringLiteral("qclip"),
+        QStringLiteral("qclip_no_session"));
     const auto sessionNameKey = QLatin1String("session_") + sessionId;
     const auto sessionName = settings.value(sessionNameKey).toString();
     return sessionName;
@@ -330,7 +330,7 @@ int startApplication(int argc, char **argv)
     case AppType::Server:
         // Set before QApplication construction so portal registration and
         // taskbar icon matching use the correct app ID.
-        QGuiApplication::setDesktopFileName(QStringLiteral("com.github.hluk.copyq"));
+        QGuiApplication::setDesktopFileName(QStringLiteral("io.github.zerovoxxx.QClip"));
         return startServer(argc, argv, args.sessionName);
 
     // If argument was specified and server is running

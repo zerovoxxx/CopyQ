@@ -3,6 +3,7 @@ message(STATUS "Building with tests.")
 file(GLOB copyq_tests_SOURCES tests/*.cpp)
 list(REMOVE_ITEM copyq_tests_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_palette.cpp")
 list(REMOVE_ITEM copyq_tests_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_management.cpp")
+list(REMOVE_ITEM copyq_tests_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_snippets.cpp")
 if(APPLE)
     set_source_files_properties(tests/clipboardguard.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
 endif()
@@ -39,9 +40,16 @@ target_compile_definitions(copyq-management-tests PRIVATE ${copyq_DEFINITIONS})
 target_link_libraries(copyq-management-tests PRIVATE ${copyq_LIBRARIES} ${copyq_qt}::Test)
 target_include_directories(copyq-management-tests PRIVATE .)
 
+add_executable(copyq-snippet-tests
+    tests/tests_snippets.cpp tests/clipboardguard.cpp
+    $<TARGET_OBJECTS:copyq-common> ${copyq_RESOURCES_RCC} ${MINIAUDIO_OBJECTS})
+target_compile_definitions(copyq-snippet-tests PRIVATE ${copyq_DEFINITIONS})
+target_link_libraries(copyq-snippet-tests PRIVATE ${copyq_LIBRARIES} ${copyq_qt}::Test)
+target_include_directories(copyq-snippet-tests PRIVATE .)
+
 if(APPLE)
     set(copyq_test_bundle "${CMAKE_BINARY_DIR}/CopyQ-tests.app/Contents")
-    foreach(test_target copyq-palette-tests copyq-management-tests)
+    foreach(test_target copyq-palette-tests copyq-management-tests copyq-snippet-tests)
         add_dependencies(${test_target} ${COPYQ_EXECUTABLE_NAME})
         add_custom_command(TARGET ${test_target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory "${copyq_test_bundle}/MacOS"
@@ -62,5 +70,5 @@ set(copyq_plugin_SOURCES
     item/itemwidget.cpp
     )
 add_library(${copyq_pkg} MODULE ${copyq_plugin_SOURCES})
-target_link_libraries(${copyq_pkg} ${copyq_qt}::Widgets ${copyq_qt}::Test)
+target_link_libraries(${copyq_pkg} ${copyq_qt}::Widgets ${copyq_qt}::Quick ${copyq_qt}::Test)
 target_include_directories(${copyq_pkg} PRIVATE .)

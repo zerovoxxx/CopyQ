@@ -27,7 +27,7 @@ export COPYQ_PASSWORD=TEST123
 export COPYQ_LOG_LEVEL=DEBUG
 export QT_LOGGING_RULES='*.debug=true;qt.*.debug=false'
 export QSG_RENDER_LOOP=basic
-export QTEST_FUNCTION_TIMEOUT=60000
+export QTEST_FUNCTION_TIMEOUT="${QTEST_FUNCTION_TIMEOUT:-60000}"
 case $(uname -s) in
     Darwin) export QT_QPA_PLATFORM=cocoa ;;
     Linux)
@@ -47,10 +47,18 @@ case $(uname -s) in
     *) echo 'Use run-isolated.ps1 on Windows' >&2; exit 2 ;;
 esac
 if [[ "$(basename "$1")" == copyq-tests && -z "${COPYQ_TESTS_EXECUTABLE:-}" ]]; then
-    native_app="$(cd "$(dirname "$1")" && pwd)/CopyQ.app/Contents/MacOS/CopyQ"
+    native_app="$(cd "$(dirname "$1")" && pwd)/QClip.app/Contents/MacOS/QClip"
     if [[ -x "$native_app" ]]; then
         export COPYQ_TESTS_EXECUTABLE="$native_app"
     fi
+fi
+if [[ $(uname -s) == Darwin && $(basename "$1") == copyq-tests && -n "${COPYQ_TESTS_EXECUTABLE:-}" ]]; then
+    native_app="$COPYQ_TESTS_EXECUTABLE"
+    # Test plugins outside the deployed bundle must use the server's Qt image.
+    export DYLD_FRAMEWORK_PATH="$(dirname "$native_app")/../Frameworks"
+    export DYLD_LIBRARY_PATH="$DYLD_FRAMEWORK_PATH"
+    export QT_PLUGIN_PATH="$(dirname "$native_app")/../PlugIns"
+    export QML_IMPORT_PATH="$(dirname "$native_app")/../Resources/qml"
 fi
 if [[ $(uname -s) == Darwin && $(basename "$1") == copyq-*-tests ]]; then
     bundled_test="$(cd "$(dirname "$1")" && pwd)/CopyQ-tests.app/Contents/MacOS/$(basename "$1")"

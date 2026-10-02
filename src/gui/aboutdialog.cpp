@@ -65,7 +65,7 @@ QString helpLibColumns(int columns, const QStringList &libs)
 QString diagnosticSection()
 {
     return "<br/><h3><a name='diagnostics'>Diagnostic Information</a></h3>"
-           "<pre>" + escapeHtml("CopyQ " + QString(versionString) + "\n" + diagnosticText()) + "</pre>";
+           "<pre>" + escapeHtml("QClip " + QString(versionString) + "\n" + diagnosticText()) + "</pre>";
 }
 
 } // namespace
@@ -129,7 +129,7 @@ QString AboutDialog::aboutPage(const Theme &theme)
         "<table><tr valign='middle'>"
         "<td><img src=':/images/logo.png' width='128' /></td>"
         "<td>"
-        "<div id='title'>CopyQ</div>"
+        "<div id='title'>QClip</div><p>Based on CopyQ by Lukáš Holeček and contributors.</p>"
         "<div id='subtitle'>" + escapeHtml(tr("Clipboard Manager")) + "</div>"
         "<div id='version'>" + versionString + "</div>"
         "</td>"

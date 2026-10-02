@@ -60,7 +60,12 @@ public:
     Q_INVOKABLE void showManagement() { cancel(); emit managementRequested(); }
     Q_INVOKABLE void triggerCommand(int index);
 
+    Q_INVOKABLE void showSnippets() { emit snippetsRequested(); }
+    Q_INVOKABLE void saveSnippet() { if (m_model.selectedIndex().isValid()) emit snippetRequested(m_model.selectedIndex()); }
+
 signals:
+    void snippetsRequested();
+    void snippetRequested(const QPersistentModelIndex &index);
     void activationRequested(const QPersistentModelIndex &index, const QVariantMap &data, bool paste);
     void activationCancelled();
     void sourceRequested(const QString &tabName);

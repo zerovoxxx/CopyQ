@@ -103,7 +103,7 @@ void ClipboardClient::onDisconnected()
 
 void ClipboardClient::onConnectionFailed()
 {
-    log( tr("Cannot connect to server! Start CopyQ server first."), LogError );
+    log( tr("Cannot connect to server! Start QClip server first."), LogError );
     exit(1);
 }
 

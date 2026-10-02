@@ -51,6 +51,8 @@ Rectangle {
                 Accessible.name: qsTr("Search clipboard history")
             }
             ThemeButton { values: root.controller.theme; text: "×"; onClicked: root.controller.cancel(); Accessible.name: qsTr("Close") }
+            ThemeButton { values: root.controller.theme; text: qsTr("Snippets…"); onClicked: root.controller.showSnippets() }
+            ThemeButton { values: root.controller.theme; text: qsTr("Save snippet"); onClicked: root.controller.saveSnippet() }
             ThemeButton { values: root.controller.theme; text: qsTr("Manage…"); objectName: "palette_manage"; onClicked: root.controller.showManagement() }
         }
 

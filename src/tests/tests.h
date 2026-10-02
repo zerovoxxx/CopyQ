@@ -29,6 +29,9 @@ private slots:
 
     void configPath();
     void paletteSearchAndCopy();
+    void snippetLifecycle();
+    void snippetExpansion();
+    void desktopPerformance();
     void paletteCommands();
     void paletteClipboardFailure();
     void paletteEditor();

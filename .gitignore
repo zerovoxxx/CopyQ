@@ -65,3 +65,12 @@ CMakeLists.txt.user*
 launchpad.key
 compile_commands.json
 uv.lock
+
+# QClip deployment and release evidence
+/AppDir/
+/squashfs-root/
+/deps/
+/qclip-*/
+/QClip*.AppImage
+/QClip-source.tar.gz
+/release-audit*.json

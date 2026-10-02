@@ -14,6 +14,26 @@
 #include <QTimer>
 #include <QInputMethodEvent>
 #include <QWindow>
+#include <QQuickWindow>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QElapsedTimer>
+#include <QListView>
+#include <utility>
+
+class FrameProbe final : public QObject
+{
+public:
+    explicit FrameProbe(QQuickWindow *window) : QObject(window) {
+        connect(window, &QQuickWindow::beforeRendering, this, [this] { m_timer.start(); }, Qt::DirectConnection);
+        connect(window, &QQuickWindow::afterRendering, this, [this] { QMutexLocker lock(&m_mutex); m_frames.append(m_timer.nsecsElapsed() / 1000.0); }, Qt::DirectConnection);
+    }
+    QVariantList take() { QMutexLocker lock(&m_mutex); return std::exchange(m_frames, {}); }
+private:
+    QMutex m_mutex;
+    QElapsedTimer m_timer;
+    QVariantList m_frames;
+};
 
 namespace {
 
@@ -511,6 +531,65 @@ QVariant ItemTestsLoader::scriptCallback(const QVariantList &arguments)
 {
     const auto cmd = arguments[0].toString();
 
+    if (cmd == QLatin1String("frameTimes")) {
+        QVariantList frames;
+        for (const auto window : QGuiApplication::topLevelWindows()) {
+            if (auto quick = qobject_cast<QQuickWindow*>(window)) {
+                auto probe = window->property("QClip_frame_probe").value<QObject*>();
+                if (!probe) { probe = new FrameProbe(quick); window->setProperty("QClip_frame_probe", QVariant::fromValue(probe)); }
+                frames.append(static_cast<FrameProbe*>(probe)->take());
+            }
+        }
+        return frames;
+    }
+
+    if (cmd == QLatin1String("desktopState")) {
+        for (auto widget : QApplication::topLevelWidgets()) {
+            if (!widget->isVisible() || !widget->windowHandle() || !widget->windowHandle()->isExposed()) continue;
+            for (auto view : widget->findChildren<QListView*>()) {
+                if (!view->inherits("ClipboardBrowser") || !view->isVisible()) continue;
+                int count = 0;
+                for (int row = 0; row < view->model()->rowCount(); ++row) if (!view->isRowHidden(row)) ++count;
+                return QVariantMap{{QStringLiteral("exposed"), true}, {QStringLiteral("count"), count}};
+            }
+        }
+        return QVariantMap{{QStringLiteral("exposed"), false}};
+    }
+
+    if (cmd.startsWith(QLatin1String("snippet"))) {
+        QWindow *window = nullptr;
+        for (auto candidate : QGuiApplication::topLevelWindows())
+            if (candidate->objectName() == QLatin1String("clipboard_snippets")) { window = candidate; break; }
+        if (!window) return QVariantMap();
+        if (cmd == QLatin1String("snippetState")) {
+            QVariantMap state{{QStringLiteral("visible"), window->isVisible()}};
+            for (const auto key : {"collections", "snippets", "selected", "settings", "error", "inputStatus"}) state.insert(QString::fromLatin1(key), window->property(key));
+            return state;
+        }
+        if (cmd == QLatin1String("snippetCall")) {
+            const auto method = arguments.value(1).toByteArray();
+            QString id;
+            bool success = false;
+            if (method == "createCollection") {
+                QMetaObject::invokeMethod(window, method.constData(), Q_RETURN_ARG(QString, id), Q_ARG(QString, arguments.value(2).toString()));
+                return id;
+            }
+            if (method == "createSnippet") {
+                QMetaObject::invokeMethod(window, method.constData(), Q_RETURN_ARG(QString, id)); return id;
+            }
+            if (method == "editSnippet") {
+                QMetaObject::invokeMethod(window, method.constData(), Q_RETURN_ARG(bool, success), Q_ARG(QVariantMap, arguments.value(2).toMap())); return success;
+            }
+            if (method == "removeSnippet") {
+                QMetaObject::invokeMethod(window, method.constData(), Q_RETURN_ARG(bool, success)); return success;
+            }
+            if (method == "setSetting") return QMetaObject::invokeMethod(window, method.constData(), Q_ARG(QString, arguments.value(2).toString()), Q_ARG(QVariant, arguments.value(3)));
+            if (method == "useSnippet") return QMetaObject::invokeMethod(window, method.constData(), Q_ARG(bool, arguments.value(2).toBool()));
+            if (method == "select") return QMetaObject::invokeMethod(window, method.constData(), Q_ARG(QString, arguments.value(2).toString()));
+            if (method == "hide" || method == "runCommand") return QMetaObject::invokeMethod(window, method.constData());
+        }
+    }
+
     if (cmd.startsWith(QLatin1String("palette"))) {
         QWindow *window = nullptr;
         for (auto candidate : QGuiApplication::topLevelWindows()) {
@@ -553,8 +632,14 @@ QVariant ItemTestsLoader::scriptCallback(const QVariantList &arguments)
             }
             return true;
         }
+        if (cmd == QLatin1String("paletteSelect")) {
+            const auto history = window->property("history").value<QObject*>();
+            return history && history->setProperty("selectedRow", arguments.value(1).toInt());
+        }
         if (cmd == QLatin1String("paletteEdit"))
             return QMetaObject::invokeMethod(window, "editItem");
+        if (cmd == QLatin1String("paletteSaveSnippet"))
+            return QMetaObject::invokeMethod(window, "saveSnippet");
         if (cmd == QLatin1String("paletteManage"))
             return QMetaObject::invokeMethod(window, "showManagement");
         if (cmd == QLatin1String("paletteSettings"))

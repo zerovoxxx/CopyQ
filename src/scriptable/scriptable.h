@@ -163,6 +163,7 @@ public slots:
 
     void show();
     QJSValue palette();
+    QJSValue snippets();
     void showAt();
     void hide();
     QJSValue toggle();

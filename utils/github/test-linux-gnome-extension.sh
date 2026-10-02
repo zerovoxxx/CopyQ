@@ -51,7 +51,7 @@ if [[ ! -x "$COPYQ_TESTS_TESTS_EXECUTABLE" ]]; then
 fi
 
 # Install GNOME extension before starting gnome-shell
-extension_uuid="copyq-clipboard@hluk.github.com"
+extension_uuid="qclip-clipboard@zerovoxxx.github.com"
 prefix_dir="$(cd "$(dirname "$COPYQ_TESTS_EXECUTABLE")/.." && pwd)"
 installed_extension_dir="${COPYQ_GNOME_EXTENSION_DIR:-$prefix_dir/share/gnome-shell/extensions/$extension_uuid}"
 if [[ ! -d "$installed_extension_dir" ]]; then
@@ -113,7 +113,7 @@ extention_service_health_check() {
         --dest org.freedesktop.DBus \
         --object-path /org/freedesktop/DBus \
         --method org.freedesktop.DBus.NameHasOwner \
-        com.github.hluk.copyq.GnomeClipboard | grep -q "true"
+        io.github.zerovoxxx.QClip.GnomeClipboard | grep -q "true"
 }
 
 try=0
@@ -150,9 +150,9 @@ set_clipboard() {
         clipboard_type_id=1
     fi
     gdbus call --session \
-        --dest com.github.hluk.copyq.GnomeClipboard \
-        --object-path /com/github/hluk/copyq/GnomeClipboard \
-        --method com.github.hluk.CopyQ.GnomeClipboard1.SetClipboardData \
+        --dest io.github.zerovoxxx.QClip.GnomeClipboard \
+        --object-path /io/github/zerovoxxx/QClip/GnomeClipboard \
+        --method io.github.zerovoxxx.QClip.GnomeClipboard1.SetClipboardData \
         "$clipboard_type_id" \
         "text/plain;charset=utf-8" \
         "<'$text'>"

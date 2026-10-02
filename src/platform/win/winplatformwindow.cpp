@@ -33,7 +33,7 @@ INPUT createInput(WORD key, DWORD flags = 0)
     input.ki.wScan = 0;
     input.ki.dwFlags = flags;
     input.ki.time = 0;
-    input.ki.dwExtraInfo = GetMessageExtraInfo();
+    input.ki.dwExtraInfo = 0x51434c49;
 
     return input;
 }

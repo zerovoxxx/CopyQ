@@ -1,11 +1,13 @@
 #!/bin/bash
 set -xeuo pipefail
 
-hdiutil attach CopyQ*.dmg
+hdiutil attach QClip*.dmg
 ls -Rl /Volumes
-app_bundle_path=$(echo /Volumes/copyq-*/CopyQ.app)
-executable="$app_bundle_path/Contents/MacOS/CopyQ"
+app_bundle_path=$(echo /Volumes/QClip-*/QClip.app)
+executable="$app_bundle_path/Contents/MacOS/QClip"
 runner="${GITHUB_WORKSPACE}/utils/run-isolated.sh"
+python3 "${GITHUB_WORKSPACE}/utils/package-source.py" QClip-source.tar.gz
+python3 "${GITHUB_WORKSPACE}/utils/check-release.py" --platform macos --root "$app_bundle_path" --source QClip-source.tar.gz --output release-audit.json
 
 # Test the app before deployment.
 "$runner" "$executable" --help
@@ -45,6 +47,8 @@ export COPYQ_TESTS_EXECUTABLE="$executable"
     modelIdentity queryChanges displayCopiesAndPreview sourceDestructionAndReset \
     qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews \
     nativeWindowIdentification pluginEditorAndSettings nativeInputListeningAndReplacement
+"$runner" ./copyq-tests testCore:snippetLifecycle testCore:snippetExpansion
+"$runner" ./copyq-snippet-tests storeRoundTrip damagedStorage encryptedStorage storageLimit dynamicDates dynamicClipboardAndRandom richTextAndReferences keywords copyMerging copyQMigration copyQExternalMigration qmlSnippets
 "$runner" ./copyq-management-tests \
     multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay transferAndDeleteProtection \
     qmlSelectionAndActions nativeDropRoundTrip themeMapping legacyStyleRules pluginPreviewBridge managementGeometry \

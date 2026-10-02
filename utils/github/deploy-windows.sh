@@ -16,7 +16,7 @@ set -exuo pipefail
 : "${DEPS_PREFIX:?}"
 : "${OPENSSL_ROOT_DIR:?}"
 
-APP="copyq-${APP_VERSION}"
+APP="qclip-${APP_VERSION}"
 DEST="${GITHUB_WORKSPACE}/${APP}"
 
 mkdir -p "$DEST"
@@ -75,7 +75,7 @@ cp -v "$OPENSSL_ROOT_DIR"/bin/libssl-*.dll "$DEST"
     --skip-plugin-types qmltooling,generic,networkinformation \
     "${kf_libraries[@]}" \
     "${crypto_libraries[@]}" \
-    "$DEST/copyq.exe"
+    "$DEST/qclip.exe"
 
 # Clean up workaround file to avoid polluting the cached Qt installation.
 rm -f "$QT_ROOT_DIR/bin/qt6keychain.dll"
@@ -85,6 +85,7 @@ rm -f "$QT_ROOT_DIR/bin/qt6keychain.dll"
 cp -v "$BUILD_DIR/copyq-tests.exe" "$DEST/"
 cp -v "$BUILD_DIR/copyq-palette-tests.exe" "$DEST/"
 cp -v "$BUILD_DIR/copyq-management-tests.exe" "$DEST/"
+cp -v "$BUILD_DIR/copyq-snippet-tests.exe" "$DEST/"
 cp -v "$QT_ROOT_DIR/bin/Qt6Test.dll" "$DEST/"
 cp -v "$BUILD_DIR/src/itemtests.dll" "$DEST/"
 
@@ -97,9 +98,9 @@ rm -vf /c/Windows/SysWOW64/libssl-*
 # Verify the deployed binary works with only bundled libraries.
 OldPath=$PATH
 export PATH="$DEST"
-"$DEST/copyq.exe" --help
-"$DEST/copyq.exe" --version
-"$DEST/copyq.exe" --info
+"$DEST/qclip.exe" --help
+"$DEST/qclip.exe" --version
+"$DEST/qclip.exe" --info
 export PATH=$OldPath
 
 echo "Deploy complete: $DEST"

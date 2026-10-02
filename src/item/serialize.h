@@ -8,6 +8,7 @@
 class QAbstractItemModel;
 class QDataStream;
 class QIODevice;
+class QString;
 
 namespace Encryption {
     class EncryptionKey;
@@ -29,5 +30,8 @@ bool serializeData(const QAbstractItemModel &model, QIODevice *file, int itemDat
 bool deserializeData(QAbstractItemModel *model, QIODevice *file, const Encryption::EncryptionKey *encryptionKey = nullptr);
 
 bool itemDataFiles(QIODevice *file, QStringList *files, const Encryption::EncryptionKey *encryptionKey = nullptr);
+
+bool materializeData(QVariantMap *data, const QString &sourceRoot,
+                     const QHash<QString, QString> &sourceFiles, QString *error);
 
 qint64 estimateDataSize(const QVariantMap &data);

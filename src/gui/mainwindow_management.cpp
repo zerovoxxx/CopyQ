@@ -50,6 +50,8 @@ void MainWindow::showManagement()
         m_palette->cancel();
     if (!m_management) {
         m_management = std::make_unique<ClipboardManagement>(m_sharedData->itemFactory);
+        connect(m_management.get(), &ClipboardManagement::snippetsRequested, this, &MainWindow::showSnippets);
+        connect(m_management.get(), &ClipboardManagement::snippetRequested, this, &MainWindow::saveHistorySnippet);
         if (!windowTitle().isEmpty()) m_management->setTitle(windowTitle());
         m_managementCommandMenu = new QMenu(this);
         connect(m_management.get(), &QWindow::visibleChanged, this, &MainWindow::updateQuickWindowState);

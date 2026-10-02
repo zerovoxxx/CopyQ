@@ -885,6 +885,12 @@ bool ScriptableProxy::togglePalette()
     return m_wnd->togglePalette();
 }
 
+bool ScriptableProxy::showSnippets()
+{
+    INVOKE(showSnippets, ());
+    return m_wnd->showSnippets();
+}
+
 bool ScriptableProxy::showWindowAt(QRect rect)
 {
     INVOKE(showWindowAt, (rect));

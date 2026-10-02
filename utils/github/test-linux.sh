@@ -6,7 +6,7 @@ set -xeuo pipefail
 export COPYQ_LOG_LEVEL=DEBUG
 export QT_LOGGING_RULES="*.debug=true;qt.*.debug=false;qt.*.warning=true"
 
-export COPYQ_TESTS_EXECUTABLE=${COPYQ_TESTS_EXECUTABLE:-"./copyq"}
+export COPYQ_TESTS_EXECUTABLE=${COPYQ_TESTS_EXECUTABLE:-"./qclip"}
 
 # Start X11 and window manager.
 export DISPLAY=':99.0'
@@ -44,6 +44,8 @@ export COPYQ_TESTS_RERUN_FAILED=1
     modelIdentity queryChanges displayCopiesAndPreview sourceDestructionAndReset \
     qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews \
     nativeWindowIdentification pluginEditorAndSettings
+"$runner" ./copyq-tests testCore:snippetLifecycle testCore:snippetExpansion
+"$runner" ./copyq-snippet-tests storeRoundTrip damagedStorage encryptedStorage storageLimit dynamicDates dynamicClipboardAndRandom richTextAndReferences keywords copyMerging copyQMigration copyQExternalMigration qmlSnippets
 "$runner" ./copyq-management-tests \
     multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay transferAndDeleteProtection \
     qmlSelectionAndActions nativeDropRoundTrip themeMapping legacyStyleRules pluginPreviewBridge managementGeometry \

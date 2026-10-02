@@ -34,8 +34,8 @@ namespace {
 
 const char *defaultDesktopFileContent =
 R"([Desktop Entry]
-Name=CopyQ
-Icon=copyq
+Name=QClip
+Icon=qclip
 GenericName=Clipboard Manager
 Type=Application
 Terminal=false
@@ -310,7 +310,7 @@ bool X11Platform::findPluginDir(QDir *pluginsDir)
     if ( pluginsDir->dirName() == QLatin1String("bin")
          && pluginsDir->cdUp()
          && (pluginsDir->cd(QLatin1String("lib64")) || pluginsDir->cd(QLatin1String("lib")))
-         && pluginsDir->cd(QLatin1String("copyq")) )
+         && pluginsDir->cd(QLatin1String("qclip")) )
     {
         // OK, installed in /usr/local/bin or /usr/bin.
         return true;
@@ -320,7 +320,7 @@ bool X11Platform::findPluginDir(QDir *pluginsDir)
 
     if ( pluginsDir->cd(QLatin1String("plugins")) ) {
         // OK, plugins in same directory as executable.
-        pluginsDir->cd(QLatin1String("copyq"));
+        pluginsDir->cd(QLatin1String("qclip"));
         return true;
     }
 

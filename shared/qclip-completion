@@ -1,0 +1,106 @@
+# shellcheck shell=bash
+
+_qclip_commands=(
+    show hide toggle menu exit disable enable clipboard selection paste copy
+    count select next previous add insert remove edit separator read write
+    action popup tab removetab renametab exporttab importtab config eval session
+    help
+)
+
+_qclip_list_sessions() {
+    ss -l -x | sed -nE 's#.*/\.qclip-?(\S*)_s .*#\1#p'
+}
+
+_qclip_complete_words() {
+    while read -r item; do
+        COMPREPLY+=("$item")
+    done < <(compgen -W "$1" -- "${COMP_WORDS[$COMP_CWORD]}")
+}
+
+_qclip_complete_lines() {
+    while read -r item; do
+        COMPREPLY+=("$item")
+    done < <(IFS=$'\n' compgen -W "$1" -- "${COMP_WORDS[$COMP_CWORD]}")
+}
+
+_qclip_complete_files() {
+    while read -r item; do
+        COMPREPLY+=("$item")
+    done < <(compgen -f -- "${COMP_WORDS[$COMP_CWORD]}")
+}
+
+_qclip_completions() {
+    case "$COMP_CWORD" in
+        1)
+            case "${COMP_WORDS[$COMP_CWORD]}" in
+                --*)
+                    _qclip_complete_words '--session --help'
+                    ;;
+                -*)
+                    _qclip_complete_words '-e -s -h'
+                    ;;
+                *)
+                    _qclip_complete_words "${_qclip_commands[*]}"
+                    ;;
+            esac
+            ;;
+        2)
+            case "${COMP_WORDS[$COMP_CWORD-1]}" in
+                show)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip tab)"
+                    ;;
+                clipboard)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip clipboard -- ?)"
+                    ;;
+                selection)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip selection -- ?)"
+                    ;;
+                copy)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip clipboardFormatsToSave)"
+                    ;;
+                read)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip read -- ?)"
+                    ;;
+                write)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip clipboardFormatsToSave)"
+                    ;;
+                tab)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip tab)"
+                    ;;
+                removetab)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip tab)"
+                    ;;
+                renametab)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip tab)"
+                    ;;
+                exporttab)
+                    _qclip_complete_files
+                    ;;
+                importtab)
+                    _qclip_complete_files
+                    ;;
+                config)
+                    pidof qclip &>/dev/null || return
+                    _qclip_complete_lines "$(qclip config | grep '^[^ ]')"
+                    ;;
+                session|-s|--session)
+                    _qclip_complete_lines "$(_qclip_list_sessions)"
+                    ;;
+                help|-h|--help)
+                    _qclip_complete_words "${_qclip_commands[*]}"
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+complete -o filenames -F _qclip_completions qclip

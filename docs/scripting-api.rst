@@ -186,6 +186,11 @@ unlike in GUI, where row numbers start from 1 by default.
    :returns: ``true`` only if main window is being shown, otherwise ``false``.
    :rtype: bool
 
+.. js:function:: snippets()
+
+    Open the QClip Snippet browser and editor.
+    Return true when the window is visible.
+
 .. js:function:: palette()
 
    Shows or hides the clipboard palette for the current history tab.

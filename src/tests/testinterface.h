@@ -44,6 +44,7 @@ public:
     virtual bool isServerRunning() = 0;
 
     virtual QString executable() = 0;
+    virtual qint64 serverPid() const = 0;
 
     /// Run client with given @a arguments and input and read outputs and return exit code.
     virtual int run(const QStringList &arguments, QByteArray *stdoutData = nullptr,

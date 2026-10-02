@@ -1,0 +1,43 @@
+QClip is based on CopyQ, copyright 2009–2026 Lukáš Holeček and contributors.
+QClip and the CopyQ sources are licensed GPL-3.0-or-later; see LICENSE and AUTHORS.
+Corresponding QClip source: https://github.com/zerovoxxx/CopyQ
+Upstream source and attribution: https://github.com/hluk/CopyQ
+
+Components used or optionally distributed by a build:
+Qt 6 — The Qt Company and contributors; LGPL-3.0/GPL-3.0 and module-specific notices.
+https://www.qt.io/licensing/open-source-lgpl-obligations
+https://code.qt.io/cgit/qt/
+KDE Frameworks and QCA — KDE contributors; LGPL and individual source notices.
+https://invent.kde.org/frameworks/  https://invent.kde.org/libraries/qca
+QtKeychain — Frank Osterfeld and contributors; Modified BSD license.
+https://github.com/frankosterfeld/qtkeychain
+OpenSSL (QCA backend) — OpenSSL project; Apache-2.0 for OpenSSL 3 builds.
+https://www.openssl.org/source/
+LibQxt — LibQxt contributors; LGPL-2.1; see licenses/LibQxt-COPYING.txt.
+FakeVim — Qt Creator contributors; LGPL-2.1; see licenses/FakeVim-LGPL.txt.
+Font Awesome — Fonticons, Inc.; fonts SIL OFL-1.1, icons CC-BY-4.0, code MIT.
+https://fontawesome.com/license/free
+miniaudio (optional audio) — David Reid; public domain or MIT-0 at the user's choice.
+https://github.com/mackron/miniaudio
+SnoreToast (Windows notifications) — Hannah von Reth and KDE contributors; LGPL-2.1.
+https://invent.kde.org/libraries/snoretoast
+ICU (Linux redistribution; Windows uses the OS implementation) — Unicode, Inc.
+Unicode License; https://github.com/unicode-org/icu
+X11 libraries (Linux) — X.Org and individual contributors; MIT/X11 licenses.
+https://www.x.org/releases/individual/lib/
+Solarized theme — Ethan Schoonover; MIT.
+https://github.com/altercation/solarized
+
+The exact runtime dependencies and their versions depend on the build platform.
+Retain the licenses and notices shipped with the matching Qt/dependency binaries;
+this index does not replace their individual license texts. Source archives retain
+the original file-level copyrights and licenses. Rebuild instructions: RELEASE.md,
+CMakePresets.json and .github/workflows/build-{windows,macos,linux}.yml.
+
+Full general/component license texts are included in licenses/: Qt LGPL-3.0,
+QCA COPYING, QtKeychain COPYING, OpenSSL LICENSE, ICU LICENSE (including ICU
+third-party notices), Font Awesome LICENSE, miniaudio LICENSE, LibQxt and FakeVim.
+QClip's LICENSE contains GPL-3.0. Qt and KDE source/runtime builds can incorporate
+additional third-party components; their matching attribution inventories must
+accompany release builds. The general license texts alone do not attest that
+every platform package's complete dependency inventory has been audited.

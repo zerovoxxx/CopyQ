@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "mainwindow.h"
+#include "gui/clipboardsnippets.h"
+#include "item/snippetstore.h"
+#include "platform/platforminput.h"
 #include "ui_mainwindow.h"
 
 #include "common/action.h"
@@ -10,6 +13,7 @@
 #include "common/command.h"
 #include "common/commandstore.h"
 #include "common/config.h"
+#include "common/copyqimport.h"
 #include "common/contenttype.h"
 #include "common/display.h"
 #include "common/encryption.h"
@@ -311,7 +315,7 @@ bool isItemActivationShortcut(const QKeySequence &shortcut)
 
 QString importExportFileDialogFilter()
 {
-    return MainWindow::tr("CopyQ Items (*.cpq)");
+    return MainWindow::tr("QClip / CopyQ Items (*.cpq)");
 }
 
 /**
@@ -517,7 +521,9 @@ ImportSelection getImportSelection(
     ImportSelection sel{
         data.value("tabs").toStringList(),
         data.value("settings").toMap(),
-        data.value("commands").toList()
+        data.value("commands").toList(),
+        data.value("snippets").toByteArray(),
+        data.value("files").toMap()
     };
     if (options == ImportOptions::All)
         return sel;
@@ -535,7 +541,9 @@ ImportSelection getImportSelection(
     return ImportSelection{
         importDialog.selectedTabs(),
         importDialog.isConfigurationEnabled() ? sel.configuration : QVariantMap(),
-        importDialog.isCommandsEnabled() ? sel.commands : QVariantList()
+        importDialog.isCommandsEnabled() ? sel.commands : QVariantList(),
+        importDialog.isConfigurationEnabled() ? sel.snippets : QByteArray(),
+        importDialog.isConfigurationEnabled() ? sel.files : QVariantMap()
     };
 }
 
@@ -940,7 +948,7 @@ void MainWindow::exit()
         answer = QMessageBox::question(
                     this,
                     tr("Exit?"),
-                    tr("Do you want to <strong>exit</strong> CopyQ?"),
+                    tr("Do you want to <strong>exit</strong> QClip?"),
                     QMessageBox::Yes | QMessageBox::No,
                     QMessageBox::Yes);
     }
@@ -1690,6 +1698,13 @@ int MainWindow::findTabIndexExactMatch(const QString &name)
 
 void MainWindow::setClipboardData(const QVariantMap &data)
 {
+    ++m_clipboardGeneration;
+    if (m_snippetStore && m_platformInput && m_snippetStore->settings().value(QStringLiteral("merge")).toBool()) {
+        const auto target = platformNativeInterface()->getCurrentWindow();
+        m_clipboardMerge.observe(m_snippetClock.elapsed(), target ? target->getApplicationId() + QLatin1Char('\n') + target->getTitle() : QString(), data,
+            data.contains(QStringLiteral(COPYQ_MIME_PRIVATE_PREFIX "snippet-source")) || data.contains(mimeOwner),
+            allowedSnippetTarget(target) && HistoryPolicy::accepts(data, {QStringLiteral("text")}, AppConfig().option<Config::clipboard_history_ignore_apps>()));
+    }
     m_clipboardData = data;
     updateContextMenu(contextMenuUpdateIntervalMsec);
     updateTrayMenuCommands();
@@ -2033,6 +2048,8 @@ bool MainWindow::registerClipboardProviderAction(int actionId, ClipboardMode mod
         m_registeredClipboardProviderId = actionId;
     if (mode == ClipboardMode::Clipboard && actionId == m_paletteProviderId)
         QTimer::singleShot(0, this, [this, actionId]() { finishPaletteClipboard(actionId); });
+    if (mode == ClipboardMode::Clipboard && actionId == m_snippetProviderId)
+        QTimer::singleShot(0, this, [this, actionId] { finishSnippetClipboard(actionId); });
     return true;
 }
 
@@ -2360,7 +2377,15 @@ bool MainWindow::exportDataV4(QDataStream *out, const QStringList &tabs, bool ex
     out->setVersion(dataStreamImportVersionDefault);
     (*out) << QByteArray("CopyQ v4");
 
-    const QVariantMap data = exportSettings(tabs, exportConfiguration, exportCommands);
+    QVariantMap data = exportSettings(tabs, exportConfiguration, exportCommands);
+    if (exportConfiguration) {
+        if (!snippetStore()->writable()) return false;
+        data.insert(QStringLiteral("snippets"), snippetStore()->exportData());
+        QVariantMap files; QString error;
+        if (!readCopyQImportFiles(configurationFilePath("_imports"), &files, &error)) { showError(error); return false; }
+        data.insert(QStringLiteral("files"), files);
+        data = relocateCopyQImportPaths(data, configurationFilePath("_imports") + QLatin1Char('/'), QStringLiteral("qclip-import://")).toMap();
+    }
     (*out) << data;
 
     const Tabs tabProps;
@@ -2384,7 +2409,15 @@ bool MainWindow::exportDataV5(QDataStream *out, const QStringList &tabs, bool ex
     (*out) << QByteArray("CopyQ v5");
     out->setVersion(dataStreamImportVersionForV5);
 
-    const QVariantMap data = exportSettings(tabs, exportConfiguration, exportCommands);
+    QVariantMap data = exportSettings(tabs, exportConfiguration, exportCommands);
+    if (exportConfiguration) {
+        if (!snippetStore()->writable()) return false;
+        data.insert(QStringLiteral("snippets"), snippetStore()->exportData());
+        QVariantMap files; QString error;
+        if (!readCopyQImportFiles(configurationFilePath("_imports"), &files, &error)) { showError(error); return false; }
+        data.insert(QStringLiteral("files"), files);
+        data = relocateCopyQImportPaths(data, configurationFilePath("_imports") + QLatin1Char('/'), QStringLiteral("qclip-import://")).toMap();
+    }
     QVariantMap dataMap;
     for (auto it = data.constBegin(); it != data.constEnd(); ++it)
         dataMap[it.key()] = serializeToByteArray(it.value());
@@ -2454,6 +2487,12 @@ QVariantMap MainWindow::exportTabData(const QString &tab, const Tabs &tabProps, 
 
 bool MainWindow::canImport(const ImportSelection &sel)
 {
+    QString assetError;
+    if (!validateCopyQImportFiles(sel.files, &assetError)) { showError(assetError); return false; }
+    if (!sel.snippets.isEmpty()) {
+        SnippetStore incoming{QString()};
+        if (!incoming.importData(sel.snippets) || !snippetStore()->writable()) return false;
+    }
     // Configuration dialog shouldn't be open.
     if (!sel.configuration.isEmpty() && m_settings) {
         log("Failed to import configuration while configuration dialog is open", LogError);
@@ -2469,15 +2508,25 @@ bool MainWindow::canImport(const ImportSelection &sel)
     return true;
 }
 
-void MainWindow::importSelected(const ImportSelection &sel)
+bool MainWindow::importSelected(const ImportSelection &sel)
 {
+    QString assetError;
+    if (!saveCopyQImportFiles(sel.files, configurationFilePath("_imports"), &assetError)) { showError(assetError); return false; }
+    if (!sel.snippets.isEmpty()) {
+        auto store = snippetStore();
+        const auto before = store->document();
+        if (!store->importData(sel.snippets) || (m_sharedData->tabsEncrypted && !m_sharedData->encryptionKey.isValid()) || !store->save(m_sharedData->encryptionKey)) {
+            store->setDocument(before);
+            return false;
+        }
+    }
     if (!sel.configuration.isEmpty()) {
         log("Importing settings");
 
         AppConfig appConfig;
 
         for (auto it = sel.configuration.constBegin(); it != sel.configuration.constEnd(); ++it)
-            appConfig.settings().setValue( it.key(), it.value() );
+            appConfig.settings().setValue( it.key(), relocateCopyQImportPaths(it.value(), QStringLiteral("qclip-import://"), configurationFilePath("_imports") + QLatin1Char('/')) );
 
         emit configurationChanged(&appConfig);
     }
@@ -2516,7 +2565,7 @@ void MainWindow::importSelected(const ImportSelection &sel)
 
         for (const auto &commandDataValue : sel.commands) {
             settings.setArrayIndex(i++);
-            const auto commandMap = commandDataValue.toMap();
+            const auto commandMap = relocateCopyQImportPaths(commandDataValue, QStringLiteral("qclip-import://"), configurationFilePath("_imports") + QLatin1Char('/')).toMap();
             for (auto it = commandMap.constBegin(); it != commandMap.constEnd(); ++it)
                 settings.setValue( it.key(), it.value() );
         }
@@ -2525,6 +2574,7 @@ void MainWindow::importSelected(const ImportSelection &sel)
 
         updateEnabledCommands();
     }
+    return true;
 }
 
 bool MainWindow::importDataV2(QDataStream *in)
@@ -2590,8 +2640,7 @@ bool MainWindow::importDataV3(QDataStream *in, ImportOptions options)
             return false;
     }
 
-    importSelected(importSelection);
-    return true;
+    return importSelected(importSelection);
 }
 
 bool MainWindow::importDataV4(QDataStream *in, ImportOptions options)
@@ -2622,8 +2671,7 @@ bool MainWindow::importDataV4(QDataStream *in, ImportOptions options)
             return false;
     }
 
-    importSelected(importSelection);
-    return true;
+    return importSelected(importSelection);
 }
 
 bool MainWindow::importDataV5(QDataStream *in, ImportOptions options)
@@ -2668,8 +2716,7 @@ bool MainWindow::importDataV5(QDataStream *in, ImportOptions options)
             return false;
     }
 
-    importSelected(importSelection);
-    return true;
+    return importSelected(importSelection);
 }
 
 bool MainWindow::importTabData(
@@ -2899,7 +2946,7 @@ void MainWindow::showError(const QString &msg)
 {
     const auto notificationId = qHash(msg);
     auto notification = createNotification( QString::number(notificationId) );
-    notification->setTitle( tr("CopyQ Error", "Notification error message title") );
+    notification->setTitle( tr("QClip Error", "Notification error message title") );
     notification->setMessage(msg);
     notification->setIcon(IconCircleXmark);
     notification->setUrgency(Notification::Urgency::High);
@@ -3204,6 +3251,7 @@ void MainWindow::loadSettings(QSettings &settings, AppConfig *appConfig)
 
     promptForEncryptionPasswordIfNeeded(appConfig);
     reencryptTabsIfNeeded(appConfig);
+    loadSnippetSettings();
 
     const QStringList tabNames = savedTabs();
 
@@ -3901,6 +3949,8 @@ bool MainWindow::togglePalette()
         return false;
     if (!m_palette) {
         m_palette = std::make_unique<ClipboardPalette>(m_sharedData->itemFactory);
+        connect(m_palette.get(), &ClipboardPalette::snippetsRequested, this, &MainWindow::showSnippets);
+        connect(m_palette.get(), &ClipboardPalette::snippetRequested, this, &MainWindow::saveHistorySnippet);
         m_paletteCommandMenu = new QMenu(this);
         connect(m_palette.get(), &QWindow::visibleChanged, this, &MainWindow::updateQuickWindowState);
         connect(m_palette.get(), &QWindow::activeChanged, this, &MainWindow::updateQuickWindowState);
@@ -4117,6 +4167,19 @@ void MainWindow::finishPaletteClipboard(int providerId)
 
 bool MainWindow::pasteToCurrentWindow(int actionId)
 {
+    const auto snippet = m_snippetActions.constFind(actionId);
+    if (snippet != m_snippetActions.cend()) {
+        const auto target = snippet->target;
+        const auto generation = snippet->generation;
+        const int providerId = m_provideClipboardActionId;
+        const auto canPaste = [this, target, generation, providerId] {
+            return m_snippetGeneration == generation && allowedSnippetTarget(target) && target->isActive()
+                && m_provideClipboardActionId == providerId;
+        };
+        SleepTimer timer(5000);
+        while (m_registeredClipboardProviderId != providerId && canPaste() && timer.sleep()) {}
+        return m_registeredClipboardProviderId == providerId && canPaste() && target->pasteFromClipboardSafely(canPaste);
+    }
     const auto guard = m_palettePasteActions.constFind(actionId);
     if (guard != m_palettePasteActions.cend()) {
         const auto target = guard.value().window;
@@ -4385,8 +4448,10 @@ void MainWindow::promptForEncryptionPasswordIfNeeded(AppConfig *appConfig)
         m_sharedData->passwordPrompt->prompt(
             useKeyStore ? PasswordSource::UseEnvAndKeychain : PasswordSource::UseEnvOnly,
             [this](const Encryption::EncryptionKey &key){
-                if (key.isValid())
+                if (key.isValid()) {
                     m_sharedData->encryptionKey = key;
+                    loadSnippetSettings();
+                }
             });
     }
 }
@@ -4426,7 +4491,7 @@ void MainWindow::reencryptTabsIfNeededHelper(AppConfig *appConfig)
         return;
     }
 
-    const bool allEncrypted = reencryptTabs(
+    bool allEncrypted = reencryptTabs(
         tabNames,
         m_sharedData.get(),
         oldEncryptionKey,
@@ -4435,6 +4500,13 @@ void MainWindow::reencryptTabsIfNeededHelper(AppConfig *appConfig)
         this
     );
 
+    if (QFile::exists(configurationFilePath("_snippets.dat"))) {
+        SnippetStore snippets(configurationFilePath("_snippets.dat"));
+        if (!snippets.load(oldEncryptionKey) || !snippets.save(newEncryptionKey)) {
+            allEncrypted = false;
+            showError(snippets.error());
+        } else if (m_snippetStore) m_snippetStore->load(newEncryptionKey);
+    }
     m_wasEncrypted = isEncrypted;
     m_sharedData->encryptionKey = newEncryptionKey;
 
@@ -5349,6 +5421,9 @@ MainWindow::~MainWindow()
 {
     m_commandDialog.reset();
     m_settings.reset();
+    m_platformInput.reset();
+    m_snippets.reset();
+    m_snippetStore.reset();
     m_management.reset();
     m_palette.reset();
     delete ui;

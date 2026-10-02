@@ -664,7 +664,7 @@ QJSValue Scriptable::NetworkRequest() const
 QJSValue Scriptable::version()
 {
     m_skipArguments = 0;
-    return tr("CopyQ Clipboard Manager")
+    return tr("QClip Clipboard Manager")
         + " " + versionString + "\n" + diagnosticText();
 }
 
@@ -680,7 +680,7 @@ QJSValue Scriptable::help()
         for (const auto &hlp : commandHelp())
             helpString.append(hlp.toString());
 
-        helpString.append("\n" + helpTail() + "\n\n" + tr("CopyQ Clipboard Manager")
+        helpString.append("\n" + helpTail() + "\n\n" + tr("QClip Clipboard Manager")
             + " " + versionString + "\n");
     } else {
         for (int i = 0; i < argumentCount(); ++i) {
@@ -713,6 +713,12 @@ QJSValue Scriptable::palette()
 {
     m_skipArguments = 0;
     return m_proxy->togglePalette();
+}
+
+QJSValue Scriptable::snippets()
+{
+    m_skipArguments = 0;
+    return m_proxy->showSnippets();
 }
 
 void Scriptable::showAt()

@@ -93,6 +93,7 @@ QStringList pluginPaths()
 
 class TestInterfaceImpl final : public TestInterface {
 public:
+    qint64 serverPid() const override { return m_server ? m_server->processId() : 0; }
     TestInterfaceImpl()
         : m_server(nullptr)
         , m_env(QProcessEnvironment::systemEnvironment())
@@ -184,7 +185,7 @@ public:
             return QString::fromUtf8(executable);
 
         QDir dir(QCoreApplication::applicationDirPath());
-        return dir.absoluteFilePath("copyq");
+        return dir.absoluteFilePath("qclip");
     }
 
     int run(const QStringList &arguments, QByteArray *stdoutData = nullptr,
@@ -466,7 +467,7 @@ public:
         for ( const auto &settingsPath : settingsPaths ) {
             Q_ASSERT( !settingsPath.isEmpty() );
             QDir settingsDir(settingsPath);
-            const QStringList settingsFileFilters(QStringLiteral("copyq*"));
+            const QStringList settingsFileFilters(QCoreApplication::applicationName().split(QLatin1Char('-')).first() + QLatin1Char('*'));
             // Omit using dangerous QDir::removeRecursively().
             for ( const auto &fileName : settingsDir.entryList(settingsFileFilters, QDir::Files) ) {
                 const auto path = settingsDir.absoluteFilePath(fileName);
@@ -859,7 +860,7 @@ int main(int argc, char **argv)
     // Avoid verbose logs on stderr if tests are not failing
     qunsetenv("COPYQ_LOG_LEVEL");
 
-    const QString appName = QStringLiteral("copyq.test");
+    const QString appName = QStringLiteral("qclip.test");
     QCoreApplication::setOrganizationName(appName);
     QCoreApplication::setApplicationName(appName);
     const auto requestedConfigPath = qEnvironmentVariable("COPYQ_SETTINGS_PATH");

@@ -4,11 +4,11 @@ import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const SERVICE_NAME = 'com.github.hluk.copyq.GnomeClipboard';
-const OBJECT_PATH = '/com/github/hluk/copyq/GnomeClipboard';
-const INTERFACE_NAME = 'com.github.hluk.CopyQ.GnomeClipboard1';
-const CLIENT_OBJECT_PATH = '/com/github/hluk/copyq/GnomeClipboardClient';
-const CLIENT_INTERFACE_NAME = 'com.github.hluk.CopyQ.GnomeClipboardClient1';
+const SERVICE_NAME = 'io.github.zerovoxxx.QClip.GnomeClipboard';
+const OBJECT_PATH = '/io/github/zerovoxxx/QClip/GnomeClipboard';
+const INTERFACE_NAME = 'io.github.zerovoxxx.QClip.GnomeClipboard1';
+const CLIENT_OBJECT_PATH = '/io/github/zerovoxxx/QClip/GnomeClipboardClient';
+const CLIENT_INTERFACE_NAME = 'io.github.zerovoxxx.QClip.GnomeClipboardClient1';
 const CLIPBOARD_TYPE_CLIPBOARD = 0;
 const CLIPBOARD_TYPE_PRIMARY = 1;
 const CLIPBOARD_TYPE_BOTH = 2;

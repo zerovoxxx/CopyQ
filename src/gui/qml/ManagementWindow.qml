@@ -56,6 +56,8 @@ Pane {
             Layout.fillWidth: true
             Layout.margins: theme.margin
             spacing: theme.spacing
+            ThemeButton { values: root.controller.theme; text: qsTr("Snippets…"); onClicked: root.controller.showSnippets() }
+            ThemeButton { values: root.controller.theme; text: qsTr("Save snippet"); enabled: root.hasSelection; onClicked: root.controller.saveSnippet() }
             Label { text: "QClip"; font.bold: true; font.pixelSize: 22 }
             Label { text: qsTr("Clipboard manager"); opacity: 0.7; visible: root.width >= 950 }
             Item { Layout.fillWidth: true }

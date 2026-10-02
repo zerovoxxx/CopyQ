@@ -162,7 +162,7 @@ jobs:
           gpg --version
 
       - name: Test
-        working-directory: ${{ github.workspace }}/copyq-${{ steps.version.outputs.version }}
+        working-directory: ${{ github.workspace }}/qclip-${{ steps.version.outputs.version }}
         run: |
           PATH="$(pwd):/c/Program Files/Git/usr/bin:$PATH"
           export PATH
@@ -188,6 +188,10 @@ jobs:
             qmlKeyboardAndIme actionsAndCancellation explicitCommands standardPreviews \
             nativeWindowIdentification pluginEditorAndSettings nativeInputListeningAndReplacement
           pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
+            -Executable ./copyq-tests.exe testCore:snippetLifecycle testCore:snippetExpansion
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
+            -Executable ./copyq-snippet-tests.exe storeRoundTrip damagedStorage encryptedStorage storageLimit dynamicDates dynamicClipboardAndRandom richTextAndReferences keywords copyMerging copyQMigration copyQExternalMigration qmlSnippets
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
             -Executable ./copyq-management-tests.exe \
             multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay transferAndDeleteProtection \
             qmlSelectionAndActions nativeDropRoundTrip themeMapping legacyStyleRules pluginPreviewBridge managementGeometry \
@@ -196,15 +200,31 @@ jobs:
           QT_FORCE_STDERR_LOGGING: 1
           COPYQ_LOG_LEVEL: DEBUG
           COPYQ_TESTS_RERUN_FAILED: 1
-          COPYQ_PLUGINS: ${{ github.workspace }}\copyq-${{ steps.version.outputs.version }}\itemtests.dll
+          COPYQ_PLUGINS: ${{ github.workspace }}\qclip-${{ steps.version.outputs.version }}\itemtests.dll
+
+      - name: Audit portable runtime
+        shell: pwsh
+        run: |
+          python utils/package-source.py QClip-source.tar.gz
+          python utils/check-release.py --platform windows --root "qclip-${{ steps.version.outputs.version }}" --source QClip-source.tar.gz --output release-audit-windows.json
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-evidence-windows
+          path: |
+            QClip-source.tar.gz
+            release-audit-windows.json
 
       - name: Separate test files from portable app
         run: |
-          APP="copyq-${APP_VERSION}"
+          APP="qclip-${APP_VERSION}"
           mkdir -p "${APP}-tests"
           mv "${APP}/copyq-tests.exe" "${APP}-tests/"
           mv "${APP}/copyq-palette-tests.exe" "${APP}-tests/"
           mv "${APP}/copyq-management-tests.exe" "${APP}-tests/"
+          mv "${APP}/copyq-snippet-tests.exe" "${APP}-tests/"
           mv "${APP}/itemtests.dll" "${APP}-tests/"
           mv "${APP}/Qt6Test.dll" "${APP}-tests/"
         env:
@@ -217,7 +237,7 @@ jobs:
             /O"$env:GITHUB_WORKSPACE" `
             /DAppVersion="$env:APP_VERSION" `
             /DAppVersionNumeric="$env:APP_VERSION_NUMERIC" `
-            /DRoot="$env:GITHUB_WORKSPACE/copyq-$env:APP_VERSION" `
+            /DRoot="$env:GITHUB_WORKSPACE/qclip-$env:APP_VERSION" `
             /DSource="$env:GITHUB_WORKSPACE" `
             "$env:GITHUB_WORKSPACE/shared/copyq.iss"
         env:
@@ -225,27 +245,27 @@ jobs:
           APP_VERSION_NUMERIC: ${{ steps.version_numeric.outputs.value }}
 
       - name: Create portable zip
-        run: 7z a "copyq-${APP_VERSION}.zip" "copyq-${APP_VERSION}"
+        run: 7z a "qclip-${APP_VERSION}.zip" "qclip-${APP_VERSION}"
         env:
           APP_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Upload portable zip
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: copyq-${{ steps.version.outputs.version }}.zip
-          path: copyq-${{ steps.version.outputs.version }}.zip
+          name: qclip-${{ steps.version.outputs.version }}.zip
+          path: qclip-${{ steps.version.outputs.version }}.zip
           archive: false
 
       - name: Upload installer
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: copyq-${{ steps.version.outputs.version }}-setup.exe
-          path: copyq-${{ steps.version.outputs.version }}-setup.exe
+          name: qclip-${{ steps.version.outputs.version }}-setup.exe
+          path: qclip-${{ steps.version.outputs.version }}-setup.exe
           archive: false
 
       - name: Upload tests
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: copyq-${{ steps.version.outputs.version }}-tests.zip
-          path: copyq-${{ steps.version.outputs.version }}-tests
+          name: qclip-${{ steps.version.outputs.version }}-tests.zip
+          path: qclip-${{ steps.version.outputs.version }}-tests
           archive: true

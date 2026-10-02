@@ -127,7 +127,12 @@ public:
     Q_INVOKABLE void startDrag(int row);
     Q_INVOKABLE bool dropItems(const QString &targetTab, int row, bool move);
 
+    Q_INVOKABLE void showSnippets() { emit snippetsRequested(); }
+    Q_INVOKABLE void saveSnippet() { if (m_model.selectedIndex().isValid()) emit snippetRequested(m_model.selectedIndex()); }
+
 signals:
+    void snippetsRequested();
+    void snippetRequested(const QPersistentModelIndex &index);
     void sourceRequested(const QString &tabName);
     void actionRequested(int id, const QString &tabName,
                          const QList<QPersistentModelIndex> &indexes, const QPersistentModelIndex &current);

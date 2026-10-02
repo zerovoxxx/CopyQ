@@ -4,8 +4,8 @@
 
 ; Path for output installation file
 #define Output                   "."
-#define MyAppName                "CopyQ"
-#define MyAppNameMin             "copyq"
+#define MyAppName                "QClip"
+#define MyAppNameMin             "qclip"
 #define MyAppCopyright           "Lukas Holecek"
 #define MyAppCopyrightStartYear  "2009"
 #define MyAppCopyrightEndYear    GetDateTimeString('yyyy','','')
@@ -16,7 +16,8 @@
 #endif
 
 [Setup]
-AppId={{9DF1F443-EA0B-4C75-A4D3-767A7783228E}
+MinVersion=10.0.18362
+AppId={{13939621-6375-4378-A9C8-E8BCC06B777D}
 AppName={#MyAppName}
 AppVersion={#AppVersion}
 AppVerName={#MyAppName} {#AppVersion}
@@ -24,16 +25,16 @@ AppVerName={#MyAppName} {#AppVersion}
 AppCopyright={#MyAppCopyright} {#MyAppCopyrightStartYear}-{#MyAppCopyrightEndYear}
 AppPublisher={#MyAppCopyright}
 
-AppPublisherURL=http://hluk.github.io/CopyQ/
-AppSupportURL=http://hluk.github.io/CopyQ/
-AppUpdatesURL=http://hluk.github.io/CopyQ/
+AppPublisherURL=https://github.com/zerovoxxx/CopyQ
+AppSupportURL=https://github.com/zerovoxxx/CopyQ/issues
+AppUpdatesURL=https://github.com/zerovoxxx/CopyQ/releases
 
 VersionInfoDescription={#MyAppName} installer
 VersionInfoProductName={#MyAppName} {#AppVersion}
 VersionInfoVersion={#AppVersionNumeric}
 
 UninstallDisplayName={#MyAppName} {#AppVersion}
-UninstallDisplayIcon={app}\copyq.exe
+UninstallDisplayIcon={app}\qclip.exe
 
 WizardStyle=Modern
 UsePreviousLanguage=no
@@ -145,10 +146,13 @@ Name: "plugins/pinned"; Description: "{cm:PluginPinned}"; Types: full
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: unchecked
-Name: "startup"; Description: {cm:AutoStartProgram,CopyQ}; Flags: unchecked
+Name: "startup"; Description: {cm:AutoStartProgram,QClip}; Flags: unchecked
 
 [Files]
-Source: "{#Root}\copyq.exe"; DestDir: "{app}"; Components: program; Flags: ignoreversion
+Source: "{#Root}\THIRD-PARTY-NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#Root}\RELEASE.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#Root}\licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#Root}\qclip.exe"; DestDir: "{app}"; Components: program; Flags: ignoreversion
 Source: "{#Root}\snoretoast.exe"; DestDir: "{app}"; Components: program; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#Root}\AUTHORS"; DestDir: "{app}"; Components: program; Flags: ignoreversion
 Source: "{#Root}\LICENSE"; DestDir: "{app}"; Components: program; Flags: ignoreversion
@@ -174,12 +178,12 @@ Source: "{#Root}\crypto\*.dll"; DestDir: "{app}\crypto"; Components: program; Fl
 Source: "{#Root}\*.dll"; DestDir: "{app}"; Components: program; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\CopyQ"; Filename: "{app}\copyq.exe"; Parameters: "--start-server show"
-Name: "{commondesktop}\CopyQ"; Filename: "{app}\copyq.exe"; Tasks: desktopicon
-Name: "{userstartup}\CopyQ"; Filename: "{app}\copyq.exe"; Tasks: startup
+Name: "{group}\QClip"; Filename: "{app}\qclip.exe"; Parameters: "--start-server show"
+Name: "{commondesktop}\QClip"; Filename: "{app}\qclip.exe"; Tasks: desktopicon
+Name: "{userstartup}\QClip"; Filename: "{app}\qclip.exe"; Tasks: startup
 
 [Run]
-Filename: "{app}\copyq.exe"; Description: "{cm:LaunchProgram,CopyQ}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\qclip.exe"; Description: "{cm:LaunchProgram,QClip}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 function GetFullInstallation(Param: string): string;

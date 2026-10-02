@@ -2,6 +2,7 @@
 #include "x11platformwindow.h"
 
 #include "x11info.h"
+#include "x11platforminput.h"
 
 #include "common/appconfig.h"
 #include "common/log.h"
@@ -47,6 +48,7 @@ private:
 #ifdef HAS_X11TEST
 bool fakeKeyEvent(Display* display, unsigned int keyCode, Bool isPress, unsigned long delayMs = CurrentTime)
 {
+    recordInjectedX11Key(keyCode, isPress);
     if (!XTestFakeKeyEvent(display, keyCode, isPress, delayMs)) {
         log( QStringLiteral("Failed to send key event (key code: %1, isPress: %2)")
                .arg(keyCode)

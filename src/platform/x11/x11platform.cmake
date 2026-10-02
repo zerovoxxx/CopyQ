@@ -1,4 +1,5 @@
 file(GLOB copyq_SOURCES ${copyq_SOURCES}
+    platform/x11/x11platforminput.cpp
     platform/x11/x11info.cpp
     platform/x11/x11platform.cpp
     platform/x11/x11platformclipboard.cpp
@@ -58,4 +59,10 @@ else()
     add_subdirectory(platform/x11/systemclipboard)
     set_target_properties(systemclipboard PROPERTIES COMPILE_FLAGS "-Wno-old-style-cast")
     list(APPEND copyq_LIBRARIES systemclipboard)
+endif()
+
+if(WITH_X11 AND X11_XTest_FOUND AND X11_Xtst_FOUND)
+    list(APPEND copyq_DEFINITIONS COPYQ_WITH_XRECORD)
+    add_definitions(-DCOPYQ_WITH_XRECORD)
+    list(APPEND copyq_LIBRARIES ${X11_Xtst_LIB})
 endif()

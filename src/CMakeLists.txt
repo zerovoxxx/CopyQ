@@ -16,6 +16,7 @@ list(REMOVE_ITEM copyq_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardcommands.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboarditempreview.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardstyle.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardsnippets.cpp"
 )
 
 file(GLOB copyq_FORMS
@@ -112,7 +113,7 @@ else()
         )
 
     set(MACOSX_BUNDLE_BUNDLE_NAME "${COPYQ_EXECUTABLE_NAME}")
-    set(MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.hluk.CopyQ")
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.zerovoxxx.QClip")
     set(MACOSX_BUNDLE_INFO_STRING "Advanced clipboard manager with editing and scripting features")
     set(MACOSX_BUNDLE_ICON_FILE "icon.icns")
     set(MACOSX_BUNDLE_LONG_VERSION_STRING "${copyq_version}")
@@ -149,7 +150,7 @@ qt_add_qml_module(copyq-palette-ui
     DEPENDENCIES QtQuick
     RESOURCE_PREFIX /copyq
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/QClip"
-    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Settings.qml gui/qml/Commands.qml gui/qml/Theme.qml gui/qml/ThemeButton.qml gui/qml/ThemeMenu.qml gui/qml/ThemeMenuItem.qml
+    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Settings.qml gui/qml/Commands.qml gui/qml/Theme.qml gui/qml/ThemeButton.qml gui/qml/ThemeMenu.qml gui/qml/ThemeMenuItem.qml gui/qml/Snippets.qml
     SOURCES gui/clipboardpalette.h gui/clipboardpalette.cpp
             gui/clipboardpalettemodel.h gui/clipboardpalettemodel.cpp
             gui/clipboardmanagement.h gui/clipboardmanagement.cpp
@@ -157,6 +158,7 @@ qt_add_qml_module(copyq-palette-ui
             gui/clipboardcommands.h gui/clipboardcommands.cpp
             gui/clipboarditempreview.h gui/clipboarditempreview.cpp
             gui/clipboardstyle.h gui/clipboardstyle.cpp
+            gui/clipboardsnippets.h gui/clipboardsnippets.cpp
 )
 target_include_directories(copyq-palette-ui PRIVATE . gui)
 target_link_libraries(copyq-palette-ui PRIVATE ${copyq_LIBRARIES})
@@ -175,6 +177,12 @@ if(QCA_OSSL_RELATIVE_PATH)
         COPYQ_QCA_PLUGIN_RELATIVE_PATH="${QCA_OSSL_RELATIVE_PATH}")
 endif()
 set_target_properties(${COPYQ_EXECUTABLE_NAME} PROPERTIES LINK_FLAGS "${copyq_LINK_FLAGS}")
+if(WIN32)
+    list(APPEND copyq_LIBRARIES icu)
+elseif(NOT APPLE)
+    find_package(ICU REQUIRED COMPONENTS i18n uc)
+    list(APPEND copyq_LIBRARIES ICU::i18n ICU::uc)
+endif()
 target_link_libraries(copyq-common ${copyq_LIBRARIES})
 target_link_libraries(${COPYQ_EXECUTABLE_NAME} ${copyq_LIBRARIES})
 target_include_directories(copyq-common PRIVATE ${CMAKE_CURRENT_BINARY_DIR} .)
@@ -213,6 +221,18 @@ if (MSVC)
 endif()
 
 # install
+# Install attribution before the final macOS signature seals bundle resources.
+if(APPLE)
+    set(copyq_notice_dir "${COPYQ_EXECUTABLE_NAME}.app/Contents/Resources")
+elseif(WIN32)
+    set(copyq_notice_dir ".")
+else()
+    set(copyq_notice_dir "${CMAKE_INSTALL_DATAROOTDIR}/doc/qclip")
+endif()
+install(FILES ../LICENSE ../AUTHORS ../RELEASE.md ../shared/THIRD-PARTY-NOTICES.txt DESTINATION "${copyq_notice_dir}")
+install(FILES ../qxt/COPYING DESTINATION "${copyq_notice_dir}/licenses" RENAME LibQxt-COPYING.txt)
+install(FILES ../plugins/itemfakevim/fakevim/LICENSE.LGPL DESTINATION "${copyq_notice_dir}/licenses" RENAME FakeVim-LGPL.txt)
+install(DIRECTORY ../shared/licenses/ DESTINATION "${copyq_notice_dir}/licenses")
 if (WIN32)
     install(TARGETS ${COPYQ_EXECUTABLE_NAME}
         RUNTIME DESTINATION . COMPONENT Runtime
@@ -261,6 +281,10 @@ else()
     list(REMOVE_DUPLICATES COPYQ_DEPLOY_LIBPATHS)
     get_target_property(COPYQ_MACDEPLOYQT Qt6::macdeployqt IMPORTED_LOCATION)
     get_target_property(COPYQ_QTPATHS Qt6::qtpaths IMPORTED_LOCATION)
+    execute_process(COMMAND "${COPYQ_QTPATHS}" --query QT_INSTALL_LIBS
+        OUTPUT_VARIABLE _qt_deploy_libs OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
+    list(APPEND COPYQ_DEPLOY_LIBPATHS "${_qt_deploy_libs}")
+    list(REMOVE_DUPLICATES COPYQ_DEPLOY_LIBPATHS)
 
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/platform/mac/deploy.cmake.in"
@@ -274,6 +298,8 @@ else()
         @ONLY)
     install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/fixup_copyq_bundle.cmake")
 
+    set(CPACK_PACKAGE_NAME "QClip")
+    set(CPACK_PACKAGE_FILE_NAME "QClip-${copyq_version}-${CMAKE_SYSTEM_PROCESSOR}")
     set(CPACK_GENERATOR "DragNDrop")
     include(CPack)
 endif()

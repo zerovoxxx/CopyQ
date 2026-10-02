@@ -160,7 +160,7 @@ QCoreApplication *MacPlatform::createConsoleApplication(int &argc, char **argv)
 
 QApplication *MacPlatform::createServerApplication(int &argc, char **argv)
 {
-    QApplication *app = new Activity<ClipboardApplication>(argc, argv, "CopyQ Server");
+    QApplication *app = new Activity<ClipboardApplication>(argc, argv, "QClip Server");
 
     // Switch the app to foreground when in foreground
     ForegroundBackgroundFilter::installFilter(app);
@@ -170,17 +170,17 @@ QApplication *MacPlatform::createServerApplication(int &argc, char **argv)
 
 QGuiApplication *MacPlatform::createClipboardProviderApplication(int &argc, char **argv)
 {
-    return new Activity<ClipboardApplication>(argc, argv, "CopyQ clipboard provider");
+    return new Activity<ClipboardApplication>(argc, argv, "QClip clipboard provider");
 }
 
 QCoreApplication *MacPlatform::createClientApplication(int &argc, char **argv)
 {
-    return new Activity<QCoreApplication>(argc, argv, "CopyQ Client");
+    return new Activity<QCoreApplication>(argc, argv, "QClip Client");
 }
 
 QGuiApplication *MacPlatform::createTestApplication(int &argc, char **argv)
 {
-    return new Activity<QGuiApplication>(argc, argv, "CopyQ Tests");
+    return new Activity<QGuiApplication>(argc, argv, "QClip Tests");
 }
 
 PlatformClipboardPtr MacPlatform::clipboard()

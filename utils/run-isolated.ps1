@@ -45,7 +45,7 @@ try {
         }
     }
     if ($IsMacOS -and (Split-Path -Leaf $Executable) -eq 'copyq-tests' -and -not $env:COPYQ_TESTS_EXECUTABLE) {
-        $nativeApp = Join-Path (Split-Path -Parent (Resolve-Path $Executable)) 'CopyQ.app/Contents/MacOS/CopyQ'
+        $nativeApp = Join-Path (Split-Path -Parent (Resolve-Path $Executable)) 'QClip.app/Contents/MacOS/QClip'
         if (Test-Path -LiteralPath $nativeApp) { $env:COPYQ_TESTS_EXECUTABLE = $nativeApp }
     }
     if ($IsMacOS -and (Split-Path -Leaf $Executable) -in @('copyq-palette-tests','copyq-management-tests')) {

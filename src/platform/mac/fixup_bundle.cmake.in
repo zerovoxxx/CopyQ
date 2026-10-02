@@ -61,7 +61,7 @@ endfunction()
 # --- Phase 1: Copy missing transitive dependencies into the bundle. ---
 message(STATUS "Fixup bundle: searching for missing deps in: ${_libpaths}")
 foreach(_iter RANGE 1 5)
-    collect_bundle_binaries(_bins "${_bundle}/Contents/Frameworks" "${_bundle}/Contents/PlugIns")
+    collect_bundle_binaries(_bins "${_bundle}/Contents/Frameworks" "${_bundle}/Contents/PlugIns" "${_bundle}/Contents/Resources/qml")
     list(APPEND _bins "${_bundle}/Contents/MacOS/@COPYQ_EXECUTABLE_NAME@")
 
     set(_found_new FALSE)
@@ -119,7 +119,7 @@ foreach(_iter RANGE 1 5)
 endforeach()
 
 # --- Phase 2: Rewrite bundled dependencies and library IDs. ---
-collect_bundle_binaries(_all_bins "${_bundle}/Contents/Frameworks" "${_bundle}/Contents/PlugIns")
+collect_bundle_binaries(_all_bins "${_bundle}/Contents/Frameworks" "${_bundle}/Contents/PlugIns" "${_bundle}/Contents/Resources/qml")
 list(APPEND _all_bins "${_bundle}/Contents/MacOS/@COPYQ_EXECUTABLE_NAME@")
 foreach(_bin ${_all_bins})
     execute_process(COMMAND otool -D "${_bin}" OUTPUT_VARIABLE _id ERROR_QUIET)

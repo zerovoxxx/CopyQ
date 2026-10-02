@@ -83,8 +83,8 @@ void setSessionName(const QString &sessionName)
 {
     const QString appName =
         sessionName.isEmpty()
-        ? QStringLiteral("copyq")
-        : QStringLiteral("copyq-%1").arg(sessionName);
+        ? QStringLiteral("qclip")
+        : QStringLiteral("qclip-%1").arg(sessionName);
     QCoreApplication::setOrganizationName(appName);
     QCoreApplication::setApplicationName(appName);
 }

@@ -642,6 +642,7 @@ int main(int argc, char **argv)
                 second.close();
                 return;
             }
+            if (command == "select-first") { receiver.selectAll(); return; }
             auto widget = command == "first" ? &receiver : &second;
             if (auto window = platformNativeInterface()->getWindow(widget->winId()))
                 window->raise();

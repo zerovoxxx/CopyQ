@@ -48,11 +48,11 @@ Q_LOGGING_CATEGORY(logClipboardGnome, "copyq.clipboard.gnome")
 constexpr auto minCheckAgainIntervalMs = 50;
 constexpr auto maxCheckAgainIntervalMs = 500;
 constexpr auto maxRetryCount = 3;
-const auto gnomeClipboardService = QStringLiteral("com.github.hluk.copyq.GnomeClipboard");
-const auto gnomeClipboardPath = QStringLiteral("/com/github/hluk/copyq/GnomeClipboard");
-const auto gnomeClipboardInterface = QStringLiteral("com.github.hluk.CopyQ.GnomeClipboard1");
-const auto gnomeClipboardClientPath = QStringLiteral("/com/github/hluk/copyq/GnomeClipboardClient");
-const auto gnomeClipboardClientInterface = QStringLiteral("com.github.hluk.CopyQ.GnomeClipboardClient1");
+const auto gnomeClipboardService = QStringLiteral("io.github.zerovoxxx.QClip.GnomeClipboard");
+const auto gnomeClipboardPath = QStringLiteral("/io/github/zerovoxxx/QClip/GnomeClipboard");
+const auto gnomeClipboardInterface = QStringLiteral("io.github.zerovoxxx.QClip.GnomeClipboard1");
+const auto gnomeClipboardClientPath = QStringLiteral("/io/github/zerovoxxx/QClip/GnomeClipboardClient");
+const auto gnomeClipboardClientInterface = QStringLiteral("io.github.zerovoxxx.QClip.GnomeClipboardClient1");
 constexpr int gnomeClipboardTypeClipboard = 0;
 constexpr int gnomeClipboardTypePrimary = 1;
 constexpr int gnomeClipboardTypeBoth = 2;
@@ -218,7 +218,7 @@ QVariantMap dataMapFromMimeData(const QMimeData *mimeData)
 class GnomeClipboardExtensionClient final : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "com.github.hluk.CopyQ.GnomeClipboardClient1")
+    Q_CLASSINFO("D-Bus Interface", "io.github.zerovoxxx.QClip.GnomeClipboardClient1")
 public:
     explicit GnomeClipboardExtensionClient(QObject *parent)
         : QObject(parent)

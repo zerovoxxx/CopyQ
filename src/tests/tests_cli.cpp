@@ -162,7 +162,7 @@ void CoreTests::commandVersion()
 
     const auto version = QString::fromUtf8(stdoutActual);
     // Version contains application name and version.
-    QVERIFY( version.contains(QRegularExpression("\\bCopyQ\\b.*" + QRegularExpression::escape(versionString))) );
+    QVERIFY( version.contains(QRegularExpression("\\bQClip\\b.*" + QRegularExpression::escape(versionString))) );
     // Version contains Qt version.
     QVERIFY( version.contains(QRegularExpression("\\bQt:\\s+\\d")) );
 

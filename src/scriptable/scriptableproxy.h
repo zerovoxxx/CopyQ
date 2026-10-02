@@ -113,6 +113,7 @@ public slots:
     void close();
     bool showWindow();
     bool togglePalette();
+    bool showSnippets();
     bool showWindowAt(QRect rect);
     bool pasteToCurrentWindow();
     bool copyFromCurrentWindow();
