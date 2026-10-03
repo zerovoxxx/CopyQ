@@ -16,7 +16,7 @@ execute_process(
     COMMAND "@COPYQ_MACDEPLOYQT@" "${_bundle}"
         "-qmldir=@CMAKE_CURRENT_SOURCE_DIR@/gui/qml"
         "-qmlimport=@CMAKE_CURRENT_BINARY_DIR@"
-        -always-overwrite -no-strip -no-codesign ${_qml_libpaths}
+        -always-overwrite -no-strip ${_qml_libpaths}
     RESULT_VARIABLE _qml_deploy_result
 )
 if(NOT _qml_deploy_result EQUAL 0)

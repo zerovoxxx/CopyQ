@@ -285,6 +285,8 @@ QClip 隐藏/显示进程组 RSS：1000 条约 153.0/152.5 MiB，10000 条约 15
 - GitHub 仓库已由用户重命名为 zerovoxxx/QClip，两套 origin 地址与 gh 默认目的地已更新；上游 remote 保留。双平台正式 CI、最终资产审计与公开状态待下一步完成。
 - Windows 主程序新增版本资源，FileDescription=QClip Clipboard Manager、FileVersion/ProductVersion=1.0.0、ProductName=QClip，原 CopyQ 作者版权仍保留。src/qclip.rc.in 替代仅含图标的 src/copyq.rc；原生重编译退出 0，文件属性已核对。
 - 本机已登记的 astack spec-lint 路径不可用，未声称该门通过；公开文档本地链接与 49 动作/90 配置/24 表单/7 插件表单/8 插件/150 API 兼容清单检查均通过。
+- 首次正式 Apple Silicon CI 已完成代码编译，但安装部署因 Qt 6.10 macdeployqt 不接受旧脚本的 -no-codesign 参数退出 1；删除该参数，继续使用末尾 fixup_bundle.cmake.in 的完整 ad-hoc 签名与验证。此失败运行不作为发行通过证据。
+- Intel 的依赖构建和缓存已完成；miniaudio 校验在该 runner 的 sha256sum 实现处失败。改为优先使用 shasum、显式 stdin 文件名及 bash 数组传参，保持固定 SHA-256 不变。
 
 
 | 日期 | 作者 | 内容 |
