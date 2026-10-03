@@ -217,6 +217,9 @@ bool ClipboardPalette::event(QEvent *event)
         return true;
     }
     if (event->type() == QEvent::KeyPress) {
+        if (rootObject() && (rootObject()->property("popupActive").toBool()
+                || !rootObject()->property("historyFocus").toBool()))
+            return ClipboardWindow::event(event);
         auto key = static_cast<QKeyEvent*>(event);
         // Let TextField and the input method consume composition keys first.
         if (!composing()) {

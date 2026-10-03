@@ -20,6 +20,6 @@ Rectangle {
         radius: parent.radius
         color: "transparent"
         border.width: 1
-        border.color: theme.dark ? "#14ffffff" : "#99ffffff"
+        border.color: theme.dark ? "#0cffffff" : "#55ffffff"
     }
 }

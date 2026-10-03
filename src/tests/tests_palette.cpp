@@ -34,6 +34,7 @@
 #include <QDir>
 #include <QScreen>
 #include <QStandardItemModel>
+#include <QQmlComponent>
 #include <qscopeguard.h>
 
 #ifdef Q_OS_MACOS
@@ -150,9 +151,10 @@ private slots:
             palette.raise();
             QTest::qWait(250);
             qInfo() << "Native material available=" << palette.blurAvailable() << "active=" << palette.isActive();
+            QVERIFY(palette.grabWindow().save(QDir(screenshots).filePath(QStringLiteral("palette-light.png"))));
             const auto rect = palette.geometry();
-            QVERIFY(palette.screen()->grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height())
-                .save(QDir(screenshots).filePath(QStringLiteral("palette-light.png"))));
+            const auto native = palette.screen()->grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height());
+            if (!native.isNull()) native.save(QDir(screenshots).filePath(QStringLiteral("palette-light-native.png")));
         }
         theme.insert(QStringLiteral("bg"), QColor(QStringLiteral("#25272d")));
         theme.insert(QStringLiteral("fg"), QColor(QStringLiteral("#f0f1f5")));
@@ -163,11 +165,16 @@ private slots:
         QVERIFY(preview);
         QTRY_VERIFY(preview->previewWidget());
         QTRY_COMPARE(preview->previewWidget()->palette().color(QPalette::WindowText), QColor(QStringLiteral("#f0f1f5")));
+        QTRY_COMPARE(preview->previewWidget()->parentWidget()->palette().color(QPalette::Base), QColor(QStringLiteral("#2e3036")));
+        QTRY_COMPARE(preview->previewWidget()->parentWidget()->parentWidget()->palette().color(QPalette::Window), QColor(QStringLiteral("#2e3036")));
+        for (auto child : preview->previewWidget()->findChildren<QWidget*>())
+            QCOMPARE(child->palette().color(QPalette::Text), QColor(QStringLiteral("#f0f1f5")));
         if (!screenshots.isEmpty()) {
             QTest::qWait(250);
+            QVERIFY(palette.grabWindow().save(QDir(screenshots).filePath(QStringLiteral("palette-dark.png"))));
             const auto rect = palette.geometry();
-            QVERIFY(palette.screen()->grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height())
-                .save(QDir(screenshots).filePath(QStringLiteral("palette-dark.png"))));
+            const auto native = palette.screen()->grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height());
+            if (!native.isNull()) native.save(QDir(screenshots).filePath(QStringLiteral("palette-dark-native.png")));
         }
         palette.cancel();
         palette.destroy();
@@ -176,6 +183,142 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(&palette));
         QTRY_VERIFY(checkSurface());
         QCOMPARE(palette.history()->count(), 4);
+        palette.cancel();
+    }
+
+    void themedControls()
+    {
+        QQuickView view;
+        QQmlComponent component(view.engine());
+        component.setData(R"QML(
+import QtQuick
+import QtQuick.Controls.Basic
+import QtQuick.Layouts
+import QClip
+Pane {
+    id: root
+    required property var values
+    width: 560; height: 460; padding: 20
+    Theme { id: theme; values: root.values }
+    font: theme.textFont
+    background: Rectangle { color: theme.background }
+    ColumnLayout {
+        anchors.fill: parent; spacing: 12
+        Label { text: "QClip · Controls"; color: theme.foreground; font.pixelSize: 18 }
+        ThemeComboBox { id: combo; objectName: "control_combo"; values: root.values; Layout.fillWidth: true; model: ["History", "A long collection name · 中文收藏夹", "Work"] }
+        ThemeTextField { values: root.values; Layout.fillWidth: true; iconName: "search"; placeholderText: "Search clipboard history…" }
+        RowLayout {
+            ThemeButton { values: root.values; text: "Copy"; iconName: "copy" }
+            ThemeButton { values: root.values; text: "Paste"; primary: true; iconName: "return"; trailingIcon: true }
+            ThemeButton { values: root.values; text: "Disabled"; enabled: false }
+            ThemeButton { values: root.values; iconName: "more"; quiet: true; Accessible.name: "More" }
+        }
+        RowLayout {
+            ThemeCheckBox { values: root.values; text: "Record history"; checked: true }
+            ThemeCheckBox { values: root.values; text: "Disabled"; enabled: false }
+            ThemeSpinBox { values: root.values; objectName: "control_spin"; value: 25; to: 100000; editable: true }
+        }
+        ThemeDelegate { values: root.values; Layout.fillWidth: true; text: "Selected collection"; highlighted: true }
+        ThemeTextArea { values: root.values; Layout.fillWidth: true; Layout.fillHeight: true; text: "A quieter place for everything you copy.\n把灵感留住，随时找回。" }
+    }
+}
+)QML", QUrl(QStringLiteral("qrc:/copyq/QClip/gui/qml/themed-controls.qml")));
+        QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+        Settings settings;
+        auto values = Theme(settings).quickTheme();
+        auto root = qobject_cast<QQuickItem*>(component.createWithInitialProperties({{QStringLiteral("values"), values}}));
+        QVERIFY2(root, qPrintable(component.errorString()));
+        view.setContent(QUrl(), &component, root);
+        view.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&view));
+        auto combo = root->findChild<QQuickItem*>(QStringLiteral("control_combo"));
+        QVERIFY(combo);
+        auto indicator = combo->property("indicator").value<QQuickItem*>();
+        QVERIFY(indicator);
+        QVERIFY(qAbs(indicator->y() + indicator->height()/2 - combo->height()/2) < 0.1);
+        auto popup = combo->property("popup").value<QObject*>();
+        QVERIFY(popup);
+        combo->forceActiveFocus();
+        QTest::keyClick(&view, Qt::Key_Space);
+        QTRY_VERIFY(popup->property("visible").toBool());
+        auto list = popup->property("contentItem").value<QQuickItem*>();
+        QVERIFY(list);
+        QTRY_VERIFY(list->property("currentItem").value<QQuickItem*>());
+        auto current = list->property("currentItem").value<QQuickItem*>();
+        QVERIFY(current->width() <= popup->property("availableWidth").toReal());
+        const auto artifacts = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
+        if (!artifacts.isEmpty()) {
+            QTest::qWait(180);
+            QVERIFY(view.grabWindow().save(artifacts + QStringLiteral("/controls-dropdown-light.png")));
+        }
+        QTest::keyClick(&view, Qt::Key_Down);
+        QTest::keyClick(&view, Qt::Key_Return);
+        QTRY_COMPARE(combo->property("currentIndex").toInt(), 1);
+        QVERIFY(!popup->property("visible").toBool());
+        auto spin = root->findChild<QQuickItem*>(QStringLiteral("control_spin"));
+        QVERIFY(spin);
+        spin->forceActiveFocus();
+        QTest::keyClick(&view, Qt::Key_Up);
+        QCOMPARE(spin->property("value").toInt(), 26);
+        for (const bool dark : {false, true}) {
+            if (dark) {
+                values.insert(QStringLiteral("bg"), QColor(QStringLiteral("#25272d")));
+                values.insert(QStringLiteral("fg"), QColor(QStringLiteral("#f0f1f5")));
+                values.insert(QStringLiteral("edit_fg"), values.value(QStringLiteral("fg")));
+                values.insert(QStringLiteral("edit_bg"), values.value(QStringLiteral("bg")));
+                root->setProperty("values", values);
+            }
+            if (!artifacts.isEmpty()) {
+                QTest::qWait(180);
+                QVERIFY(view.grabWindow().save(artifacts + (dark ? QStringLiteral("/controls-dark.png") : QStringLiteral("/controls-light.png"))));
+            }
+        }
+        auto font = values.value(QStringLiteral("font")).value<QFont>();
+        font.setPixelSize(18);
+        values.insert(QStringLiteral("font"), font);
+        root->setProperty("values", values);
+        QTRY_VERIFY(combo->height() >= 32);
+        QVERIFY(qAbs(indicator->y() + indicator->height()/2 - combo->height()/2) < 0.1);
+        if (!artifacts.isEmpty()) {
+            QTest::qWait(180);
+            QVERIFY(view.grabWindow().save(artifacts + QStringLiteral("/controls-large-font.png")));
+        }
+    }
+
+    void collectionPopupNavigation()
+    {
+        ClipboardModel source;
+        source.insertItem(textData(QStringLiteral("first")), 0);
+        source.insertItem(textData(QStringLiteral("second")), 1);
+        ClipboardPalette palette(&m_factory);
+        Settings settings;
+        palette.setTheme(Theme(settings).quickTheme());
+        palette.open(&source, QStringLiteral("History"), {QStringLiteral("History"), QStringLiteral("Work")}, {});
+        QVERIFY(QTest::qWaitForWindowExposed(&palette));
+        auto combo = palette.rootObject()->findChild<QQuickItem*>(QStringLiteral("palette_sources"));
+        QVERIFY(combo);
+        combo->forceActiveFocus();
+        QSignalSpy sourceChanged(&palette, &ClipboardPalette::sourceRequested);
+        QSignalSpy activation(&palette, &ClipboardPalette::activationRequested);
+        QTest::keyClick(&palette, Qt::Key_Space);
+        QTRY_VERIFY(palette.rootObject()->property("popupActive").toBool());
+        const auto artifacts = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
+        if (!artifacts.isEmpty()) {
+            QTest::qWait(180);
+            QVERIFY(palette.grabWindow().save(artifacts + QStringLiteral("/palette-dropdown.png")));
+        }
+        QTest::keyClick(&palette, Qt::Key_Down);
+        QTest::keyClick(&palette, Qt::Key_Return);
+        QTRY_COMPARE(sourceChanged.size(), 1);
+        QCOMPARE(sourceChanged.first().first().toString(), QStringLiteral("Work"));
+        QCOMPARE(palette.history()->selectedRow(), 0);
+        QCOMPARE(activation.size(), 0);
+        QVERIFY(palette.isVisible());
+        QTest::keyClick(&palette, Qt::Key_Space);
+        QTRY_VERIFY(palette.rootObject()->property("popupActive").toBool());
+        QTest::keyClick(&palette, Qt::Key_Escape);
+        QTRY_VERIFY(!palette.rootObject()->property("popupActive").toBool());
+        QVERIFY(palette.isVisible());
         palette.cancel();
     }
 

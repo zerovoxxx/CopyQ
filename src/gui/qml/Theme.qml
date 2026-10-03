@@ -10,11 +10,15 @@ QtObject {
     readonly property color highlightedText: values.sel_fg || "#ffffff"
     readonly property bool dark: background.r * 0.299 + background.g * 0.587 + background.b * 0.114 < 0.5
     readonly property bool customStyle: values.custom_style === true
-    readonly property color muted: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.58)
-    readonly property color line: Qt.rgba(foreground.r, foreground.g, foreground.b, dark ? 0.12 : 0.09)
-    readonly property color surface: dark ? "#30323a" : "#ffffff"
-    readonly property color hover: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.055)
-    readonly property color selection: Qt.rgba(highlight.r, highlight.g, highlight.b, dark ? 0.24 : 0.12)
+    readonly property color muted: Qt.rgba(foreground.r, foreground.g, foreground.b, dark ? 0.65 : 0.62)
+    readonly property color line: Qt.rgba(foreground.r, foreground.g, foreground.b, dark ? 0.14 : 0.10)
+    readonly property color surface: dark ? "#2e3036" : "#ffffff"
+    readonly property color hover: Qt.rgba(foreground.r, foreground.g, foreground.b, dark ? 0.075 : 0.045)
+    readonly property color pressed: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.10)
+    readonly property color selection: Qt.rgba(highlight.r, highlight.g, highlight.b, dark ? 0.25 : 0.10)
+    readonly property color selectionText: dark ? foreground : highlight
+    readonly property color focusRing: Qt.rgba(highlight.r, highlight.g, highlight.b, 0.24)
+    readonly property color danger: dark ? "#ff8a80" : "#bd3732"
     readonly property color editorBackground: values.edit_bg || background
     readonly property color editorText: values.edit_fg || foreground
     readonly property color notesBackground: values.notes_bg || alternate
@@ -30,4 +34,6 @@ QtObject {
     readonly property int rowHeight: values.quick_row_height === undefined ? 48 : Math.max(32, Math.min(256, values.quick_row_height))
     readonly property int radius: values.quick_radius === undefined ? 8 : Math.max(0, Math.min(256, values.quick_radius))
     readonly property int controlHeight: 32
+    readonly property int iconSize: 16
+    readonly property int captionSize: 11
 }

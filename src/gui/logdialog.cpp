@@ -11,6 +11,7 @@
 #include <QCheckBox>
 #include <QVBoxLayout>
 #include <QElapsedTimer>
+#include <QFontDatabase>
 #include <QRegularExpression>
 #include <QTextBlock>
 #include <QTextCharFormat>
@@ -105,7 +106,7 @@ namespace {
 class LogDecorator final : public Decorator
 {
 public:
-    LogDecorator(const QFont &font, QObject *parent)
+    LogDecorator(const QFont &font, bool dark, QObject *parent)
         : Decorator(QRegularExpression("^[^\\]]*\\] \\w+"), parent)
         , m_labelNote(logLevelLabel(LogNote))
         , m_labelError(logLevelLabel(LogError))
@@ -118,22 +119,21 @@ public:
 
         QTextCharFormat normalFormat;
         normalFormat.setFont(boldFont);
-        normalFormat.setBackground(Qt::white);
-        normalFormat.setForeground(Qt::black);
+        normalFormat.setForeground(dark ? QColor("#f0f1f5") : QColor(Qt::black));
 
         m_noteLogLevelFormat = normalFormat;
 
         m_errorLogLevelFormat = normalFormat;
-        m_errorLogLevelFormat.setForeground(Qt::red);
+        m_errorLogLevelFormat.setForeground(dark ? QColor("#ff8a80") : QColor("#bd3732"));
 
         m_warningLogLevelFormat = normalFormat;
-        m_warningLogLevelFormat.setForeground(Qt::darkRed);
+        m_warningLogLevelFormat.setForeground(dark ? QColor("#ffd08a") : QColor("#8b5610"));
 
         m_debugLogLevelFormat = normalFormat;
-        m_debugLogLevelFormat.setForeground(QColor(100, 100, 200));
+        m_debugLogLevelFormat.setForeground(dark ? QColor("#9bbcff") : QColor("#5368a6"));
 
         m_traceLogLevelFormat = normalFormat;
-        m_traceLogLevelFormat.setForeground(QColor(200, 150, 100));
+        m_traceLogLevelFormat.setForeground(dark ? QColor("#dfc48c") : QColor("#87673a"));
     }
 
 private:
@@ -168,10 +168,10 @@ private:
 class StringDecorator final : public Decorator
 {
 public:
-    explicit StringDecorator(QObject *parent)
+    StringDecorator(bool dark, QObject *parent)
         : Decorator(QRegularExpression("\"[^\"]*\"|'[^']*'"), parent)
     {
-        m_stringFormat.setForeground(Qt::darkGreen);
+        m_stringFormat.setForeground(dark ? QColor("#8edba3") : QColor("#287543"));
     }
 
 private:
@@ -186,8 +186,9 @@ private:
 class ThreadNameDecorator final : public Decorator
 {
 public:
-    explicit ThreadNameDecorator(const QFont &font, QObject *parent)
+    ThreadNameDecorator(const QFont &font, bool dark, QObject *parent)
         : Decorator(QRegularExpression("<[A-Za-z/]+-[0-9-]+>"), parent)
+        , m_dark(dark)
     {
         QFont boldFont = font;
         boldFont.setBold(true);
@@ -202,7 +203,7 @@ private:
 
         const auto hash = qHash(text);
         const int h = hash % 360;
-        m_format.setForeground( QColor::fromHsv(h, 150, 100) );
+        m_format.setForeground( QColor::fromHsv(h, m_dark ? 100 : 150, m_dark ? 220 : 100) );
 
         const auto bg =
                 text.startsWith("<Server-") ? QColor::fromRgb(255, 255, 200)
@@ -210,12 +211,13 @@ private:
               : text.startsWith("<cmd/provide") ? QColor::fromRgb(220, 255, 220)
               : text.startsWith("<cmd/synchronize") ? QColor::fromRgb(220, 255, 240)
               : QColor(Qt::white);
-        m_format.setBackground(bg);
+        m_format.setBackground(m_dark ? bg.darker(500) : bg);
 
         tc->setCharFormat(m_format);
     }
 
     QTextCharFormat m_format;
+    bool m_dark;
 };
 
 } // namespace
@@ -232,12 +234,15 @@ LogDialog::LogDialog(QWidget *parent)
     ui->setupUi(this);
 
     auto font = ui->textBrowserLog->font();
-    font.setFamily("Monospace");
+    font.setFamily(QFontDatabase::systemFont(QFontDatabase::FixedFont).family());
     ui->textBrowserLog->setFont(font);
 
-    m_logDecorator = new LogDecorator(font, this);
-    m_stringDecorator = new StringDecorator(this);
-    m_threadNameDecorator = new ThreadNameDecorator(font, this);
+    Settings settings;
+    const Theme theme(settings);
+    const bool dark = theme.quickTheme().value(QStringLiteral("bg")).value<QColor>().lightnessF() < 0.5;
+    m_logDecorator = new LogDecorator(font, dark, this);
+    m_stringDecorator = new StringDecorator(dark, this);
+    m_threadNameDecorator = new ThreadNameDecorator(font, dark, this);
 
     ui->labelLogFileName->setText(logFileName());
 
@@ -264,8 +269,7 @@ LogDialog::LogDialog(QWidget *parent)
     body->addLayout(filters);
     body->addWidget(ui->textBrowserLog, 1);
     ui->verticalLayout->insertLayout(0, body, 1);
-    Settings settings;
-    Theme(settings).decorateDialog(this, tr("Application log"), tr("Filter by level, select and copy diagnostics from the live application log."));
+    theme.decorateDialog(this, tr("Application log"), tr("Filter by level, select and copy diagnostics from the live application log."));
     resize(1000, 640);
 
     updateLog();

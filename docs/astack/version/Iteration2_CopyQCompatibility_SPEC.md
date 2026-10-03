@@ -612,6 +612,46 @@ Windows 11 build 26300 / x64、Qt 6.10.3 / MSVC 19.51、150% DPI。使用仓库�
 | 视觉检查 | `build/ui-density-screenshots/` 内浅深色 palette、management/management-compact、settings、commands、snippets 截图已检查：标题基线、两栏起止边界、控件高度与复选框对齐，片段关键字完整；未发现本轮收紧引起的裁切。仍非 macOS/Linux 或外部真实粘贴的验收。 |
 | 清单/差异/治理 | `python utils/check-compatibility.py`、`git diff --check` 退出 0；harness 入口链接限制及本机 spec-lint 不可用仍如前述记录。 |
 
+### 2026-10-03 全界面视觉精修与排查
+
+用户指出集合下拉框的字形箭头未对齐，并要求以苹果应用的精细度全面审阅和美化。沿用 740×440 快捷面板与 32px 控件基准，保留用户显式字体/密度、全部操作及自定义 QSS。以统一线性图标、低噪声表面、精确中心对齐、明确文字层级、连续焦点反馈和完整禁用/悬停/选中状态为验收目标。
+
+代码排查确认：下拉箭头/关闭/更多依赖字形基线；下拉 delegate 使用控件外宽，未扣除 popup padding；普通菜单和管理集合/历史仍使用旧绘制桥；SpinBox、滚动条、tooltip、分隔线未接入共享样式；设置/命令字段平铺、Snippet 次要设置挤在底部。修订必须覆盖这些共性问题，不能只改截图中的一个箭头。
+
+影响面（跨十个以上文件的原因是公共样式需要被所有入口复用）：
+
+| 类型 | 文件 | 原因 |
+|---|---|---|
+| NEW | src/gui/qml/ThemeIcon.qml、ThemeScrollBar.qml、ThemeSpinBox.qml、ThemeMenuSeparator.qml、ThemeToolTip.qml | 多入口共用几何图标、滚动/数字/菜单/提示控件，消除字体基线和默认 Basic 控件混搭。 |
+| MODIFY | src/gui/qml/Theme.qml、ThemeButton.qml、ThemeComboBox.qml、ThemeCheckBox.qml、ThemeDelegate.qml、ThemeTextField.qml、ThemeTextArea.qml、ThemeDialog.qml、ThemeMenu.qml、ThemeMenuItem.qml、GlassBackground.qml | 统一尺寸、颜色、焦点/禁用/选中反馈；下拉几何对齐及弹出项边界。 |
+| MODIFY | src/gui/qml/ClipboardPalette.qml、ManagementWindow.qml、Settings.qml、Commands.qml、Snippets.qml | 五窗口逐页修订图标、留白、导航/字段层级、表面与紧凑布局。 |
+| NEW / MODIFY | src/images/chevron_*.svg、check*.svg、src/copyq.qrc、src/CMakeLists.txt | 辅助 Widgets 共享矢量箭头/检查标记，注册公共 QML 与资源。 |
+| MODIFY | src/gui/theme.cpp、clipboarditempreview.cpp、clipboardsettings.cpp | 辅助 Widgets、插件预览与编辑器统一深浅色、数字/图标按钮和焦点；保留自定义 QSS 与主题编辑器预览。 |
+| MODIFY | src/gui/clipboardpalette.cpp、configurationmanager.cpp | 弹出菜单/输入控件接收自身键盘事件；按实际页面归属恢复 Layout/Tray/Notifications 设置字段。 |
+| MODIFY | src/gui/aboutdialog.cpp | 默认 About 富文本使用当前现代主题颜色及可读的链接色；显式 QSS 继续使用原颜色。 |
+| MODIFY | src/gui/logdialog.cpp | 日志采用系统等宽字体，深色状态/引号/线程高亮使用可读前景与协调底色，去掉硬编码白色高亮块。 |
+| MODIFY | src/tests/tests_palette.cpp、tests_management.cpp、tests_snippets.cpp | 增加真实控件几何/键盘/弹出选择验证及多页/深浅色/尺寸截图；保留既有业务断言。 |
+
+验证计划：`cmd /c build\build-ui.cmd`、`cmd /c build\lint-ui.cmd`；通过 `utils/run-isolated.ps1` 运行 palette 的材质、控件及键盘/IME指定函数、management 的 QML/主题/QSS/设置/命令与视觉指定函数、snippet 的 `qmlSnippets`。截图覆盖所有主窗口、设置/命令各栏目、弹窗/菜单、深浅色与紧凑窗口，并检查实际生成的图像。随后运行 `python utils/check-compatibility.py`、`pwsh -NoProfile -File utils/check-harness.ps1`、`git diff --check`，部署验证后交付开发预览。现有 Windows 命令交换回环/原生位置存储失败须保留边界，不放宽断言；macOS/Linux 实机与外部粘贴不由视觉截图证明。
+
+最后一轮辅助页审阅发现：深色快捷键表的交替行仍取系统浅色 palette；片段编辑器的隔离截图 fixture 未加载真实菜单项，导致工具栏空白。前者按实际主题表面推导默认颜色并统一图标按钮尺寸/导航，后者补齐 fixture 的菜单和快捷键后重新截图。透明预览内容的背景由滚动容器提供，验证应检查实际容器 Base 与文字颜色，不能要求透明内容自身 Window 角色为不透明背景。
+
+辅助窗口深色 fixture 必须把主题写入隔离 Settings 后再构造真实窗口，不能在浅色窗口已经初始化后仅更换父 palette；恢复隔离配置由 scope guard 保证。控件 gallery 也须提供完整的编辑器配色，避免把浅色编辑颜色保留在深色测试地图中。About 的默认链接色另按现代 accent 修订，确保深色富文本可读。
+
+#### 本轮验证记录（2026-10-03）
+
+| 验证 | 结果与证据 |
+|---|---|
+| Windows 原生构建 / QML | `cmd /c build\build-ui.cmd` 与 `cmd /c build\lint-ui.cmd` 退出 0；Qt 6.10.3、MSVC 19.51、x64，QML lint 无告警；`build/ui-polish-build.log`、`build/ui-polish-qmllint.log`。沿用此前可选 QCA/Keychain/audio/通知/sccache 关闭的开发配置，不等同于正式发行构建。 |
+| palette 指定方法 | 隔离运行 `glassWindowLifecycle themedControls collectionPopupNavigation qmlKeyboardAndIme explicitCommands standardPreviews`：8 passed / 0 failed（含 init/cleanup）；箭头几何中心、中文长集合名称、popup 宽度、数字键盘、下拉 Enter/Esc、IME、标准预览及材质生命周期通过；`build/ui-polish-palette-results.txt`。 |
+| management 指定方法 | 隔离运行 `visualAudit qmlSelectionAndActions themeMapping legacyStyleRules settingsDraftTransaction commandDraftRoundTrip pluginPreviewBridge`：8 passed / 1 failed。视觉、点击/IME、主题/QSS、设置草稿和插件桥通过；`commandDraftRoundTrip` 仍为前述修改前 baseline 在相同工具链已复现的命令交换回环失败，未修改或放宽业务断言；`build/ui-polish-management-results.txt`。未重复既有独立窗口位置存储失败测试。 |
+| snippets 指定方法 | 隔离运行 `qmlSnippets`：3 passed / 0 failed；包括浅深色正文编辑器与 720×480 布局；`build/ui-polish-snippet-results.txt`。 |
+| 完整视觉审阅 | `build/ui-polish-screenshots/` 的 115 张窗口内容截图、`build/ui-polish-contact/` 的 13 张拼图已逐页检查：五个主窗口、设置七栏目及长表单底部、命令五栏目、管理三菜单/四弹窗、七插件设置页、Appearance/Shortcuts/Tabs、九类辅助窗口、两个编辑器，包含浅深色、紧凑窗口与 18px 控件字体。修复下拉字形错位、菜单宽度/隐藏项空行、短列表滚动条、深色预览白底/标题黑字/日志白色块、深色交替行/导航对比度与三类设置空页。 |
+| 开发预览打包 | `cmake --install ... --prefix build/ui-preview`、`windeployqt` 退出 0，更新八插件。把同构建的 palette 测试程序和 QtTest 运行库放入预览目录，在无工具链 PATH 注入的隔离环境运行上述六个方法：8 passed / 0 failed；`build/ui-polish-packaged-results.txt`。`build/ui-preview/qclip.exe` SHA-256 `f3529471e861aeb8ee64688cad1b86789ba5d8f3a1c924afbe3351905b34918f`，与构建目录 EXE 一致。Qt 自身翻译 catalogs 未提供，打包保留其警告；本轮不是安装、签名或正式发布。 |
+| 清单 / 差异 / 治理 | `python utils/check-compatibility.py` 退出 0（49 actions、90 options、24 forms、7 plugin forms、8 plugins、150 APIs）；`git diff --check` 退出 0。`check-harness.ps1` 仍在既有 `AGENTS.md` 链接占位文件处失败；本机及已知 WSL astack 路径均无 spec-lint 脚本，未声称两个治理门通过。 |
+
+截图验证的是 Qt 窗口内容。Windows 材质测试报告 available/active 为 true，但原生屏幕抓取返回黑图，故不以 framebuffer 截图证明 Acrylic 的最终桌面合成效果。macOS/Linux 实机、真实中文输入法安装/候选窗、外部应用粘贴、多屏 DPI 切换、系统文件/字体/颜色选择器及所有用户自定义 QSS 组合未在本轮验收；保留相应已有实现和断言。视觉验证使用隔离会话，未启动日常会话监控或接触日常历史。用户随后明确授权提交本次改动并推送远程。
+
 ## 变更记录
 
 | 日期 | 作者 | 内容 |

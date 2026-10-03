@@ -11,6 +11,8 @@ Pane {
     required property ClipboardPaletteWindow controller
     readonly property var preview: controller.history.preview
     readonly property bool canActivate: !controller.busy && !controller.history.filtering && controller.history.selectedRow >= 0
+    readonly property bool popupActive: sources.popup.visible || options.visible || actions.visible
+    readonly property bool historyFocus: search.activeFocus || results.activeFocus
     width: 740
     height: 440
     padding: 0
@@ -38,10 +40,11 @@ Pane {
                 Layout.preferredWidth: 24; Layout.preferredHeight: 24; radius: 7; color: theme.highlight
                 Label { anchors.centerIn: parent; text: "Q"; color: "#ffffff"; font.bold: true; font.pixelSize: 15 }
             }
-            Label { text: "QClip"; font.bold: true; font.pixelSize: 14; color: theme.foreground }
+            Label { text: "QClip"; font.weight: Font.DemiBold; font.pixelSize: 14; color: theme.foreground }
             Item { Layout.fillWidth: true }
             ThemeComboBox {
                 id: sources
+                objectName: "palette_sources"
                 values: root.controller.theme
                 Layout.preferredWidth: Math.min(148, root.width / 4)
                 model: root.controller.tabs
@@ -55,7 +58,7 @@ Pane {
                 onClicked: root.controller.showManagement()
             }
             ThemeButton {
-                values: root.controller.theme; quiet: true; text: "•••"; Layout.preferredWidth: theme.controlHeight
+                values: root.controller.theme; quiet: true; iconName: "more"; Layout.preferredWidth: theme.controlHeight
                 Accessible.name: qsTr("More options")
                 onClicked: options.open()
                 ThemeMenu {
@@ -66,7 +69,7 @@ Pane {
                     ThemeMenuItem { values: root.controller.theme; text: qsTr("Plugin settings…"); onTriggered: root.controller.showPluginSettings() }
                 }
             }
-            ThemeButton { values: root.controller.theme; quiet: true; text: "×"; Layout.preferredWidth: theme.controlHeight; onClicked: root.controller.cancel(); Accessible.name: qsTr("Close") }
+            ThemeButton { values: root.controller.theme; quiet: true; iconName: "close"; Layout.preferredWidth: theme.controlHeight; onClicked: root.controller.cancel(); Accessible.name: qsTr("Close") }
         }
 
         ThemeTextField {
@@ -75,17 +78,12 @@ Pane {
             values: root.controller.theme
             Layout.fillWidth: true
             implicitHeight: 36
-            leftPadding: 34
+            iconName: "search"
             font.pixelSize: 14
             placeholderText: qsTr("Search clipboard history…")
             enabled: !root.controller.busy
             onTextEdited: root.controller.history.query = text
             Accessible.name: qsTr("Search clipboard history")
-            Item {
-                x: 12; y: (parent.height - 16) / 2; width: 16; height: 16
-                Rectangle { width: 12; height: 12; radius: 6; color: "transparent"; border.width: 1.6; border.color: theme.muted }
-                Rectangle { x: 11; y: 10; width: 7; height: 1.6; rotation: 45; color: theme.muted }
-            }
         }
 
         RowLayout {
@@ -99,7 +97,7 @@ Pane {
                 spacing: 6
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 16
+                    Layout.minimumHeight: 18
                     Layout.leftMargin: 8; Layout.rightMargin: 8
                     Label { text: qsTr("HISTORY"); font.pixelSize: 10; font.letterSpacing: 1.1; color: theme.muted }
                     Item { Layout.fillWidth: true }
@@ -118,7 +116,7 @@ Pane {
                         spacing: 2
                         boundsBehavior: Flickable.StopAtBounds
                         onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-                        ScrollBar.vertical: ScrollBar { policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
+                        ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme; policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
                         delegate: Rectangle {
                             id: row
                             required property int index
@@ -136,7 +134,6 @@ Pane {
                             height: theme.rowHeight
                             radius: theme.radius
                             color: selected ? theme.selection : rowMouse.containsMouse ? theme.hover : "transparent"
-                            border.color: selected ? Qt.rgba(theme.highlight.r, theme.highlight.g, theme.highlight.b, 0.25) : "transparent"
                             Behavior on color { ColorAnimation { duration: 110 } }
                             RowLayout {
                                 anchors.fill: parent
@@ -147,10 +144,9 @@ Pane {
                                     Layout.preferredWidth: 28; Layout.preferredHeight: 28
                                     radius: 7
                                     color: row.selected ? Qt.rgba(theme.highlight.r, theme.highlight.g, theme.highlight.b, 0.13) : theme.hover
-                                    Label {
+                                    ThemeIcon {
                                         anchors.centerIn: parent
-                                        text: row.itemType === "Image" ? "▧" : row.itemType === "Files / links" ? "↗" : "T"
-                                        font.pixelSize: 14; font.bold: true
+                                        name: row.itemType === "Image" ? "image" : row.itemType === "Files / links" ? "link" : "text"
                                         color: row.selected ? theme.highlight : theme.muted
                                     }
                                 }
@@ -160,7 +156,7 @@ Pane {
                                     Label { Layout.fillWidth: true; text: row.summary; elide: Text.ElideRight; color: theme.foreground; textFormat: Text.PlainText }
                                     Label { Layout.fillWidth: true; text: (row.pinned ? qsTr("Pinned · ") : "") + row.itemType; elide: Text.ElideRight; color: theme.muted; font.pixelSize: 11 }
                                 }
-                                Label { visible: theme.showNumber; text: String(row.index + 1); color: theme.muted; font.pixelSize: 11 }
+                                Label { visible: theme.showNumber; text: String(row.index + 1); color: theme.muted; font.pixelSize: 11; horizontalAlignment: Text.AlignRight; Layout.minimumWidth: 18 }
                             }
                             MouseArea {
                                 id: rowMouse
@@ -180,7 +176,7 @@ Pane {
                         spacing: 10
                         width: parent.width - 24
                         visible: root.controller.history.count === 0
-                        Label { anchors.horizontalCenter: parent.horizontalCenter; text: "⌕"; font.pixelSize: 32; color: theme.muted }
+                        ThemeIcon { anchors.horizontalCenter: parent.horizontalCenter; name: "search"; width: 28; height: 28; color: theme.muted }
                         Label {
                             width: parent.width
                             horizontalAlignment: Text.AlignHCenter
@@ -200,7 +196,7 @@ Pane {
                 spacing: 6
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 16
+                    Layout.minimumHeight: 18
                     Layout.leftMargin: 12; Layout.rightMargin: 12
                     Label { text: qsTr("PREVIEW"); font.pixelSize: 10; font.letterSpacing: 1.1; color: theme.muted }
                     Item { Layout.fillWidth: true }
@@ -256,8 +252,7 @@ Pane {
             Label {
                 Layout.fillWidth: true; elide: Text.ElideRight
                 text: qsTr("↑↓ Select · Esc Close"); color: theme.muted; font.pixelSize: 11
-                ToolTip.visible: shortcutHover.hovered
-                ToolTip.text: Qt.platform.os === "osx" ? qsTr("⌘↵ Copy · ⇧↵ Plain text · ⌥↵ Paste") : qsTr("Ctrl+Enter Copy · Shift+Enter Plain text · Alt+Enter Paste")
+                ThemeToolTip { values: root.controller.theme; visible: shortcutHover.hovered; text: Qt.platform.os === "osx" ? qsTr("⌘↵ Copy · ⇧↵ Plain text · ⌥↵ Paste") : qsTr("Ctrl+Enter Copy · Shift+Enter Plain text · Alt+Enter Paste") }
                 HoverHandler { id: shortcutHover }
             }
             ThemeButton {
@@ -283,7 +278,8 @@ Pane {
             ThemeButton { values: root.controller.theme; quiet: true; text: qsTr("Copy"); enabled: root.canActivate; onClicked: root.controller.activate(false) }
             ThemeButton {
                 values: root.controller.theme; primary: true
-                text: root.controller.busy ? qsTr("Working…") : root.controller.enterLabel + "  ↵"
+                text: root.controller.busy ? qsTr("Working…") : root.controller.enterLabel
+                iconName: "return"; trailingIcon: true
                 enabled: root.canActivate
                 onClicked: root.controller.activate()
             }

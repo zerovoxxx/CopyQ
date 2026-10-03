@@ -9,6 +9,9 @@
 #include "common/clipboardmerge.h"
 #include "common/copyqimport.h"
 #include "gui/clipboardsnippets.h"
+#include "gui/menuitems.h"
+#include "common/settings.h"
+#include "item/itemeditorwidget.h"
 #include "item/clipboardmodel.h"
 #include <QQuickItem>
 #include <QSettings>
@@ -407,6 +410,11 @@ private slots:
         QTemporaryDir dir;
         SnippetStore store(dir.filePath(QStringLiteral("snippets.dat")));
         auto shared = std::make_shared<ClipboardBrowserShared>();
+        shared->menuItems = menuItems();
+        Settings settings;
+        settings.beginGroup(QStringLiteral("Shortcuts"));
+        loadShortcuts(&shared->menuItems, settings);
+        settings.endGroup();
         ClipboardSnippets window(&store, shared);
         auto ctx = context();
         window.setContext([ctx] { return ctx; });
@@ -426,8 +434,45 @@ private slots:
         const auto artifacts = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
         if (!artifacts.isEmpty()) {
             QVERIFY(QTest::qWaitForWindowExposed(&window));
-            QTest::qWait(100);
+            QTest::qWait(180);
             QVERIFY(window.grabWindow().save(artifacts + QStringLiteral("/snippets.png")));
+            window.editBody();
+            QWidget *bodyEditor = nullptr;
+            for (auto widget : QApplication::topLevelWidgets())
+                if (widget->isVisible() && widget->findChild<ItemEditorWidget*>()) bodyEditor = widget;
+            QVERIFY(bodyEditor);
+            QTest::qWait(180);
+            QVERIFY(bodyEditor->grab().save(artifacts + QStringLiteral("/snippets-body-editor-light.png")));
+            bodyEditor->close();
+            auto dialog = window.rootObject()->findChild<QObject*>(QStringLiteral("snippet_collection_dialog"));
+            QVERIFY(dialog);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
+            QTest::qWait(180);
+            QVERIFY(window.grabWindow().save(artifacts + QStringLiteral("/snippets-collection.png")));
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            window.resize(720, 480);
+            QTest::qWait(180);
+            QVERIFY(window.grabWindow().save(artifacts + QStringLiteral("/snippets-compact.png")));
+            QSettings darkSettings(dir.filePath(QStringLiteral("dark.ini")), QSettings::IniFormat);
+            darkSettings.setValue(QStringLiteral("bg"), QStringLiteral("#25272d"));
+            darkSettings.setValue(QStringLiteral("fg"), QStringLiteral("#f0f1f5"));
+            shared->theme.loadTheme(darkSettings);
+            ClipboardSnippets dark(&store, shared);
+            dark.setContext([ctx] { return ctx; });
+            dark.open({});
+            dark.select(id);
+            QVERIFY(QTest::qWaitForWindowExposed(&dark));
+            QTest::qWait(180);
+            QVERIFY(dark.grabWindow().save(artifacts + QStringLiteral("/snippets-dark.png")));
+            dark.editBody();
+            bodyEditor = nullptr;
+            for (auto widget : QApplication::topLevelWidgets())
+                if (widget->isVisible() && widget->findChild<ItemEditorWidget*>()) bodyEditor = widget;
+            QVERIFY(bodyEditor);
+            QTest::qWait(180);
+            QVERIFY(bodyEditor->grab().save(artifacts + QStringLiteral("/snippets-body-editor-dark.png")));
+            bodyEditor->close();
+            dark.hide();
         }
         window.setQuery(QStringLiteral("missing")); QVERIFY(window.snippets().isEmpty());
         window.setQuery(QString());

@@ -20,6 +20,16 @@
 #include "gui/clipboardcommands.h"
 #include "gui/commandedit.h"
 #include "gui/configurationmanager.h"
+#include "gui/aboutdialog.h"
+#include "gui/actiondialog.h"
+#include "gui/actionhandler.h"
+#include "gui/actionhandlerdialog.h"
+#include "gui/addcommanddialog.h"
+#include "gui/clipboarddialog.h"
+#include "gui/importexportdialog.h"
+#include "gui/logdialog.h"
+#include "gui/shortcutdialog.h"
+#include "gui/tabdialog.h"
 #include "item/clipboardmodel.h"
 #include "item/itemfactory.h"
 #include "item/serialize.h"
@@ -45,7 +55,11 @@
 #include <QScrollArea>
 #include <QSpinBox>
 #include <QListWidget>
+#include <QLabel>
 #include <QTest>
+#include <QDir>
+#include <QTemporaryDir>
+#include <QScopeGuard>
 #include <memory>
 
 Q_DECLARE_METATYPE(QPersistentModelIndex)
@@ -701,6 +715,183 @@ private slots:
         QVERIFY(CommandEdit::scriptError(QStringLiteral("copyq: }\n globalThis.executed = true; { ")).size() > 0);
         QVERIFY(CommandEdit::scriptError(QStringLiteral("copyq: return; throw new Error('never run')")).isEmpty());
         QVERIFY(CommandEdit::scriptError(QStringLiteral("sh: echo '('")).isEmpty());
+    }
+
+    void visualAudit()
+    {
+        const auto artifacts = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
+        if (!artifacts.isEmpty()) QVERIFY(QDir().mkpath(artifacts));
+        const auto quickSnapshot = [&](QQuickView &window, const QString &name) {
+            QTest::qWait(180);
+            return artifacts.isEmpty() || window.grabWindow().save(artifacts + '/' + name + QStringLiteral(".png"));
+        };
+        const auto scrollSnapshot = [&](QQuickView &window, const QString &scrollName, const QString &name) {
+            auto scroll = window.rootObject()->findChild<QQuickItem*>(scrollName);
+            if (!scroll) return false;
+            auto content = scroll->property("contentItem").value<QQuickItem*>();
+            if (!content) return false;
+            const auto bottom = content->property("contentHeight").toReal() - content->height();
+            if (bottom <= 1) return true;
+            content->setProperty("contentY", bottom);
+            const auto result = quickSnapshot(window, name + QStringLiteral("-bottom"));
+            content->setProperty("contentY", 0);
+            return result;
+        };
+        const auto widgetSnapshot = [&](QWidget &window, const QString &name) {
+            window.show();
+            window.raise();
+            QTest::qWait(180);
+            const auto header = window.findChild<QWidget*>(QStringLiteral("dialog_heading"));
+            if (header) {
+                const auto labels = header->findChildren<QLabel*>();
+                if (!labels.isEmpty() && labels.first()->palette().color(QPalette::WindowText)
+                        != m_shared->theme.quickTheme().value(QStringLiteral("fg")).value<QColor>()) return false;
+            }
+            const bool result = artifacts.isEmpty() || window.grab().save(artifacts + '/' + name + QStringLiteral(".png"));
+            window.hide();
+            return result;
+        };
+        const auto savedTheme = m_shared->theme;
+        Settings profileSettings;
+        QVariantMap savedProfile;
+        for (const auto &key : profileSettings.allKeys()) savedProfile.insert(key, profileSettings.value(key));
+        const auto restore = qScopeGuard([&] {
+            m_shared->theme = savedTheme;
+            profileSettings.clear();
+            for (auto it = savedProfile.cbegin(); it != savedProfile.cend(); ++it) profileSettings.setValue(it.key(), it.value());
+            profileSettings.sync();
+        });
+        QTemporaryDir themeDir;
+        QVERIFY(themeDir.isValid());
+        for (const bool dark : {false, true}) {
+            QSettings themeSettings(themeDir.filePath(QStringLiteral("theme.ini")), QSettings::IniFormat);
+            themeSettings.setValue(QStringLiteral("bg"), dark ? QStringLiteral("#25272d") : QStringLiteral("#f4f5f7"));
+            themeSettings.setValue(QStringLiteral("fg"), dark ? QStringLiteral("#f0f1f5") : QStringLiteral("#252832"));
+            m_shared->theme.loadTheme(themeSettings);
+            m_shared->theme.saveTheme(&profileSettings);
+            profileSettings.sync();
+            QCOMPARE(m_shared->theme.quickTheme().value(QStringLiteral("edit_fg")), m_shared->theme.quickTheme().value(QStringLiteral("fg")));
+            QCOMPARE(m_shared->theme.quickTheme().value(QStringLiteral("notes_fg")), m_shared->theme.quickTheme().value(QStringLiteral("fg")));
+            QCOMPARE(m_shared->theme.quickTheme().value(QStringLiteral("alt_bg")).value<QColor>(), QColor(dark ? QStringLiteral("#34363e") : QStringLiteral("#e9ebf0")));
+            const auto suffix = dark ? QStringLiteral("-dark") : QStringLiteral("-light");
+            ClipboardModel history;
+            history.insertItem(textData("A quieter place for everything you copy."), 0);
+            history.insertItem(textData("Meeting notes - Friday, 10:30"), 1);
+            ClipboardManagement management(m_factory.get());
+            management.setTheme(m_shared->theme.quickTheme());
+            management.setActions(m_shared->menuItems);
+            management.setSource(&history, QStringLiteral("History"), {QStringLiteral("History"), QStringLiteral("Work")}, {});
+            QVERIFY(management.load());
+            management.open();
+            QVERIFY(QTest::qWaitForWindowExposed(&management));
+            management.resize(1100, 740);
+            QVERIFY(quickSnapshot(management, QStringLiteral("management") + suffix));
+            for (const auto popupName : {"management_global_menu", "management_collection_menu", "management_item_menu", "management_collection_dialog", "management_properties", "management_clear_dialog", "management_icon_dialog"}) {
+                auto popup = management.rootObject()->findChild<QObject*>(QLatin1String(popupName));
+                QVERIFY2(popup, popupName);
+                QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+                QTRY_VERIFY(popup->property("visible").toBool());
+                QVERIFY(popup->property("width").toReal() >= 200);
+                QVERIFY(quickSnapshot(management, QLatin1String(popupName) + suffix));
+                QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+                QTRY_VERIFY(!popup->property("visible").toBool());
+            }
+            management.resize(800, 520);
+            QVERIFY(quickSnapshot(management, QStringLiteral("management-compact") + suffix));
+            management.hide();
+            ClipboardSettings settings(m_shared);
+            QHash<QString, QString> fieldSections;
+            for (const auto &field : settings.fields()) {
+                const auto data = field.toMap();
+                fieldSections.insert(data.value(QStringLiteral("name")).toString(), data.value(QStringLiteral("section")).toString());
+            }
+            QCOMPARE(fieldSections.value(QStringLiteral("hide_toolbar")), QStringLiteral("Layout"));
+            QCOMPARE(fieldSections.value(QStringLiteral("tray_items")), QStringLiteral("Tray"));
+            QCOMPARE(fieldSections.value(QStringLiteral("notification_position")), QStringLiteral("Notifications"));
+            settings.open();
+            QCOMPARE(settings.status(), QQuickView::Ready);
+            QVERIFY(QTest::qWaitForWindowExposed(&settings));
+            for (const auto section : {"General", "History", "Layout", "Tray", "Notifications", "Plugins", "Advanced"}) {
+                settings.rootObject()->setProperty("section", QLatin1String(section));
+                QVERIFY(quickSnapshot(settings, QStringLiteral("settings-") + QLatin1String(section) + suffix));
+                QVERIFY(scrollSnapshot(settings, QStringLiteral("settings_fields_scroll"), QStringLiteral("settings-") + QLatin1String(section) + suffix));
+            }
+            settings.resize(760, 520);
+            settings.rootObject()->setProperty("section", QStringLiteral("History"));
+            QVERIFY(quickSnapshot(settings, QStringLiteral("settings-compact") + suffix));
+            for (const auto page : {"Appearance", "Shortcuts", "Tabs", "itemtext", "itemimage", "itemnotes", "itemtags", "itemsync", "itemfakevim", "itemencrypted"}) {
+                settings.openPage(QLatin1String(page));
+                QWidget *panel = nullptr;
+                for (auto widget : QApplication::topLevelWidgets())
+                    if (widget->objectName() == QLatin1String("qclip_settings_native") && widget->isVisible()) panel = widget;
+                QVERIFY2(panel, page);
+                QCOMPARE(panel->palette().color(QPalette::WindowText), m_shared->theme.quickTheme().value(QStringLiteral("fg")).value<QColor>());
+                for (auto label : panel->findChildren<QLabel*>()) {
+                    QWidget *preview = label;
+                    while (preview && preview->objectName() != QLatin1String("ClipboardBrowser"))
+                        preview = preview->parentWidget();
+                    if (!preview) QCOMPARE(label->palette().color(QPalette::WindowText), panel->palette().color(QPalette::WindowText));
+                }
+                QVERIFY(widgetSnapshot(*panel, QStringLiteral("settings-native-") + QLatin1String(page) + suffix));
+            }
+            settings.cancel();
+
+            ClipboardCommands commands(m_shared);
+            commands.create();
+            QVERIFY(commands.setField(QStringLiteral("name"), QStringLiteral("Format clipboard · 中文")));
+            QVERIFY(commands.setField(QStringLiteral("cmd"), QStringLiteral("copyq: print(input());")));
+            commands.open();
+            QCOMPARE(commands.status(), QQuickView::Ready);
+            QVERIFY(QTest::qWaitForWindowExposed(&commands));
+            for (const auto section : {"General", "Conditions", "Command", "Behavior", "Shortcuts"}) {
+                commands.rootObject()->setProperty("section", QLatin1String(section));
+                QVERIFY(quickSnapshot(commands, QStringLiteral("commands-") + QLatin1String(section) + suffix));
+                QVERIFY(scrollSnapshot(commands, QStringLiteral("commands_fields_scroll"), QStringLiteral("commands-") + QLatin1String(section) + suffix));
+            }
+            commands.resize(760, 520);
+            commands.rootObject()->setProperty("section", QStringLiteral("Command"));
+            QVERIFY(quickSnapshot(commands, QStringLiteral("commands-compact") + suffix));
+            commands.editCode(QStringLiteral("cmd"));
+            QWidget *scriptEditor = nullptr;
+            for (auto widget : QApplication::topLevelWidgets())
+                if (widget->isVisible() && widget->findChild<CommandEdit*>()) scriptEditor = widget;
+            QVERIFY(scriptEditor);
+            QVERIFY(widgetSnapshot(*scriptEditor, QStringLiteral("commands-script-editor") + suffix));
+            scriptEditor->close();
+            commands.cancel();
+            const auto auxiliarySnapshot = [&](QWidget &window, const QString &name) {
+                return widgetSnapshot(window, name + (dark ? suffix : QString()));
+            };
+
+            AboutDialog about(m_shared->theme);
+            QVERIFY(auxiliarySnapshot(about, QStringLiteral("aux-about")));
+            ActionDialog action;
+            action.setInputData(textData("Sample clipboard text"));
+            action.setOutputTabs({QStringLiteral("History"), QStringLiteral("Work")});
+            QVERIFY(auxiliarySnapshot(action, QStringLiteral("aux-action")));
+            ImportExportDialog transfer;
+            transfer.setTabs({QStringLiteral("History"), QStringLiteral("Work")});
+            transfer.setHasConfiguration(true);
+            transfer.setHasCommands(true);
+            QVERIFY(auxiliarySnapshot(transfer, QStringLiteral("aux-transfer")));
+            ClipboardModel source;
+            source.insertItem(textData("Sample clipboard text"), 0);
+            ClipboardDialog formats(QPersistentModelIndex(source.index(0, 0)), &source);
+            QVERIFY(auxiliarySnapshot(formats, QStringLiteral("aux-formats")));
+            LogDialog log;
+            QVERIFY(auxiliarySnapshot(log, QStringLiteral("aux-log")));
+            AddCommandDialog add(m_factory->commands());
+            QVERIFY(auxiliarySnapshot(add, QStringLiteral("aux-add-command")));
+            ShortcutDialog shortcut;
+            QVERIFY(auxiliarySnapshot(shortcut, QStringLiteral("aux-shortcut")));
+            TabDialog tab(TabDialog::TabNew);
+            QVERIFY(auxiliarySnapshot(tab, QStringLiteral("aux-collection")));
+            ActionHandler handler(nullptr, this);
+            QStandardItemModel processes;
+            processes.setHorizontalHeaderLabels({QStringLiteral("Status"), QStringLiteral("Command"), QStringLiteral("Output")});
+            ActionHandlerDialog manager(&handler, &processes);
+            QVERIFY(auxiliarySnapshot(manager, QStringLiteral("aux-processes")));
+        }
     }
 
     void pluginSettingsDraft()

@@ -320,32 +320,76 @@ void Theme::decorateMainWindow(QWidget *mainWindow) const
         const auto foreground = quick.value(QStringLiteral("fg")).value<QColor>();
         const auto accent = quick.value(QStringLiteral("sel_bg")).value<QColor>();
         const bool dark = surface.lightnessF() < 0.5;
-        const auto field = dark ? QStringLiteral("#30323a") : QStringLiteral("#ffffff");
+        const auto field = dark ? QStringLiteral("#2e3036") : QStringLiteral("#ffffff");
         const auto border = dark ? QStringLiteral("#454750") : QStringLiteral("#dfe2e9");
         palette.setColor(QPalette::Window, surface);
         palette.setColor(QPalette::WindowText, foreground);
         palette.setColor(QPalette::Base, QColor(field));
         palette.setColor(QPalette::Text, foreground);
+        palette.setColor(QPalette::Button, QColor(field));
         palette.setColor(QPalette::ButtonText, foreground);
         palette.setColor(QPalette::Highlight, accent);
         palette.setColor(QPalette::HighlightedText, Qt::white);
+        palette.setColor(QPalette::Disabled, QPalette::Text, dark ? QColor("#aeb3bf") : QColor("#68707c"));
+        palette.setColor(QPalette::Disabled, QPalette::WindowText, palette.color(QPalette::Disabled, QPalette::Text));
+        palette.setColor(QPalette::AlternateBase, quick.value(QStringLiteral("alt_bg")).value<QColor>());
         mainWindow->setPalette(palette);
+        // Plugin/settings pages can retain an explicit palette from their original parent.
+        for (auto child : mainWindow->findChildren<QWidget*>()) {
+            auto preview = child;
+            while (preview && preview->objectName() != QLatin1String("ClipboardBrowser"))
+                preview = preview->parentWidget();
+            if (!preview) child->setPalette(palette);
+        }
         mainWindow->setStyleSheet(QStringLiteral(
-            "QPushButton, QToolButton { color: %1; background: %2; border: 1px solid %3; border-radius: 6px; padding: 4px 10px; }"
+            "QPushButton, QToolButton { color: %1; background: %2; border: 1px solid %3; border-radius: 7px; padding: 5px 12px; min-height: 20px; }"
             "QPushButton:hover, QToolButton:hover { border-color: %4; }"
+            "QPushButton:pressed, QToolButton:pressed { background: %3; }"
+            "QPushButton:focus, QToolButton:focus { border-color: %4; }"
+            "QPushButton:disabled, QToolButton:disabled, QLineEdit:disabled, QComboBox:disabled { color: %6; background: %2; }"
             "QPushButton:default { background: %4; color: white; border-color: %4; }"
-            "QLineEdit, QComboBox, QSpinBox, QPlainTextEdit, QTextEdit { color: %1; background: %2; border: 1px solid %3; border-radius: 6px; padding: 4px; }"
-            "QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus { border-color: %4; }"
-            "QGroupBox { border: 1px solid %3; border-radius: 8px; margin-top: 12px; padding-top: 12px; }"
+            "QToolBar { background: transparent; border: 0; spacing: 4px; }"
+            "QToolBar QToolButton { padding: 5px; min-width: 20px; }"
+            "QToolButton:checked { background: %4; color: white; border-color: %4; }"
+            "QListWidget#shortcut_navigation::item { padding: 8px; border-radius: 6px; }"
+            "QListWidget#shortcut_navigation::item:selected { color: white; background: %4; }"
+            "QLineEdit, QComboBox, QSpinBox, QPlainTextEdit, QTextEdit { color: %1; background: %2; border: 1px solid %3; border-radius: 7px; padding: 5px 10px; selection-background-color: %4; selection-color: white; }"
+            "QLineEdit, QComboBox, QSpinBox { min-height: 20px; }"
+            "QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QPlainTextEdit:focus, QTextEdit:focus { border-color: %4; }"
+            "QComboBox { padding-right: 32px; }"
+            "QComboBox::drop-down { subcontrol-origin: padding; subcontrol-position: top right; width: 28px; border: 0; }"
+            "QComboBox::down-arrow { image: url(%5); width: 16px; height: 16px; }"
+            "QSpinBox { padding-right: 32px; }"
+            "QSpinBox::up-button { subcontrol-origin: padding; subcontrol-position: top right; width: 24px; border: 0; }"
+            "QSpinBox::down-button { subcontrol-origin: padding; subcontrol-position: bottom right; width: 24px; border: 0; }"
+            "QSpinBox::up-arrow { image: url(%7); width: 12px; height: 12px; }"
+            "QSpinBox::down-arrow { image: url(%5); width: 12px; height: 12px; }"
+            "QComboBox QAbstractItemView { color: %1; background: %2; border: 1px solid %3; padding: 4px; selection-background-color: %4; selection-color: white; }"
+            "QCheckBox, QRadioButton { spacing: 8px; padding: 3px 0; }"
+            "QCheckBox::indicator { width: 16px; height: 16px; border: 1px solid %6; border-radius: 4px; background: %2; }"
+            "QCheckBox::indicator:checked { background: %4; border-color: %4; image: url(:/images/check); }"
+            "QCheckBox::indicator:indeterminate { background: %4; border-color: %4; image: url(:/images/check_partial); }"
+            "QCheckBox::indicator:hover, QCheckBox::indicator:focus { border-color: %4; }"
+            "QCheckBox::indicator:disabled { border-color: %3; background: %3; }"
+            "QGroupBox { border: 1px solid %3; border-radius: 8px; margin-top: 14px; padding: 12px; }"
             "QGroupBox::title { subcontrol-origin: margin; left: 12px; }"
             "QTabWidget::pane { border: 1px solid %3; border-radius: 8px; }"
             "QTabBar::tab { color: %1; padding: 5px 10px; border: 0; }"
             "QTabBar::tab:selected { color: %4; }"
+            "QMenu { color: %1; background: %2; border: 1px solid %3; padding: 6px; }"
+            "QMenu::item { padding: 6px 20px 6px 12px; border-radius: 5px; }"
+            "QMenu::item:selected { background: %4; color: white; }"
+            "QMenu::item:disabled { color: %6; }"
+            "QMenu::separator { height: 1px; background: %3; margin: 4px 8px; }"
+            "QToolTip { color: %1; background: %2; border: 1px solid %3; padding: 6px 8px; }"
             "QScrollBar:vertical { background: transparent; width: 8px; margin: 2px; }"
             "QScrollBar::handle:vertical { background: %3; border-radius: 3px; min-height: 24px; }"
             "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
             "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }")
-            .arg(foreground.name(), field, border, accent.name()));
+            .arg(foreground.name(), field, border, accent.name(),
+                dark ? QStringLiteral(":/images/chevron_down_dark") : QStringLiteral(":/images/chevron_down"),
+                dark ? QStringLiteral("#aeb3bf") : QStringLiteral("#68707c"),
+                dark ? QStringLiteral(":/images/chevron_up_dark") : QStringLiteral(":/images/chevron_up")));
         return;
     }
     if ( !isMainWindowThemeEnabled() ) {
@@ -389,9 +433,11 @@ QVariantMap Theme::quickTheme() const
     for (const auto name : {"bg", "fg", "alt_bg", "sel_bg", "sel_fg", "edit_bg", "edit_fg",
             "find_bg", "find_fg", "notes_bg", "notes_fg"})
         result.insert(QLatin1String(name), color(QLatin1String(name)));
-    const bool dark = QApplication::palette().color(QPalette::Window).lightnessF() < 0.5;
+    const bool systemDark = QApplication::palette().color(QPalette::Window).lightnessF() < 0.5;
+    if (value(QStringLiteral("bg")).toString().startsWith(QLatin1String("default_")))
+        result.insert(QStringLiteral("bg"), QColor(systemDark ? QStringLiteral("#25272d") : QStringLiteral("#f4f5f7")));
+    const bool dark = result.value(QStringLiteral("bg")).value<QColor>().lightnessF() < 0.5;
     for (const auto &entry : QList<QPair<QString, QString>>{
-            {QStringLiteral("bg"), dark ? QStringLiteral("#25272d") : QStringLiteral("#f4f5f7")},
             {QStringLiteral("fg"), dark ? QStringLiteral("#f0f1f5") : QStringLiteral("#252832")},
             {QStringLiteral("alt_bg"), dark ? QStringLiteral("#34363e") : QStringLiteral("#e9ebf0")},
             {QStringLiteral("sel_bg"), QStringLiteral("#3975ed")}}) {
@@ -400,6 +446,13 @@ QVariantMap Theme::quickTheme() const
     }
     if (value(QStringLiteral("find_fg")).toString() == QLatin1String("black"))
         result.insert(QStringLiteral("find_fg"), result.value(QStringLiteral("fg")));
+    for (const auto name : {"edit_fg", "notes_fg"})
+        if (value(QLatin1String(name)).toString().startsWith(QLatin1String("default_")))
+            result.insert(QLatin1String(name), result.value(QStringLiteral("fg")));
+    if (value(QStringLiteral("edit_bg")).toString().startsWith(QLatin1String("default_")))
+        result.insert(QStringLiteral("edit_bg"), result.value(QStringLiteral("bg")));
+    if (value(QStringLiteral("notes_bg")).toString().startsWith(QLatin1String("default_")))
+        result.insert(QStringLiteral("notes_bg"), result.value(QStringLiteral("alt_bg")));
     result.insert(QStringLiteral("custom_style"), isCustomStyleEnabled());
     result.insert(QStringLiteral("font"), font(QStringLiteral("font")));
     result.insert(QStringLiteral("edit_font"), editorFont());
@@ -422,20 +475,30 @@ void Theme::decorateDialog(QWidget *dialog, const QString &title, const QString 
     decorateMainWindow(dialog);
     auto layout = dialog->layout();
     if (!layout || dialog->findChild<QWidget *>(QStringLiteral("dialog_heading"))) return;
-    layout->setContentsMargins(24, 20, 24, 20);
-    layout->setSpacing(12);
+    layout->setContentsMargins(20, 16, 20, 16);
+    layout->setSpacing(10);
     auto header = new QWidget(dialog);
     header->setObjectName(QStringLiteral("dialog_heading"));
     auto headerLayout = new QVBoxLayout(header);
     headerLayout->setContentsMargins(0, 0, 0, 8);
     auto heading = new QLabel(title, header);
     auto headingFont = font(QStringLiteral("font"));
-    headingFont.setBold(true);
-    headingFont.setPointSizeF(qMax(14.0, headingFont.pointSizeF() + 4));
+    headingFont.setWeight(QFont::DemiBold);
+    headingFont.setPointSizeF(qMax(12.0, headingFont.pointSizeF() + 3));
     heading->setFont(headingFont);
+    auto headingPalette = heading->palette();
+    headingPalette.setColor(QPalette::WindowText, quickTheme().value(QStringLiteral("fg")).value<QColor>());
+    heading->setPalette(headingPalette);
     headerLayout->addWidget(heading);
     auto detail = new QLabel(description, header);
     detail->setWordWrap(true);
+    if (!isCustomStyleEnabled()) {
+        auto muted = quickTheme().value(QStringLiteral("fg")).value<QColor>();
+        muted.setAlphaF(0.62);
+        auto detailPalette = detail->palette();
+        detailPalette.setColor(QPalette::WindowText, muted);
+        detail->setPalette(detailPalette);
+    }
     headerLayout->addWidget(detail);
     if (auto box = qobject_cast<QBoxLayout *>(layout)) box->insertWidget(0, header);
     else if (auto grid = qobject_cast<QGridLayout *>(layout)) {

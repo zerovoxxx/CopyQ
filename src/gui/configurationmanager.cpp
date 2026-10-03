@@ -483,6 +483,18 @@ QVariantList ConfigurationManager::optionFields() const
         if (name.startsWith(QLatin1String("clipboard_history_")))
             section = QStringLiteral("History");
         for (auto parent = widget; parent; parent = parent->parentWidget()) {
+            if (parent == m_tabLayout->scrollAreaWidgetContents_6) {
+                section = QStringLiteral("Layout");
+                break;
+            }
+            if (parent == m_tabTray->scrollAreaWidgetContents_4) {
+                section = QStringLiteral("Tray");
+                break;
+            }
+            if (parent == m_tabNotifications->scrollAreaWidgetContents_3) {
+                section = QStringLiteral("Notifications");
+                break;
+            }
             if (parent->objectName().startsWith(QLatin1String("ConfigTab"))) {
                 section = parent->objectName().mid(9);
                 break;

@@ -164,6 +164,9 @@ void ClipboardSettings::openPage(const QString &page)
     buttons->addWidget(back);
     buttons->addWidget(apply);
     layout->addLayout(buttons);
+    for (auto button : m_panel->findChildren<QPushButton*>())
+        button->setAutoDefault(false);
+    apply->setDefault(true);
     connect(back, &QPushButton::clicked, this, [this]() { m_panel->hide(); open(); });
     connect(apply, &QPushButton::clicked, this, [this]() { this->apply(); });
     m_sharedData->theme.decorateMainWindow(m_panel);

@@ -101,9 +101,11 @@ AboutDialog::~AboutDialog()
 
 QString AboutDialog::aboutPage(const Theme &theme)
 {
-    const auto bg = theme.color("bg").name();
-    const auto fg = theme.color("fg").name();
-    const auto link = theme.color("num_fg").name();
+    const auto values = theme.quickTheme();
+    const auto bg = values.value(QStringLiteral("bg")).value<QColor>().name();
+    const auto fg = values.value(QStringLiteral("fg")).value<QColor>().name();
+    const auto link = values.value(QStringLiteral("custom_style")).toBool()
+        ? theme.color("num_fg").name() : values.value(QStringLiteral("sel_bg")).value<QColor>().name();
     return
         "<html>"
 

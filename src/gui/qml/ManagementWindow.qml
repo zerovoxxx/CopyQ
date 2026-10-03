@@ -56,26 +56,28 @@ Pane {
             Layout.fillWidth: true
             Layout.margins: theme.margin
             spacing: theme.spacing
-            Label { text: "QClip"; font.bold: true; font.pixelSize: 18 }
+            Label { text: "QClip"; font.weight: Font.DemiBold; font.pixelSize: 18 }
             Label { text: qsTr("Clipboard manager"); color: theme.muted; visible: root.width >= 1050 }
             Item { Layout.fillWidth: true }
             ThemeButton { values: root.controller.theme;
+                quiet: true; iconName: root.controller.monitoring ? "pause" : "play"
                 text: root.controller.monitoring ? qsTr("Pause recording") : qsTr("Resume recording")
                 onClicked: root.action(ClipboardManagementWindow.File_ToggleClipboardStoring)
             }
             ThemeButton { values: root.controller.theme;
-                text: qsTr("Settings…")
+                quiet: true; text: qsTr("Settings…")
                 onClicked: root.action(ClipboardManagementWindow.File_Preferences)
             }
             ThemeButton { values: root.controller.theme;
-                text: qsTr("More…")
+                quiet: true; iconName: "more"; Accessible.name: qsTr("More options")
                 onClicked: globalMenu.open()
                 ThemeMenu { values: root.controller.theme;
                     id: globalMenu
+                    objectName: "management_global_menu"
                     ThemeMenuItem { values: root.controller.theme; text: qsTr("Snippets…"); onTriggered: root.controller.showSnippets() }
                     ThemeMenuItem { values: root.controller.theme; text: qsTr("Save snippet"); enabled: root.hasSelection; onTriggered: root.controller.saveSnippet() }
                     ThemeMenuItem { values: root.controller.theme; text: qsTr("Clear history…"); enabled: root.controller.tabName === root.options.historyTab; onTriggered: clearHistory.open() }
-                    MenuSeparator {}
+                    ThemeMenuSeparator { values: root.controller.theme }
                     Repeater {
                         model: [ClipboardManagementWindow.File_Import, ClipboardManagementWindow.File_Export,
                             ClipboardManagementWindow.File_Commands, ClipboardManagementWindow.File_ShowClipboardContent,
@@ -112,7 +114,7 @@ Pane {
                     model: root.controller.tabTree
                     clip: true
                     spacing: 2
-                    ScrollBar.vertical: ScrollBar { policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
+                    ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme; policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
                     delegate: ThemeDelegate { values: root.controller.theme;
                         id: tabRow
                         required property var modelData
@@ -121,27 +123,35 @@ Pane {
                         highlighted: modelData.path === root.controller.selectedTabPath
                         onClicked: root.controller.selectTabPath(modelData.path)
                         Accessible.name: modelData.path
-                        background: ClipboardStyle {
-                            theme: root.controller.theme
-                            kind: root.options.treeMode === false ? ClipboardStyle.Tab : ClipboardStyle.Collection
-                            font: tabRow.font
-                            selected: tabRow.highlighted
-                            hovered: tabRow.hovered
+                        background: Rectangle {
+                            radius: theme.radius
+                            color: tabRow.highlighted ? theme.selection : tabRow.hovered ? theme.hover : "transparent"
+                            ClipboardStyle {
+                                anchors.fill: parent; theme: root.controller.theme
+                                kind: root.options.treeMode === false ? ClipboardStyle.Tab : ClipboardStyle.Collection
+                                font: tabRow.font; selected: tabRow.highlighted; hovered: tabRow.hovered
+                                visible: theme.customStyle
+                            }
                         }
                         contentItem: RowLayout {
                             spacing: 4
                             Item { Layout.preferredWidth: tabRow.modelData.depth * 12 }
-                            ToolButton {
+                            ThemeButton {
+                                values: root.controller.theme; quiet: true
                                 visible: tabRow.modelData.group
                                 Layout.preferredWidth: 22
-                                text: tabRow.modelData.group ? (tabRow.modelData.expanded ? "▾" : "▸") : ""
+                                iconName: tabRow.modelData.expanded ? "chevron-down" : "chevron-right"
                                 enabled: tabRow.modelData.group
                                 onClicked: root.controller.toggleGroup(tabRow.modelData.path)
                                 Accessible.name: qsTr("Expand or collapse %1").arg(tabRow.modelData.path)
                             }
                             Label { text: tabRow.modelData.icon.length <= 2 ? tabRow.modelData.icon : ""; font: root.controller.iconFont; visible: text.length > 0 }
                             Image { source: tabRow.modelData.icon.length > 2 ? "file:" + tabRow.modelData.icon : ""; visible: tabRow.modelData.icon.length > 2; Layout.preferredWidth: 20; Layout.preferredHeight: 20; fillMode: Image.PreserveAspectFit }
+                            ThemeIcon { name: "collection"; color: tabRow.highlighted ? theme.selectionText : theme.muted; visible: !theme.customStyle && tabRow.modelData.icon.length === 0 }
+                            Label { text: tabRow.modelData.name; Layout.fillWidth: true; elide: Text.ElideRight; color: tabRow.highlighted ? theme.selectionText : theme.foreground; font.weight: tabRow.highlighted ? Font.DemiBold : Font.Normal; visible: !theme.customStyle }
+                            Label { text: tabRow.modelData.count < 0 ? "?" : String(tabRow.modelData.count); color: theme.muted; font.pixelSize: 11; visible: !theme.customStyle && root.options.showTabCounts === true && tabRow.modelData.collection }
                             ClipboardStyle {
+                                visible: theme.customStyle
                                 theme: root.controller.theme
                                 kind: root.options.treeMode === false ? ClipboardStyle.Tab : ClipboardStyle.Collection
                                 text: tabRow.modelData.name
@@ -174,6 +184,7 @@ Pane {
                         onClicked: tabMenu.open()
                         ThemeMenu { values: root.controller.theme;
                             id: tabMenu
+                            objectName: "management_collection_menu"
                             ThemeMenuItem { values: root.controller.theme; text: qsTr("Rename…"); onTriggered: { tabName.text = root.controller.selectedTabPath; tabDialog.rename = true; tabDialog.open() } }
                             ThemeMenuItem { values: root.controller.theme; text: qsTr("New inside group…"); visible: root.controller.selectedTabIsGroup; onTriggered: { tabName.text = root.controller.selectedTabPath + "/"; tabDialog.rename = false; tabDialog.open() } }
                             ThemeMenuItem { values: root.controller.theme; text: qsTr("Properties…"); enabled: !root.controller.selectedTabIsGroup; onTriggered: properties.open() }
@@ -181,7 +192,7 @@ Pane {
                             ThemeMenuItem { values: root.controller.theme; text: qsTr("Move up"); onTriggered: root.controller.selectedTabIsGroup ? root.controller.moveGroup(root.controller.selectedTabPath, -1) : root.controller.moveTab(-1) }
                             ThemeMenuItem { values: root.controller.theme; text: qsTr("Move down"); onTriggered: root.controller.selectedTabIsGroup ? root.controller.moveGroup(root.controller.selectedTabPath, 1) : root.controller.moveTab(1) }
                             ThemeMenuItem { values: root.controller.theme; text: qsTr("Sort collections"); onTriggered: root.controller.sortGroup(root.controller.selectedTabIsGroup ? root.controller.selectedTabPath : "") }
-                            MenuSeparator {}
+                            ThemeMenuSeparator { values: root.controller.theme }
                             ThemeMenuItem { values: root.controller.theme; text: qsTr("Remove collection…"); enabled: root.controller.tabs.length > 1; onTriggered: removeTab.open() }
                         }
                     }
@@ -202,6 +213,7 @@ Pane {
                         KeyNavigation.tab: results
                         Layout.fillWidth: true
                         placeholderText: qsTr("Search this collection…")
+                        iconName: "search"
                         text: root.history.query
                         onTextEdited: root.history.query = text
                         onAccepted: root.action(ClipboardManagementWindow.Item_MoveToClipboard)
@@ -210,21 +222,39 @@ Pane {
                         color: theme.searchText
                         Accessible.name: qsTr("Search collection")
                     }
-                    ThemeButton { values: root.controller.theme; text: qsTr("New item…"); onClicked: root.action(ClipboardManagementWindow.File_New) }
+                    ThemeButton { values: root.controller.theme; iconName: "plus"; text: qsTr("New item…"); onClicked: root.action(ClipboardManagementWindow.File_New) }
                 }
                 RowLayout {
                     visible: !root.options.hideToolbar
                     spacing: 6
                     ThemeButton { values: root.controller.theme; text: qsTr("Select all"); enabled: !root.history.filtering; onClicked: { root.history.selectAll(); results.forceActiveFocus() } }
-                    ThemeButton { values: root.controller.theme; toolbar: true; text: root.toolbarText(ClipboardManagementWindow.Edit_CopySelectedItems, qsTr("Copy")); font: root.options.hideToolbarLabels ? root.controller.iconFont : theme.textFont; Accessible.name: qsTr("Copy"); ToolTip.visible: hovered; ToolTip.text: qsTr("Copy"); objectName: "management_copy"; enabled: root.hasSelection; onClicked: root.action(ClipboardManagementWindow.Edit_CopySelectedItems) }
-                    ThemeButton { values: root.controller.theme; toolbar: true; text: root.toolbarText(ClipboardManagementWindow.Item_Edit, qsTr("Edit…")); font: root.options.hideToolbarLabels ? root.controller.iconFont : theme.textFont; Accessible.name: qsTr("Edit…"); ToolTip.visible: hovered; ToolTip.text: qsTr("Edit…"); enabled: root.hasSelection; onClicked: root.action(ClipboardManagementWindow.Item_Edit) }
-                    ThemeButton { values: root.controller.theme; toolbar: true; text: root.toolbarText(ClipboardManagementWindow.Item_Remove, qsTr("Delete")); font: root.options.hideToolbarLabels ? root.controller.iconFont : theme.textFont; Accessible.name: qsTr("Delete"); ToolTip.visible: hovered; ToolTip.text: qsTr("Delete"); objectName: "management_delete"; enabled: root.hasSelection; onClicked: root.action(ClipboardManagementWindow.Item_Remove) }
+                    ThemeButton {
+                        id: copyButton; values: root.controller.theme; toolbar: true; iconName: "copy"
+                        text: root.options.hideToolbarLabels ? "" : qsTr("Copy"); Accessible.name: qsTr("Copy")
+                        objectName: "management_copy"; enabled: root.hasSelection
+                        onClicked: root.action(ClipboardManagementWindow.Edit_CopySelectedItems)
+                        ThemeToolTip { values: root.controller.theme; visible: copyButton.hovered; text: qsTr("Copy") }
+                    }
+                    ThemeButton {
+                        id: editButton; values: root.controller.theme; toolbar: true; iconName: "edit"
+                        text: root.options.hideToolbarLabels ? "" : qsTr("Edit…"); Accessible.name: qsTr("Edit…")
+                        enabled: root.hasSelection; onClicked: root.action(ClipboardManagementWindow.Item_Edit)
+                        ThemeToolTip { values: root.controller.theme; visible: editButton.hovered; text: qsTr("Edit…") }
+                    }
+                    ThemeButton {
+                        id: deleteButton; values: root.controller.theme; toolbar: true; destructive: true; iconName: "trash"
+                        text: root.options.hideToolbarLabels ? "" : qsTr("Delete"); Accessible.name: qsTr("Delete")
+                        objectName: "management_delete"; enabled: root.hasSelection
+                        onClicked: root.action(ClipboardManagementWindow.Item_Remove)
+                        ThemeToolTip { values: root.controller.theme; visible: deleteButton.hovered; text: qsTr("Delete") }
+                    }
                     ThemeButton { values: root.controller.theme;
                         text: qsTr("Actions…")
                         enabled: root.hasSelection
                         onClicked: itemMenu.open()
                         ThemeMenu { values: root.controller.theme;
                             id: itemMenu
+                            objectName: "management_item_menu"
                             Repeater {
                                 model: [ClipboardManagementWindow.Item_MoveToClipboard, ClipboardManagementWindow.Edit_SortSelectedItems, ClipboardManagementWindow.Edit_ReverseSelectedItems,
                                     ClipboardManagementWindow.Edit_PasteItems, ClipboardManagementWindow.Item_ShowContent,
@@ -234,7 +264,7 @@ Pane {
                                     ClipboardManagementWindow.Item_MoveToBottom]
                                 ThemeMenuItem { values: root.controller.theme; required property int modelData; text: root.actionName(modelData); onTriggered: root.action(modelData) }
                             }
-                            MenuSeparator {}
+                            ThemeMenuSeparator { values: root.controller.theme }
                             Repeater {
                                 model: root.controller.commands
                                 ThemeMenuItem { values: root.controller.theme;
@@ -265,7 +295,7 @@ Pane {
                         clip: true
                         spacing: 2
                         boundsBehavior: Flickable.StopAtBounds
-                        ScrollBar.vertical: ScrollBar { policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
+                        ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme; policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
                         delegate: Rectangle {
                             id: row
                             required property int index
@@ -285,8 +315,10 @@ Pane {
                             width: ListView.view.width
                             height: theme.rowHeight
                             radius: theme.radius
-                            color: "transparent"
+                            color: row.itemSelected ? theme.selection : rowMouse.containsMouse ? theme.hover : "transparent"
+                            border.color: row.index === root.history.selectedRow && results.activeFocus ? theme.focusRing : "transparent"
                             ClipboardStyle {
+                                visible: theme.customStyle
                                 anchors.fill: parent
                                 kind: ClipboardStyle.Item
                                 theme: root.controller.theme
@@ -297,6 +329,21 @@ Pane {
                                 focused: row.index === root.history.selectedRow && results.activeFocus
                                 hovered: rowMouse.containsMouse
                                 rowNumber: theme.showNumber ? String(row.sourceRow + (root.options.rowIndexFromOne ? 1 : 0)) : ""
+                            }
+                            RowLayout {
+                                anchors.fill: parent; anchors.margins: 8; spacing: 10
+                                visible: !theme.customStyle
+                                Rectangle {
+                                    Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 7
+                                    color: row.itemSelected ? theme.selection : theme.hover
+                                    ThemeIcon { anchors.centerIn: parent; name: row.itemType === "Image" ? "image" : row.itemType === "Files / links" ? "link" : "text"; color: row.itemSelected ? theme.selectionText : theme.muted }
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true; spacing: 2
+                                    Label { Layout.fillWidth: true; text: row.summary.split("\n")[0]; elide: Text.ElideRight; textFormat: Text.PlainText; color: theme.foreground }
+                                    Label { Layout.fillWidth: true; text: (row.pinned ? qsTr("Pinned · ") : "") + row.itemType + (row.tags ? " · " + row.tags : "") + (row.notes ? " · " + row.notes : ""); elide: Text.ElideRight; textFormat: Text.PlainText; color: theme.muted; font.pixelSize: 11 }
+                                }
+                                Label { text: String(row.sourceRow + (root.options.rowIndexFromOne ? 1 : 0)); visible: theme.showNumber; color: theme.muted; font.pixelSize: 11; horizontalAlignment: Text.AlignRight; Layout.minimumWidth: 18 }
                             }
                             MouseArea {
                                 id: rowMouse
@@ -347,7 +394,6 @@ Pane {
                             text: root.history.filtering ? qsTr("Searching…") : root.history.sourceCount === 0 ? qsTr("This collection is empty") : qsTr("No matches")
                         }
                     }
-                    Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.line; visible: root.width >= 1000 }
                     Rectangle {
                         Layout.fillHeight: true
                         Layout.preferredWidth: 270
@@ -359,7 +405,7 @@ Pane {
                             anchors.fill: parent
                             anchors.margins: 12
                             spacing: theme.spacing
-                            Label { text: qsTr("Preview"); font.bold: true }
+                            Label { text: qsTr("Preview"); color: theme.muted; font.pixelSize: 11; font.weight: Font.DemiBold }
                             ClipboardItemPreview {
                                 objectName: "management_preview"
                                 Layout.fillWidth: true
@@ -371,8 +417,8 @@ Pane {
                             Label { Layout.fillWidth: true; visible: !!root.preview.notes; text: root.preview.notes || ""; wrapMode: Text.Wrap; color: theme.notesText }
                             Label { visible: !!root.preview.tags; text: qsTr("Tags: ") + (root.preview.tags || "") }
                             Label { visible: !!root.preview.pinned; text: qsTr("Pinned item") }
-                            Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: root.preview.copiedAt >= 0 ? qsTr("Copied: ") + new Date(root.preview.copiedAt).toLocaleString() : qsTr("Copy time unknown") }
-                            Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: root.preview.application || qsTr("Source application unknown") }
+                            Label { Layout.fillWidth: true; wrapMode: Text.Wrap; color: theme.muted; font.pixelSize: 11; text: root.preview.copiedAt >= 0 ? qsTr("Copied: ") + new Date(root.preview.copiedAt).toLocaleString() : qsTr("Copy time unknown") }
+                            Label { Layout.fillWidth: true; wrapMode: Text.Wrap; color: theme.muted; font.pixelSize: 11; text: root.preview.application || qsTr("Source application unknown") }
                         }
                     }
                 }
@@ -386,11 +432,13 @@ Pane {
             }
         }
         Label { Layout.fillWidth: true; Layout.margins: theme.spacing; visible: root.controller.error.length > 0; text: root.controller.error; wrapMode: Text.Wrap }
-        Label { Layout.margins: theme.spacing; text: qsTr("%1 of %2 items · %3 selected").arg(root.history.count).arg(root.history.sourceCount).arg(root.history.selectedCount) + (root.controller.monitoring ? "" : qsTr(" · Recording paused")); opacity: 0.7 }
+        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: theme.line }
+        Label { Layout.margins: theme.margin; color: theme.muted; font.pixelSize: 11; text: qsTr("%1 of %2 items · %3 selected").arg(root.history.count).arg(root.history.sourceCount).arg(root.history.selectedCount) + (root.controller.monitoring ? "" : qsTr(" · Recording paused")) }
     }
 
     ThemeDialog { values: root.controller.theme;
         id: tabDialog
+        objectName: "management_collection_dialog"
         property bool rename: false
         property string sourceTab
         property bool group: false
@@ -425,6 +473,7 @@ Pane {
         id: properties
         objectName: "management_properties"
         property string sourceTab
+        width: Math.min(540, root.width - 40)
         anchors.centerIn: parent
         title: qsTr("Collection properties")
         modal: true
@@ -438,16 +487,17 @@ Pane {
         onAccepted: root.controller.saveTabProperties({ maxItemCount: capacity.value, storeItems: store.checked, encryptedExpireSeconds: encryptedExpiry.value }, sourceTab)
         GridLayout {
             columns: 2
-            Label { text: qsTr("Capacity (0 uses the global limit)") }
-            SpinBox { id: capacity; objectName: "management_capacity"; from: 0; to: 100000; editable: true }
+            Label { text: qsTr("Capacity (0 uses the global limit)"); Layout.fillWidth: true; wrapMode: Text.Wrap }
+            ThemeSpinBox { values: root.controller.theme; id: capacity; objectName: "management_capacity"; from: 0; to: 100000; editable: true }
             Label { text: qsTr("Save items to disk") }
             ThemeCheckBox { values: root.controller.theme; id: store; objectName: "management_store" }
-            Label { text: qsTr("Password expires after seconds (0 uses global)") }
-            SpinBox { id: encryptedExpiry; objectName: "management_encrypted_expiry"; from: 0; to: 999999; editable: true }
+            Label { text: qsTr("Password expires after seconds (0 uses global)"); Layout.fillWidth: true; wrapMode: Text.Wrap }
+            ThemeSpinBox { values: root.controller.theme; id: encryptedExpiry; objectName: "management_encrypted_expiry"; from: 0; to: 999999; editable: true }
         }
     }
     ThemeDialog { values: root.controller.theme;
         id: clearHistory
+        objectName: "management_clear_dialog"
         property string sourceTab
         anchors.centerIn: parent; modal: true
         title: qsTr("Clear ordinary history?"); standardButtons: Dialog.Yes | Dialog.No
@@ -465,6 +515,7 @@ Pane {
     }
     ThemeDialog { values: root.controller.theme;
         id: iconDialog
+        objectName: "management_icon_dialog"
         property string sourceTab
         anchors.centerIn: parent
         width: Math.min(580, root.width - 40)
@@ -481,12 +532,14 @@ Pane {
                 Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                 cellWidth: 44; cellHeight: 44
                 model: root.controller.icons(iconSearch.text)
-                ScrollBar.vertical: ScrollBar { policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
-                delegate: ToolButton {
+                ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme; policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
+                delegate: ThemeButton {
+                    id: iconButton
+                    values: root.controller.theme; quiet: true
                     required property var modelData
                     width: 42; height: 42; text: modelData.icon || "×"; font: root.controller.iconFont
                     onClicked: iconValue.text = modelData.icon
-                    ToolTip.visible: hovered; ToolTip.text: modelData.name
+                    ThemeToolTip { values: root.controller.theme; visible: iconButton.hovered; text: iconButton.modelData.name }
                     Accessible.name: modelData.name
                 }
             }

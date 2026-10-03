@@ -19,6 +19,7 @@ Pane {
     background: GlassBackground { values: root.controller.theme; controller: root.controller }
     Theme { id: theme; values: root.controller.theme }
     Keys.onEscapePressed: root.controller.cancel()
+    Component.onCompleted: selectedRows = controller.currentIndex < 0 ? [] : [controller.currentIndex]
 
     function select(row, toggle) {
         let rows = toggle ? selectedRows.slice() : []
@@ -38,11 +39,16 @@ Pane {
 
     ColumnLayout {
         anchors.fill: parent; anchors.margins: theme.margin; spacing: theme.spacing
-        Label { text: qsTr("Commands") + (root.controller.modified ? " *" : ""); font.pixelSize: 18; font.bold: true }
+        RowLayout {
+            Layout.fillWidth: true
+            Label { text: qsTr("Commands"); font.pixelSize: 18; font.weight: Font.DemiBold }
+            Label { text: qsTr("Unsaved changes"); visible: root.controller.modified; color: theme.muted; font.pixelSize: 11 }
+            Item { Layout.fillWidth: true }
+        }
         RowLayout {
             Layout.fillWidth: true
             spacing: theme.spacing
-            ThemeButton { values: root.controller.theme; text: qsTr("New"); onClicked: root.controller.create() }
+            ThemeButton { values: root.controller.theme; iconName: "plus"; text: qsTr("New"); onClicked: root.controller.create() }
             ThemeComboBox { values: root.controller.theme; id: templates; model: root.controller.templates; Layout.preferredWidth: 220 }
             ThemeButton { values: root.controller.theme; text: qsTr("Add template"); enabled: templates.currentIndex >= 0; onClicked: root.controller.addTemplate(templates.currentIndex) }
             Item { Layout.fillWidth: true }
@@ -54,10 +60,12 @@ Pane {
         RowLayout {
             Layout.fillWidth: true; Layout.fillHeight: true
             spacing: theme.spacing
-            ColumnLayout {
-                Layout.preferredWidth: 240; Layout.maximumWidth: 280; Layout.fillHeight: true
-                spacing: theme.spacing
-                ThemeTextField { values: root.controller.theme; id: search; Layout.fillWidth: true; placeholderText: qsTr("Filter commands") }
+            Pane {
+                Layout.preferredWidth: 240; Layout.maximumWidth: 280; Layout.fillHeight: true; padding: 8
+                background: Rectangle { radius: theme.radius + 2; color: theme.hover }
+                ColumnLayout {
+                anchors.fill: parent; spacing: theme.spacing
+                ThemeTextField { values: root.controller.theme; id: search; iconName: "search"; Layout.fillWidth: true; placeholderText: qsTr("Filter commands") }
                 ListView {
                     Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                     model: root.controller.commands
@@ -75,15 +83,15 @@ Pane {
                             onClicked: mouse => root.select(commandRow.index, !!(mouse.modifiers & (Qt.ControlModifier | Qt.MetaModifier)))
                         }
                     }
-                    ScrollBar.vertical: ScrollBar { policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
+                    ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme; policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
                 }
                 RowLayout {
-                    ThemeButton { values: root.controller.theme; text: "↑"; enabled: root.controller.currentIndex > 0; onClicked: root.controller.move(root.controller.currentIndex, -1); Accessible.name: qsTr("Move command up") }
-                    ThemeButton { values: root.controller.theme; text: "↓"; enabled: root.controller.currentIndex >= 0; onClicked: root.controller.move(root.controller.currentIndex, 1); Accessible.name: qsTr("Move command down") }
-                    ThemeButton { values: root.controller.theme; text: qsTr("Remove"); enabled: root.selectedRows.length > 0; onClicked: remove.open() }
+                    ThemeButton { values: root.controller.theme; quiet: true; iconName: "arrow-up"; enabled: root.controller.currentIndex > 0; onClicked: root.controller.move(root.controller.currentIndex, -1); Accessible.name: qsTr("Move command up") }
+                    ThemeButton { values: root.controller.theme; quiet: true; iconName: "arrow-down"; enabled: root.controller.currentIndex >= 0; onClicked: root.controller.move(root.controller.currentIndex, 1); Accessible.name: qsTr("Move command down") }
+                    ThemeButton { values: root.controller.theme; quiet: true; destructive: true; text: qsTr("Remove"); enabled: root.selectedRows.length > 0; onClicked: remove.open() }
+                }
                 }
             }
-            Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.line }
             ColumnLayout {
                 Layout.fillWidth: true; Layout.fillHeight: true
                 spacing: theme.spacing
@@ -91,25 +99,32 @@ Pane {
                     spacing: 4
                     Repeater {
                         model: ["General", "Conditions", "Command", "Behavior", "Shortcuts"]
-                        ThemeButton { values: root.controller.theme; required property string modelData; text: modelData; primary: root.section === modelData; quiet: true; onClicked: root.section = modelData }
+                        ThemeButton { values: root.controller.theme; required property string modelData; text: modelData; selected: root.section === modelData; quiet: true; onClicked: root.section = modelData }
                     }
                 }
                 ScrollView {
                     id: commandFields
+                    objectName: "commands_fields_scroll"
                     Layout.fillWidth: true; Layout.fillHeight: true; clip: true
+                    ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme }
+                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                    background: Rectangle { radius: theme.radius + 2; color: theme.surface; border.color: theme.line }
                     ColumnLayout {
-                        width: commandFields.availableWidth; spacing: theme.spacing
+                        width: commandFields.availableWidth; spacing: 0
                         Repeater {
                             model: root.controller.fields
-                            ColumnLayout {
+                            Pane {
                                 id: field
                                 required property var modelData
                                 Layout.fillWidth: true; visible: modelData.section === root.section
-                                spacing: 4
+                                padding: 12
+                                background: Item {}
+                                ColumnLayout {
+                                anchors.fill: parent; spacing: 6
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: theme.spacing
-                                    Label { text: field.modelData.label; font.bold: true; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                                    Label { text: field.modelData.label; font.weight: Font.Medium; Layout.fillWidth: true; wrapMode: Text.Wrap }
                                     ThemeCheckBox {
                                         values: root.controller.theme
                                         visible: field.modelData.kind === "bool"
@@ -126,6 +141,7 @@ Pane {
                                     Accessible.name: field.modelData.label
                                 }
                                 ThemeTextArea { values: root.controller.theme;
+                                    objectName: "command_" + field.modelData.name
                                     visible: field.modelData.kind === "code" || field.modelData.kind === "list"
                                     Layout.fillWidth: true; wrapMode: TextEdit.Wrap; font: theme.editorFont
                                     text: field.modelData.kind === "list" ? field.modelData.value.join("\n") : String(field.modelData.value)
@@ -133,18 +149,20 @@ Pane {
                                     Accessible.name: field.modelData.label
                                 }
                                 ThemeButton { values: root.controller.theme; visible: field.modelData.kind === "code"; text: qsTr("Open script editor…"); onClicked: root.controller.editCode(field.modelData.name) }
-                                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: theme.line }
+                                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; Layout.topMargin: 6; color: theme.line }
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        Label { text: root.controller.error; visible: text.length > 0; color: "#df7b6a"; wrapMode: Text.Wrap; Layout.fillWidth: true }
+        Label { text: root.controller.error; visible: text.length > 0; color: theme.danger; wrapMode: Text.Wrap; Layout.fillWidth: true }
+        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: theme.line }
         RowLayout {
             Layout.fillWidth: true
             spacing: theme.spacing
-            Label { text: qsTr("Ctrl/⌘ click selects multiple commands."); opacity: 0.7 }
+            Label { text: qsTr("Ctrl/⌘ click selects multiple commands."); color: theme.muted; font.pixelSize: 11 }
             Item { Layout.fillWidth: true }
             ThemeButton { values: root.controller.theme; text: qsTr("Cancel"); onClicked: root.controller.cancel() }
             ThemeButton { values: root.controller.theme; text: qsTr("Apply"); onClicked: root.controller.apply(false) }

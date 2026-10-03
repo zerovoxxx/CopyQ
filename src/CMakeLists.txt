@@ -151,7 +151,7 @@ qt_add_qml_module(copyq-palette-ui
     DEPENDENCIES QtQuick
     RESOURCE_PREFIX /copyq
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/QClip"
-    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Settings.qml gui/qml/Commands.qml gui/qml/Theme.qml gui/qml/ThemeButton.qml gui/qml/ThemeMenu.qml gui/qml/ThemeMenuItem.qml gui/qml/Snippets.qml gui/qml/GlassBackground.qml gui/qml/ThemeTextField.qml gui/qml/ThemeComboBox.qml gui/qml/ThemeCheckBox.qml gui/qml/ThemeDelegate.qml gui/qml/ThemeDialog.qml gui/qml/ThemeTextArea.qml
+    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Settings.qml gui/qml/Commands.qml gui/qml/Theme.qml gui/qml/ThemeButton.qml gui/qml/ThemeMenu.qml gui/qml/ThemeMenuItem.qml gui/qml/Snippets.qml gui/qml/GlassBackground.qml gui/qml/ThemeTextField.qml gui/qml/ThemeComboBox.qml gui/qml/ThemeCheckBox.qml gui/qml/ThemeDelegate.qml gui/qml/ThemeDialog.qml gui/qml/ThemeTextArea.qml gui/qml/ThemeIcon.qml gui/qml/ThemeScrollBar.qml gui/qml/ThemeSpinBox.qml gui/qml/ThemeMenuSeparator.qml gui/qml/ThemeToolTip.qml
     SOURCES gui/clipboardpalette.h gui/clipboardpalette.cpp
             gui/clipboardwindow.h gui/clipboardwindow.cpp
             gui/clipboardpalettemodel.h gui/clipboardpalettemodel.cpp

@@ -48,7 +48,7 @@ Pane {
         RowLayout {
             Layout.fillWidth: true
             spacing: theme.spacing
-            Label { text: qsTr("Snippets"); font.bold: true; font.pixelSize: 18 }
+            Label { text: qsTr("Snippets"); font.weight: Font.DemiBold; font.pixelSize: 18 }
             Item { Layout.fillWidth: true }
             ThemeButton { values: root.controller.theme; text: qsTr("Import collection…"); onClicked: root.controller.importFile() }
             ThemeButton { values: root.controller.theme; text: qsTr("Export collection…"); enabled: root.controller.collectionId !== ""; onClicked: root.controller.exportFile() }
@@ -58,16 +58,21 @@ Pane {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: theme.spacing
-            ColumnLayout {
+            Pane {
                 Layout.preferredWidth: 180
                 Layout.fillHeight: true
-                spacing: theme.spacing
-                ThemeButton { values: root.controller.theme; text: qsTr("All snippets"); Layout.fillWidth: true; onClicked: root.controller.collectionId = "" }
+                padding: 8
+                background: Rectangle { radius: theme.radius + 2; color: theme.hover }
+                ColumnLayout {
+                anchors.fill: parent; spacing: theme.spacing
+                Label { text: qsTr("COLLECTIONS"); color: theme.muted; font.pixelSize: 10; font.letterSpacing: 1; Layout.margins: 4 }
+                ThemeDelegate { values: root.controller.theme; text: qsTr("All snippets"); highlighted: root.controller.collectionId === ""; Layout.fillWidth: true; onClicked: root.controller.collectionId = "" }
                 ListView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
                     model: root.controller.collections
+                    ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme }
                     delegate: ThemeDelegate { values: root.controller.theme;
                         required property var modelData
                         width: ListView.view.width
@@ -84,19 +89,21 @@ Pane {
                         }
                     }
                 }
-                ThemeButton { values: root.controller.theme; text: qsTr("New collection…"); Layout.fillWidth: true; onClicked: {
+                ThemeButton { values: root.controller.theme; quiet: true; iconName: "plus"; text: qsTr("New collection…"); Layout.fillWidth: true; onClicked: {
                     collectionDialog.identity = ""; collectionName.text = ""; prefix.text = ""; suffix.text = ""; groupEnabled.checked = true; collectionDialog.open()
                 } }
-                ThemeButton { values: root.controller.theme; text: qsTr("Delete collection…"); Layout.fillWidth: true; enabled: root.controller.collectionId !== ""; onClicked: removeGroup.open() }
+                ThemeButton { values: root.controller.theme; quiet: true; destructive: true; text: qsTr("Delete collection…"); Layout.fillWidth: true; enabled: root.controller.collectionId !== ""; onClicked: removeGroup.open() }
+                }
             }
             ColumnLayout {
-                Layout.preferredWidth: 250
+                Layout.preferredWidth: root.width < 980 ? 200 : 250
                 Layout.fillHeight: true
                 spacing: theme.spacing
                 ThemeTextField { values: root.controller.theme;
                     objectName: "snippet_search"
                     Layout.fillWidth: true
                     placeholderText: qsTr("Search title or keyword…")
+                    iconName: "search"
                     onTextEdited: root.controller.query = text
                 }
                 ListView {
@@ -105,6 +112,8 @@ Pane {
                     Layout.fillHeight: true
                     clip: true
                     model: root.controller.snippets
+                    spacing: 2
+                    ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme }
                     delegate: ThemeDelegate { values: root.controller.theme;
                         id: snippetRow
                         required property var modelData
@@ -113,6 +122,7 @@ Pane {
                         implicitHeight: theme.rowHeight
                         text: modelData.title + "\n" + modelData.resolvedKeyword + (modelData.conflict ? " ⚠" : "")
                         contentItem: Column {
+                            topPadding: Math.max(0, (height - implicitHeight) / 2)
                             spacing: 2
                             Label { width: parent.width; text: snippetRow.modelData.title; font: snippetRow.font; color: theme.foreground; elide: Text.ElideRight }
                             Label { width: parent.width; text: snippetRow.modelData.resolvedKeyword + (snippetRow.modelData.conflict ? " ⚠" : ""); font.pixelSize: 11; color: theme.muted; elide: Text.ElideRight }
@@ -123,43 +133,57 @@ Pane {
                     }
                     Keys.onReturnPressed: event => { if (currentIndex >= 0) { root.controller.select(root.controller.snippets[currentIndex].id); root.controller.useSnippet(true) } event.accepted = true }
                 }
-                ThemeButton { values: root.controller.theme; text: qsTr("New snippet"); Layout.fillWidth: true; enabled: root.controller.collectionId !== ""; onClicked: root.controller.createSnippet() }
+                ThemeButton { values: root.controller.theme; iconName: "plus"; text: qsTr("New snippet"); Layout.fillWidth: true; enabled: root.controller.collectionId !== ""; onClicked: root.controller.createSnippet() }
             }
-            ColumnLayout {
+            Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.line }
+            ScrollView {
+                id: snippetDetails
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 4
+                clip: true
+                ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme }
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                ColumnLayout {
+                width: snippetDetails.availableWidth; spacing: 6
                 enabled: Boolean(root.selected.id)
-                Label { text: qsTr("Title") }
+                Label { text: qsTr("Title"); font.weight: Font.Medium }
                 ThemeTextField { values: root.controller.theme; id: title; objectName: "snippet_title"; Layout.fillWidth: true }
-                Label { text: qsTr("Keyword (case sensitive)") }
+                Label { text: qsTr("Keyword (case sensitive)"); font.weight: Font.Medium }
                 ThemeTextField { values: root.controller.theme; id: keyword; objectName: "snippet_keyword"; Layout.fillWidth: true }
-                Label { text: (root.selected.resolvedKeyword || "") + (root.selected.conflict ? " · " + root.selected.conflict : ""); wrapMode: Text.Wrap; Layout.fillWidth: true }
+                Label { text: (root.selected.resolvedKeyword || "") + (root.selected.conflict ? " · " + root.selected.conflict : ""); color: root.selected.conflict ? theme.danger : theme.muted; font.pixelSize: 11; wrapMode: Text.Wrap; Layout.fillWidth: true; visible: text.length > 0 }
                 ThemeComboBox { values: root.controller.theme; id: collection; Layout.fillWidth: true; model: root.controller.collections; textRole: "name"; valueRole: "id" }
                 ThemeCheckBox { values: root.controller.theme; id: expansion; text: qsTr("Allow automatic expansion") }
                 ThemeTextField { values: root.controller.theme; id: command; Layout.fillWidth: true; placeholderText: qsTr("Optional CopyQ command name (runs instead of automatic paste)") }
-                RowLayout {
+                Flow {
+                    Layout.fillWidth: true
                     spacing: 6
                     ThemeButton { values: root.controller.theme; primary: true; text: qsTr("Save details"); onClicked: root.controller.editSnippet({ title: title.text, keyword: keyword.text, command: command.text, enabled: expansion.checked, collection: collection.currentValue }) }
-                    ThemeButton { values: root.controller.theme; text: qsTr("Edit body…"); onClicked: root.controller.editBody() }
-                    ThemeButton { values: root.controller.theme; text: qsTr("Delete…"); onClicked: removeSnippet.open() }
+                    ThemeButton { values: root.controller.theme; text: qsTr("Edit body…"); iconName: "edit"; onClicked: root.controller.editBody() }
+                    ThemeButton { values: root.controller.theme; quiet: true; destructive: true; iconName: "trash"; onClicked: removeSnippet.open(); Accessible.name: qsTr("Delete snippet") }
                 }
-                Label { text: qsTr("Preview"); font.bold: true }
+                Label { text: qsTr("Preview"); color: theme.muted; font.pixelSize: 11; font.weight: Font.DemiBold; Layout.topMargin: 4 }
                 ScrollView {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredHeight: Math.max(100, root.height - 540)
+                    clip: true
+                    ScrollBar.vertical: ThemeScrollBar { values: root.controller.theme }
+                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                     ThemeTextArea { values: root.controller.theme; text: root.controller.richPreview || root.controller.preview; textFormat: root.controller.richPreview ? TextEdit.RichText : TextEdit.PlainText; readOnly: true; wrapMode: TextEdit.Wrap; selectByMouse: true }
                 }
-                RowLayout {
+                Flow {
+                    Layout.fillWidth: true
                     spacing: 6
-                    ThemeButton { values: root.controller.theme; text: qsTr("Copy"); onClicked: root.controller.useSnippet(false) }
+                    ThemeButton { values: root.controller.theme; quiet: true; text: qsTr("Copy"); onClicked: root.controller.useSnippet(false) }
                     ThemeButton { values: root.controller.theme; primary: true; text: qsTr("Paste to original window"); onClicked: root.controller.useSnippet(true) }
-                    ThemeButton { values: root.controller.theme; text: qsTr("Run command"); enabled: Boolean(root.selected.command); onClicked: root.controller.runCommand() }
+                    ThemeButton { values: root.controller.theme; quiet: true; text: qsTr("Run command"); enabled: Boolean(root.selected.command); onClicked: root.controller.runCommand() }
+                }
                 }
             }
         }
-        Label { Layout.fillWidth: true; text: root.controller.error; color: theme.foreground; wrapMode: Text.Wrap; visible: text !== "" }
-        RowLayout {
+        Label { Layout.fillWidth: true; text: root.controller.error; color: theme.danger; wrapMode: Text.Wrap; visible: text !== "" }
+        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: theme.line }
+        Flow {
+            Layout.fillWidth: true
             spacing: theme.spacing
             ThemeCheckBox { values: root.controller.theme; text: qsTr("Automatically expand"); checked: root.settings.autoExpand || false; onToggled: root.controller.setSetting("autoExpand", checked) }
             ThemeCheckBox { values: root.controller.theme; text: qsTr("Match anywhere"); checked: root.settings.anywhere || false; onToggled: root.controller.setSetting("anywhere", checked) }
@@ -168,16 +192,18 @@ Pane {
             ThemeCheckBox { values: root.controller.theme; text: qsTr("Sound"); checked: root.settings.sound || false; onToggled: root.controller.setSetting("sound", checked) }
         }
         RowLayout {
+            Layout.fillWidth: true
             spacing: theme.spacing
             Label { text: qsTr("Merge separator") }
             ThemeComboBox { values: root.controller.theme; model: [qsTr("Newline"), qsTr("Space"), qsTr("None")]; currentIndex: root.settings.separator === " " ? 1 : root.settings.separator === "" ? 2 : 0; onActivated: index => root.controller.setSetting("separator", index === 1 ? " " : index === 2 ? "" : "\n") }
             Label { text: qsTr("Excluded application IDs") }
             ThemeTextField { values: root.controller.theme; Layout.fillWidth: true; text: (root.settings.excludedApps || []).join(";"); placeholderText: qsTr("Application IDs separated by ;"); onEditingFinished: root.controller.setSetting("excludedApps", text.split(";").map(value => value.trim()).filter(value => value !== "")) }
         }
-        Label { Layout.fillWidth: true; text: root.controller.inputStatus; wrapMode: Text.Wrap }
+        Label { Layout.fillWidth: true; text: root.controller.inputStatus; color: theme.muted; font.pixelSize: 11; wrapMode: Text.Wrap }
     }
     ThemeDialog { values: root.controller.theme;
         id: collectionDialog
+        objectName: "snippet_collection_dialog"
         property string identity: ""
         title: identity === "" ? qsTr("New collection") : qsTr("Edit collection")
         anchors.centerIn: parent

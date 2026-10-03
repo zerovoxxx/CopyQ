@@ -7,6 +7,12 @@
         <file alias="images/tab_rename">images/tab_rename.svg</file>
         <file alias="images/tab_remove">images/tab_remove.svg</file>
         <file alias="images/logo.png">images/icon_512x512.png</file>
+        <file alias="images/chevron_down">images/chevron_down.svg</file>
+        <file alias="images/chevron_down_dark">images/chevron_down_dark.svg</file>
+        <file alias="images/chevron_up">images/chevron_up.svg</file>
+        <file alias="images/chevron_up_dark">images/chevron_up_dark.svg</file>
+        <file alias="images/check">images/check.svg</file>
+        <file alias="images/check_partial">images/check_partial.svg</file>
         <file>images/fontawesome.ttf</file>
         <file alias="knotifications6/copyq.notifyrc">knotifications5/copyq.notifyrc</file>
     </qresource>
