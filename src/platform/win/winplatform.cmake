@@ -1,5 +1,8 @@
-# File icon on Windows
-set(copyq_RC copyq.rc)
+# Product metadata and icon on Windows.
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" copyq_WINDOWS_VERSION_MATCH "${copyq_version}")
+set(copyq_WINDOWS_VERSION "${CMAKE_MATCH_1},${CMAKE_MATCH_2},${CMAKE_MATCH_3},0")
+set(copyq_RC "${CMAKE_CURRENT_BINARY_DIR}/qclip.rc")
+configure_file(qclip.rc.in "${copyq_RC}" @ONLY)
 
 file(GLOB copyq_SOURCES ${copyq_SOURCES}
     platform/win/winplatforminput.cpp

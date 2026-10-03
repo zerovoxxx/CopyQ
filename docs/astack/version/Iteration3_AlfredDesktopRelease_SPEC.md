@@ -283,6 +283,8 @@ QClip 隐藏/显示进程组 RSS：1000 条约 153.0/152.5 MiB，10000 条约 15
 - 本机 Windows CMake 构建退出 0，copyq-palette-ui_qmllint 退出 0；独立配置下 qclip.exe --version 输出 QClip 1.0.0 / Qt 6.10.3 / x64。本机构建仍关闭音频、加密、Keychain 和原生通知，仅用于源码更名回归，正式包由 CI 构建完整依赖。
 - 本机隔离聚焦 testCore:configPath、testCore:paletteCommands，以及 Snippet 的 storeRoundTrip、damagedStorage、dynamicDates、dynamicClipboardAndRandom、keywords 均退出 0。首次未显式指定 itemtests.dll 时误载 .exp/.lib，改用 COPYQ_PLUGINS 的完整 DLL 路径后通过；未使用该失败运行充当通过证据。
 - GitHub 仓库已由用户重命名为 zerovoxxx/QClip，两套 origin 地址与 gh 默认目的地已更新；上游 remote 保留。双平台正式 CI、最终资产审计与公开状态待下一步完成。
+- Windows 主程序新增版本资源，FileDescription=QClip Clipboard Manager、FileVersion/ProductVersion=1.0.0、ProductName=QClip，原 CopyQ 作者版权仍保留。src/qclip.rc.in 替代仅含图标的 src/copyq.rc；原生重编译退出 0，文件属性已核对。
+- 本机已登记的 astack spec-lint 路径不可用，未声称该门通过；公开文档本地链接与 49 动作/90 配置/24 表单/7 插件表单/8 插件/150 API 兼容清单检查均通过。
 
 
 | 日期 | 作者 | 内容 |

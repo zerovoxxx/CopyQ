@@ -17,8 +17,8 @@ sha="$(git -C "$repo_root" rev-parse "$tag^{commit}")"
 assets=("qclip-$version-setup.exe" "qclip-$version.zip"
         "QClip-$version-macos-13.dmg" "QClip-$version-macos-13-m1.dmg")
 for workflow in build-windows.yml build-macos.yml; do
-    run_id="$(gh run list --repo "$repo" --workflow "$workflow" --branch "$tag" --commit "$sha" --event push --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
-    [[ -n "$run_id" ]] || { echo "No tag build for $workflow ($sha)"; exit 1; }
+    run_id="$(gh run list --repo "$repo" --workflow "$workflow" --commit "$sha" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+    [[ -n "$run_id" ]] || { echo "No successful build for $workflow ($sha)"; exit 1; }
     result="$(gh run view "$run_id" --repo "$repo" --json conclusion --jq .conclusion)"
     [[ "$result" = success ]] || { echo "$workflow is not successful: $result"; exit 1; }
     for asset in "${assets[@]}"; do
