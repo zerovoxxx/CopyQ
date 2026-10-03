@@ -20,6 +20,18 @@ def require(condition, message):
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
+with tarfile.open(root / ('QClip-' + version + '.tar.gz')) as archive:
+    release_sources = {item.name.split('/', 1)[1]: archive.extractfile(item).read()
+                       for item in archive if item.isfile()}
+
+def same_source(actual, expected):
+    if actual == expected:
+        return True
+    try:
+        return actual.decode('utf-8').replace('\r\n', '\n') == expected.decode('utf-8').replace('\r\n', '\n')
+    except UnicodeDecodeError:
+        return False
+
 audits = {}
 for platform, audit_name in [('windows', 'release-audit-windows.json'), ('macos', 'release-audit.json')]:
     folder = root / ('evidence-' + platform)
@@ -32,6 +44,10 @@ for platform, audit_name in [('windows', 'release-audit-windows.json'), ('macos'
         member = next(item for item in archive if item.name.endswith('/source-manifest.json'))
         manifest = json.load(archive.extractfile(member))
         require(manifest['commit'] == commit, platform + ' source commit matches release tag')
+        for name, expected in release_sources.items():
+            member = archive.getmember('QClip-source/' + name)
+            require(member.isfile() and same_source(archive.extractfile(member).read(), expected),
+                    platform + ' audited source matches tag: ' + name)
     metadata = json.loads((folder / ('release-metadata-' + platform + '.json')).read_text(encoding='utf-8-sig'))
     require(metadata['commit'] == commit, platform + ' binary metadata commit matches release tag')
     for name, record in metadata['files'].items():

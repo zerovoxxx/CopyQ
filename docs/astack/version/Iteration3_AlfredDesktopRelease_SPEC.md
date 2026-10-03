@@ -302,6 +302,7 @@ QClip 隐藏/显示进程组 RSS：1000 条约 153.0/152.5 MiB，10000 条约 15
 - 58756ab9 Windows 原生 CI 的七组指定发行测试全部通过（99 passed / 0 failed / 1 skipped，跳过为 Windows symlink 权限）。布局审计发现 API-set 合约匹配表达式误将虚拟系统合约当作缺失 DLL；修正完整名称匹配，继续逐 DLL 检查实际开发依赖。macOS 构造前禁止 provider 前台变换仍未消除取消，增加仅记录进程身份/焦点状态的诊断继续定位，不放宽失焦保护。FakeVim 删除目标后测试保持正常模式，直接执行保存并验证既有条目不变，避免额外 Escape 关闭对话框。
 - 1144f55e Windows 七组指定测试再次通过，完整依赖/源码审计 errors=[]，但安装器产品元数据核验失败；统一安装器 ProductName=QClip，并独立设置 ProductVersion=1.0.0，核验前输出实际字段。macOS 两项 FakeVim 回归通过，唯一失败为 palettePaste；原生诊断确认失焦前台 PID 正是 provideClipboard 子进程。将 bundle 标记为 LSUIElement，避免 Launch Services 把同 bundle 的后台进程作为普通前台应用启动；正常窗口仍由既有 ForegroundBackgroundFilter 显式切换策略，失焦/目标身份/AX 安全输入保护保持。临时全局 PID 诊断随定位完成删除；发行说明的上游历史链接改为 tag 的绝对 GitHub 链接。
 - be051bf9 原生 macOS 实际粘贴已成功；下一次打开面板被尚未处理的测试接收器聚焦命令取消。测试辅助进程增加控制请求完成确认，打开面板前同时验证请求已处理和目标确实前台，保留全部原生粘贴/覆盖/同应用换窗口/关闭目标断言。Windows 仍全部指定测试与审计通过（历史采集首次失败、严格重试通过），安装器实际 ProductName/ProductVersion 正确但资源文本有填充空格；仅对资源文本 Trim，文件数字版本改为四个原生数字字段比较，不放宽版本要求。
+- 发行汇总进一步逐文件核对两端审计源码与 tag 归档的全部跟踪文件，仅容许 Windows checkout 的 CRLF 文本行尾差异，避免只凭 manifest 的提交号认定源码相同；构建下载/生成的额外文件保持可追溯。拼写检查沿用上游对多语种 desktop 的排除规则并更新为 QClip 路径，排除需原样保留的第三方许可文本。安装器数字版本核验使用既有 numeric-version 输出，兼容标签后的开发构建。
 
 
 | 日期 | 作者 | 内容 |
