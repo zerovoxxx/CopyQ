@@ -2,6 +2,7 @@
 #include "clipboardpalette.h"
 
 #include "common/mimetypes.h"
+#include "common/log.h"
 #include "platform/platformwindow.h"
 
 #include <QAction>
@@ -162,6 +163,8 @@ void ClipboardPalette::activate(bool paste, bool plainText, bool bypassDefault)
 void ClipboardPalette::cancel()
 {
     const bool wasBusy = m_busy;
+    if (wasBusy)
+        COPYQ_LOG("Cancelling pending palette activation");
     m_busy = false;
     m_pendingIndex = QPersistentModelIndex();
     m_pendingData.clear();
@@ -197,6 +200,8 @@ bool ClipboardPalette::beginCommand()
 
 void ClipboardPalette::setError(const QString &error)
 {
+    if (!error.isEmpty())
+        COPYQ_LOG(QStringLiteral("Palette: %1").arg(error));
     m_error = error;
     emit stateChanged();
     if (!error.isEmpty())

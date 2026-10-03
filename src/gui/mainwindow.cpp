@@ -2046,6 +2046,9 @@ bool MainWindow::registerClipboardProviderAction(int actionId, ClipboardMode mod
     tracked = actionId;
     if (mode == ClipboardMode::Clipboard)
         m_registeredClipboardProviderId = actionId;
+    if (mode == ClipboardMode::Clipboard && m_palette && m_palette->busy())
+        COPYQ_LOG(QStringLiteral("Palette provider registered: %1 (expected %2, pending %3)")
+            .arg(actionId).arg(m_paletteProviderId).arg(m_palette->pendingValid()));
     if (mode == ClipboardMode::Clipboard && actionId == m_paletteProviderId)
         QTimer::singleShot(0, this, [this, actionId]() { finishPaletteClipboard(actionId); });
     if (mode == ClipboardMode::Clipboard && actionId == m_snippetProviderId)
@@ -4111,6 +4114,8 @@ void MainWindow::activatePaletteItem(
 
 void MainWindow::finishPaletteClipboard(int providerId)
 {
+    COPYQ_LOG(QStringLiteral("Finishing palette provider: %1 (expected %2, pending %3)")
+        .arg(providerId).arg(m_paletteProviderId).arg(m_palette->pendingValid()));
     if (providerId != m_paletteProviderId || !m_palette->pendingValid())
         return;
     m_paletteClipboardTimer.stop();

@@ -257,6 +257,7 @@ void CoreTests::managementHistoryCapture()
             {automatic:true, cmd:'copyq: tab("CaptureEvents"); add("automatic")'}
         ])
     )", "");
+    TEST(m_test->setClipboard(QByteArray()));
     RUN("enable", "");
     WAIT_ON_OUTPUT("clipboardFormatsToSave().join(',')", "text/plain,text/html,application/custom,image/png\n");
     const QVariantMap copied{{mimeText, QByteArray("external")}, {mimeHtml, QByteArray("<b>external</b>")},

@@ -173,6 +173,7 @@ private slots:
         QFile file(dir.filePath(QStringLiteral("encrypted.dat")));
         QVERIFY(file.open(QIODevice::ReadOnly));
         QVERIFY(!file.readAll().contains("SECRET-TEMPLATE"));
+        file.close();
         SnippetStore reader(file.fileName());
         QVERIFY(reader.load(key));
         QCOMPARE(reader.snippet(id), store.snippet(id));

@@ -66,6 +66,7 @@ void ItemFakeVimTests::createItem()
 
     RUN(args << "read" << "0", "ABC\nDEF");
 
+    RUN("show", "");
     KEYS("F2" << "focus:palette_editor_text" << ":GccXYZ" << "ESC" << "focus:" << "::w" << "ENTER");
     RUN(args << "read" << "0", "ABC\nXYZ");
     KEYS(":p:wq" << "ENTER");
