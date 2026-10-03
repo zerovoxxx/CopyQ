@@ -23,6 +23,14 @@ if(NOT _qml_deploy_result EQUAL 0)
     message(FATAL_ERROR "QML deployment failed: ${_qml_deploy_result}")
 endif()
 
+# QClip does not use these optional SQL backends. The official Qt SDK plugins
+# reference database client libraries which are not part of the SDK or runtime.
+# Keep SQLite (used by QtQuick.LocalStorage) and remove only those unused drivers.
+file(REMOVE
+    "${_bundle}/Contents/PlugIns/sqldrivers/libqsqlmimer.dylib"
+    "${_bundle}/Contents/PlugIns/sqldrivers/libqsqlodbc.dylib"
+    "${_bundle}/Contents/PlugIns/sqldrivers/libqsqlpsql.dylib")
+
 # Homebrew exposes some qmldir files as symlinks which macdeployqt skips.
 # Complete metadata for modules it already deployed, without copying all of Qt.
 execute_process(COMMAND "@COPYQ_QTPATHS@" --query QT_INSTALL_QML

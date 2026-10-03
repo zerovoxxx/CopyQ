@@ -20,6 +20,9 @@
 #include <QElapsedTimer>
 #include <QListView>
 #include <utility>
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
 
 class FrameProbe final : public QObject
 {
@@ -658,6 +661,16 @@ QVariant ItemTestsLoader::scriptCallback(const QVariantList &arguments)
             return QVariantMap();
         if (cmd == QLatin1String("managementState")) {
             QVariantMap state{{QStringLiteral("visible"), window->isVisible()}};
+#ifdef Q_OS_WIN
+            const auto handle = reinterpret_cast<HWND>(window->winId());
+            WCHAR title[1024];
+            const auto length = GetWindowTextW(handle, title, int(std::size(title)));
+            state.insert(QStringLiteral("active"), GetForegroundWindow() == handle);
+            state.insert(QStringLiteral("title"), QString::fromWCharArray(title, length));
+#else
+            state.insert(QStringLiteral("active"), window->isActive());
+            state.insert(QStringLiteral("title"), window->title());
+#endif
             if (auto root = window->findChild<QObject *>(QStringLiteral("management_root")))
                 state.insert(QStringLiteral("popupActive"), root->property("popupActive"));
             for (const auto key : {"error", "tabName", "tabs", "tabTree", "selectedTabPath", "selectedTabIsGroup", "tabProperties", "commands", "monitoring"})

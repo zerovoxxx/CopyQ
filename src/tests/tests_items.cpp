@@ -68,7 +68,13 @@ void CoreTests::keysAndFocusing()
 
     KEYS(tabDialogLineEditId << "ESC");
     WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests','managementState').popupActive", "false\n");
+#ifdef Q_OS_WIN
+    // The public paste-target query excludes tool windows. Check this HWND directly.
+    WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests','managementState').active", "true\n");
+    WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests','managementState').title", appWindowTitle("*Clipboard Storing Disabled*"));
+#else
     WAIT_ON_OUTPUT("currentWindowTitle", appWindowTitle("*Clipboard Storing Disabled*"));
+#endif
 
     RUN("enable", "");
 }

@@ -87,7 +87,12 @@ void CoreTests::paletteMimeAndDisplayCommands()
     RUN("clipboard" << "application/custom", "");
     RUN("eval" << "callPlugin('itemtests', 'paletteInput', 'CTRL+RETURN')", "true\n");
     WAIT_FOR_CLIPBOARD("plain");
+#ifdef Q_OS_WIN
+    // Qt's Windows clipboard converter wraps HTML in CF_HTML fragment markers.
+    WAIT_FOR_CLIPBOARD2("<!--StartFragment--><b>rich</b><!--EndFragment-->", QStringLiteral("text/html"));
+#else
     WAIT_FOR_CLIPBOARD2("<b>rich</b>", QStringLiteral("text/html"));
+#endif
     WAIT_FOR_CLIPBOARD2("opaque", QStringLiteral("application/custom"));
     RUN("read" << "text/plain" << "0", "plain");
     RUN("read" << "text/html" << "0", "<b>rich</b>");
