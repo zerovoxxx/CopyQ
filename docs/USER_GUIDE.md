@@ -241,6 +241,8 @@ QClip 的 `.qcs` 与 Alfred 的 `.alfredsnippets` 不同，当前不承诺直接
 
 同步是磁盘文件同步，不是云账户服务。使用同步/加密前检查外部文件、密码与导出格式。
 
+Encryption 插件的条目加密需要另行安装 [GnuPG](https://gnupg.org/download/) 并让 `gpg` 或 `gpg2` 可从 PATH 找到；QClip 不附带 GnuPG。安装后重启 QClip，先在临时集合中验证密钥、加密和解密，并保管密钥备份。它与设置中的整个存储密码、Snippet 存储加密是不同的功能。
+
 **Settings… → Appearance…** 调整外观，Layout 调整布局。新 Qt Quick 控件不能完整复刻任意旧 Widgets QSS；升级旧主题后逐项检查，必要时恢复默认主题。
 
 ## 备份与恢复

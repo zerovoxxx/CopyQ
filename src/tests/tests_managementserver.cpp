@@ -263,7 +263,11 @@ void CoreTests::managementHistoryCapture()
         {QStringLiteral("application/custom"), QByteArray("opaque")}};
     TEST(m_test->setClipboard(copied));
     WAIT_ON_OUTPUT("read" << "0", "external");
+#ifdef Q_OS_WIN
+    RUN("read" << "text/html" << "0", "<!--StartFragment--><b>external</b><!--EndFragment-->");
+#else
     RUN("read" << "text/html" << "0", "<b>external</b>");
+#endif
     RUN("read" << "application/custom" << "0", "opaque");
     WAIT_ON_OUTPUT("eval" << "tab('CaptureEvents');size()", "1\n");
     QByteArray previousTime;

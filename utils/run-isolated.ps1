@@ -19,6 +19,14 @@ try {
     $env:COPYQ_STATE_PATH = Join-Path $profile 'state'
     $env:GNUPGHOME = Join-Path $profile 'gnupg'
     New-Item -ItemType Directory -Path $env:GNUPGHOME -Force | Out-Null
+    if ($IsWindows) {
+        $gpg = Get-Command gpg -ErrorAction SilentlyContinue
+        if ($gpg -and (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $gpg.Source) 'msys-2.0.dll'))) {
+            # Git's GnuPG uses POSIX paths, including the Home line used by the plugin.
+            $gnuHomePath = $env:GNUPGHOME.Replace('\', '/')
+            $env:GNUPGHOME = '/' + $gnuHomePath.Substring(0, 1).ToLowerInvariant() + $gnuHomePath.Substring(2)
+        }
+    }
     if (-not $IsWindows) { & chmod 700 $env:GNUPGHOME }
     if (-not $env:COPYQ_PLUGINS) { $env:COPYQ_PLUGINS = '' }
     $env:COPYQ_DEFAULT_ICON = '1'
@@ -55,7 +63,7 @@ try {
     & $Executable @Arguments
     $result = $LASTEXITCODE
 } finally {
-    if (Get-Command gpgconf -ErrorAction SilentlyContinue) { & gpgconf --homedir (Join-Path $profile 'gnupg') --kill all 2>$null }
+    if (Get-Command gpgconf -ErrorAction SilentlyContinue) { & gpgconf --homedir $env:GNUPGHOME --kill all 2>$null }
     foreach ($name in $names) { [Environment]::SetEnvironmentVariable($name, $previous[$name]) }
     if (Test-Path -LiteralPath $profile) { Remove-Item -LiteralPath $profile -Recurse -Force }
 }

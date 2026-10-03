@@ -253,7 +253,7 @@ QString exportCommands(const Commands &commands)
     saveCommands( commands, temporarySettings.settings() );
 
     // Replace ugly '\n' with indented lines.
-    const QString data = getTextData( temporarySettings.content() );
+    const QString data = getTextData( temporarySettings.content() ).replace("\r\n", "\n");
     QString commandData;
     QRegularExpression re(R"(^(\d+\\)?(Command|MatchCommand)="?)");
 

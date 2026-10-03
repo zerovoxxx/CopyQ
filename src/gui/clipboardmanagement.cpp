@@ -72,6 +72,8 @@ void ClipboardManagement::open()
     setFlag(Qt::WindowStaysOnTopHint, config.option<Config::always_on_top>());
     setFlag(Qt::Tool, config.option<Config::hide_main_window_in_task_bar>());
     setFlag(Qt::FramelessWindowHint, config.option<Config::frameless_window>());
+    // Resolve native frame margins before applying saved client geometry.
+    create();
     setOpacity(1.0 - config.option<Config::transparency_focused>() / 100.0);
     if (config.option<Config::open_windows_on_current_screen>()) {
         if (auto screen = QGuiApplication::screenAt(QCursor::pos()))

@@ -289,6 +289,8 @@ QClip 隐藏/显示进程组 RSS：1000 条约 153.0/152.5 MiB，10000 条约 15
 - Intel 的依赖构建和缓存已完成；miniaudio 校验在该 runner 的 sha256sum 实现处失败。改为优先使用 shasum、显式 stdin 文件名及 bash 数组传参，保持固定 SHA-256 不变。
 - Windows 发布测试的窗口标题仍写 CopyQ，且 currentWindowTitle() 会排除隐藏任务栏的 tool window，并回退到外部窗口；keysAndFocusing 经测试插件用 GetForegroundWindow/窗口 HWND 与原生标题直接验证管理窗口前台，保留严格焦点检查，标题改为 QClip。富文本测试采用 Windows CF_HTML 片段标记的精确预期，保持原始存储 HTML 检查；产品焦点代码未更改。本机重编译后两项隔离测试 4 passed / 0 failed。
 - 第二次 Apple Silicon 的 DMG 已生成；逐依赖审计拦截 Qt SDK 自动复制的 Mimer、ODBC、PostgreSQL 三个未使用 SQL 驱动，它们引用 SDK 外的数据库库。部署阶段仅移除这三项，保留 SQLite，重新签名和严格逐依赖审计，未绕过审计。
+- 本机展开正式发布的指定测试后，历史采集的 HTML 预期同样需使用 Windows 片段标记，修正后通过。加密插件测试发现 Git/MSYS GnuPG 在 Windows GNUPGHOME 下被误识别为原生程序；隔离入口检测 gpg 同目录的 msys-2.0.dll 并仅为其使用 /c/... 临时 GnuPG 路径，产品加密实现与用户配置保持不变。
+- Windows 管理 UI 的指定测试另暴露两个发布问题：首次原生窗口创建把持久客户区几何当外框处理，以及命令导出的 CRLF 行尾进入加引号的命令正文。管理窗口先创建平台窗口再设置持久几何；导出 INI 时只规范文件行尾，保留命令内部转义和全部字段。继续使用 managementGeometry、commandDraftRoundTrip 严格回归，不放宽几何或命令相等断言。
 
 
 | 日期 | 作者 | 内容 |
