@@ -297,6 +297,8 @@ QClip 隐藏/显示进程组 RSS：1000 条约 153.0/152.5 MiB，10000 条约 15
 - macOS Qt 6.10 日志确认装饰窗口会反复 unset/setColorScheme，触发 ThemeChange→完整配置重载，清空选择、取消待粘贴并破坏编辑焦点。按应用记录最后请求的颜色方案，仅在请求变化时调用系统外观 API；初始自动方案不重复重置。保留真实系统主题事件与显式主题设置，现有 paletteSearchAndCopy/palettePaste/FakeVim/主题映射严格测试作为回归。
 - Windows 自动展开修复后单项隔离服务回归 3 passed / 0 failed / 0 skipped，覆盖实际关键词替换、中文正文、光标、复制合并和脚本覆盖。之后同时检查界面焦点的本机批次受到前台 Chrome 操作干扰，不能作为通过证据；由原生 CI 的受控桌面重新执行全部指定发行测试。诊断构建日志曾因缺少 log.h 编译失败，未把旧二进制当成修复成功。
 - c07cd94e 原生 Windows CI 的展开/合并服务 4 passed / 0 failed；加密 Snippet 测试读取后未关闭 QFile，Windows 原子替换被测试句柄阻止，测试关闭读取句柄后继续保持换钥/旧钥拒绝/解密的严格断言。历史采集单次失败后重试通过，测试启用前清空隔离剪贴板以排除初始内容。macOS 搜索/焦点与退出崩溃回归通过，实际粘贴仍失败；加入不含剪贴板正文的 provider/取消诊断继续定位。FakeVim 测试在关闭独立编辑器后显式显示管理窗口，再验证 F2 重新编辑，避免向隐藏窗口发送按键。
+- ad2a480a 的 Windows 加密 Snippet 指定测试 15 passed / 0 failed；管理测试修正为屏幕工作区内的几何，并在该独立进程排除 itemtests 测试插件，保持实际八插件断言。FakeVim 删除编辑目标前保留未保存修改，严格验证保存不能复活被删除条目；完成后显式丢弃修改。macOS 日志显示后台 provider 启动时抢焦点并取消待粘贴，Qt 6.10.3 Cocoa 源码确认 QApplication 构造会将进程切换前台；仅 provider 在构造前禁用该变换，正常窗口和焦点取消保护保持。
+- 发行汇总增加手动运行的 Prepare release workflow，复用成功且与 tag 同 SHA 的原生构建，检查两端源码 manifest/安装布局审计、Windows 文件版本与资产哈希，再生成源码和校验文件及 GitHub 草稿；公开步骤仍在核验后执行。当前本机 Azure artifact 下载中断，云端汇总避免下载连接影响完整发行；不把网络失败或仅创建草稿当作公开完成。
 
 
 | 日期 | 作者 | 内容 |

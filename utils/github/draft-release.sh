@@ -21,6 +21,12 @@ for workflow in build-windows.yml build-macos.yml; do
     [[ -n "$run_id" ]] || { echo "No successful build for $workflow ($sha)"; exit 1; }
     result="$(gh run view "$run_id" --repo "$repo" --json conclusion --jq .conclusion)"
     [[ "$result" = success ]] || { echo "$workflow is not successful: $result"; exit 1; }
+    if [[ "$workflow" = build-windows.yml ]]; then
+        gh run download "$run_id" --repo "$repo" --name release-evidence-windows --dir "$workdir/evidence-windows"
+        gh run download "$run_id" --repo "$repo" --name release-metadata-windows --dir "$workdir/evidence-windows"
+    else
+        gh run download "$run_id" --repo "$repo" --name release-evidence-macos-13-m1 --dir "$workdir/evidence-macos"
+    fi
     for asset in "${assets[@]}"; do
         case "$workflow:$asset" in
             build-windows.yml:qclip-*|build-macos.yml:QClip-*.dmg)
@@ -38,6 +44,7 @@ done
 source="$workdir/QClip-$version.tar.gz"
 git -C "$repo_root" archive --format=tar.gz --prefix="QClip-$version/" --output="$source" "$tag"
 assets+=("QClip-$version.tar.gz")
+python3 "$repo_root/utils/verify-release-assets.py" "$version" "$sha" "$workdir"
 if command -v sha256sum >/dev/null; then
     (cd "$workdir" && sha256sum "${assets[@]}" > checksums-sha256.txt)
 else

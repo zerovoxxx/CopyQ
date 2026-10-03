@@ -48,6 +48,7 @@
 #include <QMenu>
 #include <QMimeData>
 #include <QQuickItem>
+#include <QScreen>
 #include <QSignalSpy>
 #include <QStandardItemModel>
 #include <QPainter>
@@ -628,18 +629,25 @@ private slots:
         config.setOption(Config::restore_geometry::name(), true);
         config.setOption(Config::open_windows_on_current_screen::name(), false);
         const auto key = QStringLiteral("Options/clipboard_management_geometry_global");
-        const QRect saved(100, 160, 900, 600);
+        const auto area = QGuiApplication::primaryScreen()->availableGeometry();
+        const auto onScreen = [&area](const QPoint &offset, const QSize &size) {
+            const auto bounded = size.boundedTo(area.size());
+            return QRect(area.topLeft() + QPoint(qMin(offset.x(), area.width() - bounded.width()),
+                qMin(offset.y(), area.height() - bounded.height())), bounded);
+        };
+        const QRect saved = onScreen(QPoint(100, 160), QSize(900, 600));
         setGeometryOptionValue(key, saved);
         setGeometryOptionValue(key + QStringLiteral("_maximized"), false);
         ClipboardManagement first(m_factory.get());
         first.open();
         QTRY_COMPARE(first.geometry(), saved);
-        const QRect moved(120, 180, 850, 560);
+        const QRect moved = onScreen(QPoint(120, 180), QSize(850, 560));
         first.setGeometry(moved);
         first.hide();
         QCOMPARE(geometryOptionValue(key).toRect(), moved);
-        first.openAt(QRect(200, 200, 600, 400));
-        QTRY_COMPARE(first.position(), QPoint(200, 200));
+        const auto explicitPosition = area.topLeft() + QPoint(20, 20);
+        first.openAt(QRect(explicitPosition, QSize(600, 400)));
+        QTRY_COMPARE(first.position(), explicitPosition);
         first.hide();
         QCOMPARE(geometryOptionValue(key).toRect(), moved);
         ClipboardManagement second(m_factory.get());

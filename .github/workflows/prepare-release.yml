@@ -1,0 +1,40 @@
+name: Prepare release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing release tag version (without v)
+        default: '1.0.0'
+        required: true
+        type: string
+
+concurrency:
+  group: qclip-prepare-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v5
+        with:
+          fetch-depth: 0
+          ref: v${{ inputs.version }}
+      - name: Validate native builds and prepare draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          bash utils/github/draft-release.sh "$RELEASE_VERSION"
+          cat "release-$RELEASE_VERSION/checksums-sha256.txt"
+      - name: Upload release verification
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-verification
+          path: |
+            release-${{ inputs.version }}/checksums-sha256.txt
+            release-${{ inputs.version }}/asset-verification.json

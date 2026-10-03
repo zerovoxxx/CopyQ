@@ -6,6 +6,15 @@ ls -Rl /Volumes
 app_bundle_path=$(echo /Volumes/QClip-*/QClip.app)
 executable="$app_bundle_path/Contents/MacOS/QClip"
 runner="${GITHUB_WORKSPACE}/utils/run-isolated.sh"
+test "$(lipo -archs "$executable")" = arm64
+python3 - <<'PY'
+import hashlib, json, os
+from pathlib import Path
+dmg = next(Path('.').glob('QClip-*.dmg'))
+metadata = {'commit': os.environ['GITHUB_SHA'], 'files': {dmg.name: {'sha256': hashlib.sha256(dmg.read_bytes()).hexdigest(), 'bytes': dmg.stat().st_size}}}
+Path('release-metadata-macos.json').write_text(json.dumps(metadata, indent=2) + '\n')
+print(json.dumps(metadata))
+PY
 python3 "${GITHUB_WORKSPACE}/utils/package-source.py" QClip-source.tar.gz
 python3 "${GITHUB_WORKSPACE}/utils/check-release.py" --platform macos --root "$app_bundle_path" --source QClip-source.tar.gz --output release-audit.json
 

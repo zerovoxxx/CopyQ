@@ -79,10 +79,11 @@ void ItemFakeVimTests::createItem()
     KEYS("focus:palette_editor_text" << ":A tail" << "ESC" << "focus:" << "::w" << "ENTER");
     RUN(args << "size", "2\n");
     RUN(args << "read" << "0", "NEW tail");
+    KEYS("focus:palette_editor_text" << ":A unsaved" << "ESC");
     RUN(args << "remove" << "0", "");
     KEYS("focus:" << "ESC" << "::w" << "ENTER");
     RUN(args << "size", "1\n");
-    KEYS("focus:" << "ESC" << "::q" << "ENTER");
+    KEYS("focus:" << "ESC" << "::q!" << "ENTER");
 }
 
 void ItemFakeVimTests::paletteEditor()

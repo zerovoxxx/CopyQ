@@ -170,6 +170,9 @@ QApplication *MacPlatform::createServerApplication(int &argc, char **argv)
 
 QGuiApplication *MacPlatform::createClipboardProviderApplication(int &argc, char **argv)
 {
+    // Keep background providers from briefly taking focus during Qt startup.
+    // Setting the activation policy after QApplication construction is too late.
+    qputenv("QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM", "1");
     return new Activity<ClipboardApplication>(argc, argv, "QClip clipboard provider");
 }
 

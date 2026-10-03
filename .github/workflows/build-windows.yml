@@ -197,7 +197,7 @@ jobs:
             -Executable ./copyq-tests.exe testCore:snippetLifecycle testCore:snippetExpansion
           pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
             -Executable ./copyq-snippet-tests.exe storeRoundTrip damagedStorage encryptedStorage storageLimit dynamicDates dynamicClipboardAndRandom richTextAndReferences keywords copyMerging copyQMigration copyQExternalMigration qmlSnippets
-          pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
+          COPYQ_PLUGINS='' pwsh -NoProfile -File "$GITHUB_WORKSPACE/utils/run-isolated.ps1" \
             -Executable ./copyq-management-tests.exe \
             multiSelectionIdentity bulkSelectionPerformance sourceLifetimeAndDisplay transferAndDeleteProtection \
             qmlSelectionAndActions nativeDropRoundTrip themeMapping legacyStyleRules pluginPreviewBridge managementGeometry \
@@ -254,6 +254,29 @@ jobs:
         run: 7z a "qclip-${APP_VERSION}.zip" "qclip-${APP_VERSION}"
         env:
           APP_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Verify Windows release metadata
+        shell: pwsh
+        run: |
+          $app = Get-Item "qclip-$env:APP_VERSION/qclip.exe"
+          $setup = Get-Item "qclip-$env:APP_VERSION-setup.exe"
+          if ($app.VersionInfo.ProductName -ne 'QClip' -or $app.VersionInfo.ProductVersion -ne $env:APP_VERSION) { throw 'Incorrect QClip executable version' }
+          if ($setup.VersionInfo.ProductName -ne "QClip $env:APP_VERSION") { throw 'Incorrect QClip installer product' }
+          if ([version]$setup.VersionInfo.FileVersion -ne [version]"$env:APP_VERSION.0") { throw 'Incorrect installer version' }
+          $files = @{}
+          foreach ($path in @($app.FullName, $setup.FullName, "qclip-$env:APP_VERSION.zip")) {
+            $files[(Split-Path -Leaf $path)] = @{ sha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLowerInvariant(); bytes=(Get-Item -LiteralPath $path).Length }
+          }
+          @{ commit=$env:GITHUB_SHA; version=$env:APP_VERSION; product=$app.VersionInfo.ProductName; files=$files } | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 release-metadata-windows.json
+          Get-Content release-metadata-windows.json
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Upload Windows release metadata
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-metadata-windows
+          path: release-metadata-windows.json
 
       - name: Upload portable zip
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

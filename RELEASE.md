@@ -71,7 +71,7 @@ python3 utils/check-release.py --platform macos --root /Volumes/QClip-1.0.0/QCli
 1. 更新 src/version.cmake、CHANGES.md、应用元数据和使用文档。插件 ABI 独立版本化，产品版本重置不修改已有 ABI。
 2. 通过上述检查后提交代码，为目标提交创建 v1.0.0 标签并推送 master 和标签。
 3. 标签触发 Windows/macOS 原生构建；也可先从 Actions 手动运行两套 workflow。只使用与发行标签完全相同提交、版本号匹配的成功运行产物。
-4. 在 Git Bash 或原生 Unix shell 执行 utils/github/draft-release.sh 1.0.0；脚本下载已成功构建的资产，生成 git archive 对应源码和 SHA-256，创建草稿并上传。
+4. 在 Git Bash 或原生 Unix shell 执行 utils/github/draft-release.sh 1.0.0，或运行 Prepare release workflow；脚本下载已成功构建的资产，核对原生审计、源码提交、Windows 文件版本与资产哈希，生成 git archive 对应源码和 SHA-256，创建草稿并上传。
 5. 审阅资产、版本、哈希、许可和发行说明后，执行 gh release edit v1.0.0 --repo zerovoxxx/QClip --draft=false --latest 发布。不得将缺失平台或失败运行当作发布完成。
 
 脚本支持复用同一个 release-1.0.0 目录继续下载。SHA-256 校验不是数字签名；没有提供签名凭据时不得声称官方代码签名或公证。

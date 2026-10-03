@@ -170,3 +170,4 @@ jobs:
           path: |
             build/copyq/${{ matrix.cmake_preset }}/QClip-source.tar.gz
             build/copyq/${{ matrix.cmake_preset }}/release-audit.json
+            build/copyq/${{ matrix.cmake_preset }}/release-metadata-macos.json
