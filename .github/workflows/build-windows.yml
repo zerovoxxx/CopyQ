@@ -2,8 +2,8 @@
 name: Windows
 
 on:
+  workflow_dispatch:
   push:
-    branches: [master]
     tags: ['v*']
   pull_request:
     branches: [master]
@@ -91,8 +91,11 @@ jobs:
         id: cache-deps
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ github.workspace }}/deps/install
+          path: |
+            ${{ github.workspace }}/deps/install
+            ${{ github.workspace }}/deps/downloads
           key: >-
+            qt${{ env.QT_VERSION }}-
             windows-deps
             -kf${{ env.KF_VERSION }}.${{ env.KF_PATCH }}
             -qca${{ env.QCA_VERSION }}
@@ -108,8 +111,11 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ github.workspace }}/deps/install
+          path: |
+            ${{ github.workspace }}/deps/install
+            ${{ github.workspace }}/deps/downloads
           key: >-
+            qt${{ env.QT_VERSION }}-
             windows-deps
             -kf${{ env.KF_VERSION }}.${{ env.KF_PATCH }}
             -qca${{ env.QCA_VERSION }}
@@ -118,7 +124,7 @@ jobs:
             -${{ hashFiles('utils/patches/**') }}
 
       - name: Download miniaudio
-        uses: $/.github/actions/download-miniaudio
+        uses: ./.github/actions/download-miniaudio
 
       - name: Build with CMake
         env:
@@ -134,7 +140,7 @@ jobs:
 
       - name: Get version string
         id: version
-        uses: $/.github/actions/get-version
+        uses: ./.github/actions/get-version
         with:
           build_dir: ${{ github.workspace }}/build/copyq/Windows
 
@@ -239,7 +245,7 @@ jobs:
             /DAppVersionNumeric="$env:APP_VERSION_NUMERIC" `
             /DRoot="$env:GITHUB_WORKSPACE/qclip-$env:APP_VERSION" `
             /DSource="$env:GITHUB_WORKSPACE" `
-            "$env:GITHUB_WORKSPACE/shared/copyq.iss"
+            "$env:GITHUB_WORKSPACE/shared/qclip.iss"
         env:
           APP_VERSION: ${{ steps.version.outputs.version }}
           APP_VERSION_NUMERIC: ${{ steps.version_numeric.outputs.value }}

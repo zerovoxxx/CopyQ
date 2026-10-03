@@ -16,12 +16,12 @@ by `FontAwesome <http://fontawesome.io/>`__.
 
 The application logo and icons were created in `Inkscape
 <https://inkscape.org/>`__ (icon source is in `src/images/icon.svg
-<https://github.com/hluk/CopyQ/blob/master/src/images/icon.svg>`__).
+<https://github.com/zerovoxxx/QClip/blob/master/src/images/icon.svg>`__).
 
 Application Processes
 ---------------------
 
-There are these system processes related to CopyQ:
+There are these system processes related to QClip:
 
 - Main GUI application
 - Clipboard monitor - executes automatic clipboard commands
@@ -37,7 +37,7 @@ Main GUI Application
 ~~~~~~~~~~~~~~~~~~~~
 
 The main GUI application (or server) can be executed by running
-``copyq`` binary without attributes (session name can be optionally
+``qclip`` binary without attributes (session name can be optionally
 specified on command line).
 
 It creates local server allowing communication with clipboard monitor
@@ -70,35 +70,35 @@ same syntax and functions as JavaScript).
 
 API is described in :ref:`scripting-api`.
 
-A script can be started by passing arguments to ``copyq``.
-For example: ``copyq "1+1"``
+A script can be started by passing arguments to ``qclip``.
+For example: ``qclip "1+1"``
 
 After script finishes, the server sends back output of last command and
 exit code (non-zero if script crashes).
 
 .. code-block:: bash
 
-    copyq eval 'read(0,1,2)' # prints first three items in list
-    copyq eval 'fail()' # exit code will be non-zero
+    qclip eval 'read(0,1,2)' # prints first three items in list
+    qclip eval 'fail()' # exit code will be non-zero
 
 While script is running, it can send print requests to client.
 
 .. code-block:: bash
 
-    copyq eval 'print("Hello, "); print("World!\n")'
+    qclip eval 'print("Hello, "); print("World!\n")'
 
 Scripts can ask for stdin from client.
 
 .. code-block:: bash
 
-    copyq eval 'var client_stdin = input()'
+    qclip eval 'var client_stdin = input()'
 
 The script run in current directory of client process.
 
 .. code-block:: bash
 
-    copyq eval 'Dir().absolutePath()'
-    copyq eval 'execute("ls", "-l").stdout'
+    qclip eval 'Dir().absolutePath()'
+    qclip eval 'execute("ls", "-l").stdout'
 
 Single function call where all arguments are numbers or strings can be
 executed by passing function name and function arguments on command
@@ -106,16 +106,16 @@ line. Following commands are equal.
 
 .. code-block:: bash
 
-    copyq eval 'copy("Hello, World!")'
-    copyq copy "Hello, World!"
+    qclip eval 'copy("Hello, World!")'
+    qclip copy "Hello, World!"
 
 Getting application version or help mustn't require the server to be
 running.
 
 .. code-block:: bash
 
-    copyq help
-    copyq version
+    qclip help
+    qclip version
 
 Scripts run in separate thread and communicate with main thread by
 calling methods on an object of ``ScriptableProxy`` class. If called
@@ -153,7 +153,7 @@ This leverages amount of ``#if``\ s and similar preprocessor directives
 in common code.
 
 Each supported platform implements
-`PlatformNativeInterface <https://github.com/hluk/CopyQ/blob/master/src/platform/platformnativeinterface.h>`__
+`PlatformNativeInterface <https://github.com/zerovoxxx/QClip/blob/master/src/platform/platformnativeinterface.h>`__
 and ``platformNativeInterface()``.
 
 The implementations can contain:

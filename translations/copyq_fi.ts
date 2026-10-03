@@ -338,8 +338,8 @@
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Ei voi muodostaa yhteyttä palvelimeen! Käynnistä CopyQ-palvelin ensin.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Ei voi muodostaa yhteyttä palvelimeen! Käynnistä QClip-palvelin ensin.</translation>
     </message>
 </context>
 <context>
@@ -380,8 +380,8 @@
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>CopyQ-palvelin on jo käynnissä.</translation>
+        <source>QClip server is already running.</source>
+        <translation>QClip-palvelin on jo käynnissä.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -467,8 +467,8 @@
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Komennot (*.ini);; CopyQ-kokoonpano (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Komennot (*.ini);; QClip-kokoonpano (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2384,8 +2384,8 @@ Aseta arvoksi 0 poistaaksesi käytöstä.</translation>
     <name>MainWindow</name>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ-kohteet (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip-kohteet (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -2431,8 +2431,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Haluatko &lt;strong&gt;poistua&lt;/strong&gt; CopyQ:sta?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Haluatko &lt;strong&gt;poistua&lt;/strong&gt; QClip:sta?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2502,9 +2502,9 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>CopyQ-virhe</translation>
+        <translation>QClip-virhe</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -3021,8 +3021,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Välilehti %1 on vioittunut tai jotkin CopyQ-liitännäiset puuttuvat!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Välilehti %1 on vioittunut tai jotkin QClip-liitännäiset puuttuvat!</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="319"/>
@@ -3601,8 +3601,8 @@ Oletus on ensimmäinen välilehti.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ-leikepöydän hallinta</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip-leikepöydän hallinta</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

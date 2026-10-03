@@ -10,13 +10,13 @@ Download the source code from git repository
 
 ::
 
-    git clone https://github.com/hluk/CopyQ.git
+    git clone https://github.com/zerovoxxx/QClip.git
 
 or download the latest source code archive from:
 
-- `latest release <https://github.com/hluk/CopyQ/releases>`__
-- `master branch in zip <https://github.com/hluk/CopyQ/archive/master.zip>`__
-- `master branch in tar.gz <https://github.com/hluk/CopyQ/archive/master.tar.gz>`__
+- `latest release <https://github.com/zerovoxxx/QClip/releases>`__
+- `master branch in zip <https://github.com/zerovoxxx/QClip/archive/master.zip>`__
+- `master branch in tar.gz <https://github.com/zerovoxxx/QClip/archive/master.tar.gz>`__
 
 Install Dependencies
 --------------------
@@ -142,7 +142,7 @@ Build the source code with CMake and make or using an IDE of your choice (see ne
 
 ::
 
-    cd CopyQ
+    cd QClip
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .
     # Add -DWITH_QCA_ENCRYPTION=OFF for systems without `QCA` packages
     # Add -DWITH_NATIVE_NOTIFICATIONS=OFF for systems without `KF6` packages
@@ -186,19 +186,19 @@ On OS X, required Qt 6 libraries and utilities can be easily installed with `Hom
 
 ::
 
-    cd CopyQ
+    cd QClip
     git -C "utils/github/homebrew" init .
     git -C "utils/github/homebrew" add .
     git -C "utils/github/homebrew" commit -m "Initial"
 
-    brew tap copyq/kde utils/github/homebrew/
+    brew tap qclip/kde utils/github/homebrew/
     # if the above "brew tap" command produces an error like
-    #     "Error: Tap copyq/kde remote mismatch"
+    #     "Error: Tap qclip/kde remote mismatch"
     # then run
-    #     brew untap --force copyq/kde
+    #     brew untap --force qclip/kde
     # and re-run the above "brew tap" command
 
-    brew install qt6 copyq/kde/kf6-knotifications copyq/kde/kf6-kstatusnotifieritem
+    brew install qt6 qclip/kde/kf6-knotifications qclip/kde/kf6-kstatusnotifieritem
 
 Build with the following commands:
 
@@ -208,18 +208,18 @@ Build with the following commands:
     cmake --build .
     cpack
 
-This will produce a self-contained application bundle ``CopyQ.app``
+This will produce a self-contained application bundle ``QClip.app``
 which can then be copied or moved into ``/Applications``.
 
-NOTE: If no Items are shown when you start CopyQ and open "File - Preferences - Items",
-then your CopyQ plugins were not installed. If you saw warning messages like this::
+NOTE: If no Items are shown when you start QClip and open "File - Preferences - Items",
+then your QClip plugins were not installed. If you saw warning messages like this::
 
-     /<some_path>/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /<some_path>/CopyQ/_CPack_Packages/Darwin/DragNDrop/copyq-6.2.0-Darwin/CopyQ.app/Contents/Plugins/<some_file>.dylib
+     /<some_path>/install_name_tool: warning: changes being made to the file will invalidate the code signature in: /<some_path>/QClip/_CPack_Packages/Darwin/DragNDrop/qclip-6.2.0-Darwin/QClip.app/Contents/Plugins/<some_file>.dylib
 
 when you ran the above "cpack" command, then you have likely encountered
 `issue 1903 <https://github.com/hluk/CopyQ/issues/1903/>`__.
 
-In that case you may codesign the CopyQ app again using the following command,
-un-install the previous CopyQ app, and install the re-signed ``CopyQ.app``::
+In that case you may codesign the QClip app again using the following command,
+un-install the previous QClip app, and install the re-signed ``QClip.app``::
 
-    codesign --force --deep --sign - $PWD/_CPack_Packages/Darwin/DragNDrop/copyq-*-Darwin/CopyQ.app
+    codesign --force --deep --sign - $PWD/_CPack_Packages/Darwin/DragNDrop/qclip-*-Darwin/QClip.app

@@ -351,8 +351,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Не вдається підключитись до сервера! Спочатку запустіть сервер CopyQ.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Не вдається підключитись до сервера! Спочатку запустіть сервер QClip.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -403,8 +403,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>Сервер CopyQ вже запущено.</translation>
+        <source>QClip server is already running.</source>
+        <translation>Сервер QClip вже запущено.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -490,8 +490,8 @@ You can set up the command in preferences.</source>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Файли команд (*.ini);; Файли конфігурації CopyQ (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Файли команд (*.ini);; Файли конфігурації QClip (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2591,8 +2591,8 @@ Set to 0 to disable.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Дійсно &lt;strong&gt;закрити&lt;/strong&gt; CopyQ?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Дійсно &lt;strong&gt;закрити&lt;/strong&gt; QClip?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2659,9 +2659,9 @@ Set to 0 to disable.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>Помилка CopyQ</translation>
+        <translation>Помилка QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="1105"/>
@@ -2735,8 +2735,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>Елементи CopyQ (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>Елементи QClip (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4541"/>
@@ -3268,8 +3268,8 @@ which can be letters, digits, &apos;-&apos; or &apos;_&apos;!</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Вкладка %1 пошкоджена або відсутні деякі плагіни CopyQ!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Вкладка %1 пошкоджена або відсутні деякі плагіни QClip!</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/scriptable/scriptableproxy.cpp" line="2253"/>
@@ -3833,8 +3833,8 @@ Use %1 in PROGRAM to pass text as argument.</source>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>Менеджер буфера обміну CopyQ</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>Менеджер буфера обміну QClip</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

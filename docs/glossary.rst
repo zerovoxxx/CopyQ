@@ -3,7 +3,7 @@
 Glossary
 ========
 
-Here is a list of frequent terms from CopyQ.
+Here is a list of frequent terms from QClip.
 
 - Action - a command run from Action dialog
 - Clipboard - system clipboard that stores and provides copied stuff (``Ctrl+C``)

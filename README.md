@@ -1,259 +1,85 @@
 # QClip
 
-QClip is a GPL-3.0-or-later fork of [CopyQ](https://github.com/hluk/CopyQ), rebuilding the desktop interface with Qt Quick and adding persistent Snippets, dynamic templates, automatic expansion and double-copy merging. The implementation and verified platform boundaries are tracked in [the active specifications](docs/astack/INDEX.md). The first release has not passed all platform acceptance gates yet.
+**把复制过的内容，变成随时可用的工具。**
 
-The executable is `qclip` on Windows/Linux and `QClip.app` on macOS. QClip uses its own configuration, sessions and IPC endpoints; CopyQ profiles are imported explicitly from an isolated source directory. The `COPYQ_*` environment variables, scripting API and plugin interfaces remain compatible.
+QClip 是面向 Windows 和 macOS 的开源剪贴板管理器。它基于 [CopyQ](https://github.com/hluk/CopyQ) 的历史记录、插件和脚本能力，重新设计桌面界面，提供快捷搜索面板、集合管理、持久文本片段（Snippet）、动态模板和可选的关键词自动展开。
 
-[QClip source and issues](https://github.com/zerovoxxx/CopyQ) · [Build and release](RELEASE.md) · [Project instructions](CLAUDE.md)
+QClip is an open-source clipboard manager built on CopyQ, with a Qt Quick interface, searchable history, collections, snippets and dynamic templates.
 
-The upstream documentation and attribution follow.
+[下载 v1.0.0](https://github.com/zerovoxxx/QClip/releases/tag/v1.0.0) · [完整使用说明](docs/USER_GUIDE.md) · [报告问题](https://github.com/zerovoxxx/QClip/issues) · [构建与发布](RELEASE.md)
 
-# CopyQ
+## 能做什么
 
-[![Documentation Status](https://readthedocs.org/projects/copyq/badge/?version=latest)](https://copyq.readthedocs.io/en/latest/?badge=latest)
-[![Translation Status](https://hosted.weblate.org/widgets/copyq/-/svg-badge.svg)](https://hosted.weblate.org/engage/copyq/?utm_source=widget)
-[![Linux Build Status](https://github.com/hluk/CopyQ/actions/workflows/build-linux.yml/badge.svg?branch=master&event=push)](https://github.com/hluk/CopyQ/actions?query=branch%3Amaster+event%3Apush+workflow%3ALinux)
-[![macOS Build Status](https://github.com/hluk/CopyQ/actions/workflows/build-macos.yml/badge.svg?branch=master&event=push)](https://github.com/hluk/CopyQ/actions?query=branch%3Amaster+event%3Apush+workflow%3AmacOS)
-[![Windows Build Status](https://github.com/hluk/CopyQ/actions/workflows/build-windows.yml/badge.svg?branch=master&event=push)](https://github.com/hluk/CopyQ/actions?query=branch%3Amaster+event%3Apush+workflow%3AWindows)
-[![Coverage Status](https://codecov.io/gh/hluk/CopyQ/branch/master/graph/badge.svg)](https://codecov.io/gh/hluk/CopyQ)
+- **找回复制过的内容**：保存文本、HTML、图片、文件链接等剪贴板格式，通过搜索和预览快速定位。
+- **用键盘完成操作**：呼出快捷面板、输入关键词、选择条目并粘贴；支持仅复制、纯文本粘贴和自定义动作。
+- **整理常用资料**：用集合、分组、标签、备注和固定条目管理历史，批量编辑、移动、导入和导出。
+- **保存常用回复**：Snippet 独立于普通历史保存，支持集合、富文本、关键词、动态占位符和光标位置。
+- **减少重复输入**：显式启用关键词自动展开或连续两次复制合并；可设置应用例外和合并分隔符。
+- **按自己的方式工作**：保留 CopyQ 的命令行、脚本、快捷键、主题和八个内置插件，包括图片、标签、固定、同步和加密。
 
-CopyQ is an advanced clipboard manager with powerful editing and scripting features.
+数据保存在本机。自定义命令和同步插件可以访问网络或外部文件，行为取决于你启用的配置。
 
-- [Downloads](https://github.com/hluk/CopyQ/releases)
-- [Web Site](https://hluk.github.io/CopyQ/)
-- [Documentation](https://copyq.readthedocs.io)
-- [Mailing List](https://groups.google.com/group/copyq)
-- [Bug Reports](https://github.com/hluk/CopyQ/issues)
-- [Donate](https://liberapay.com/CopyQ/)
-- [Scripting API](https://copyq.readthedocs.io/en/latest/scripting-api.html)
+## 下载与安装
 
-## Overview
+从 [GitHub Releases](https://github.com/zerovoxxx/QClip/releases) 下载适合设备的文件。
 
-* CopyQ monitors the system clipboard and saves its content in customized tabs.
-* Saved clipboard entries can later be copied and pasted directly into any application.
+| 系统 | 文件 | 安装方式 |
+|---|---|---|
+| Windows 10 1903 / Windows 11，x64 | `qclip-1.0.0-setup.exe` | 运行安装器，按提示安装 |
+| Windows，x64 | `qclip-1.0.0.zip` | 完整解压到可写目录，运行 `qclip.exe` |
+| macOS 13+，Intel | `QClip-1.0.0-macos-13.dmg` | 打开 DMG，将 QClip 拖入 Applications |
+| macOS 13+，Apple Silicon | `QClip-1.0.0-macos-13-m1.dmg` | 打开 DMG，将 QClip 拖入 Applications |
 
-## Features
+macOS 可在 **Apple menu → About This Mac** 查看芯片类型。当前发行包未提供 Windows 商业代码签名或 Apple Developer ID 公证；首次启动可能需要按系统提示确认来源。macOS 的自动粘贴和后台展开需要相关系统权限，详见[安装说明](docs/USER_GUIDE.md#安装与首次启动)。
 
-* Support for Linux, Windows, and [macOS 13+](https://doc.qt.io/qt-6/macos.html)
-* Store text, HTML, images, and any other custom formats
-* Quickly browse and filter items in clipboard history
-* Sort, create, edit, remove, copy/paste, drag'n'drop items in tabs
-* Add notes and tags to items
-* System-wide keyboard shortcuts with customizable commands
-* Paste items with keyboard shortcuts, from tray, or from main window
-* Fully customizable appearance
-* Advanced command-line interface and scripting
-* Ignore clipboard copied from specified windows or containing specified text
-* Support for simple Vim-like editor with keyboard shortcuts
-* Many more features
+本次发行提供 Windows/macOS 二进制。Linux 源码支持仍保留，可参考[源码构建说明](RELEASE.md#从源码构建)。
 
-## Install
+## 第一次使用
 
-<a href="https://repology.org/metapackage/copyq">
-    <img src="https://repology.org/badge/vertical-allrepos/copyq.svg" alt="Packaging status" align="right">
-</a>
+1. 启动 QClip，保持托盘或菜单栏中的程序运行。
+2. 在其他应用里复制一段普通文字，再复制另一段文字。
+3. 打开 QClip，通过 **Manage** 进入管理窗口；快捷面板也可用 `qclip palette` 呼出。
+4. 输入关键词搜索，使用 ↑ / ↓ 选择条目，按 Enter 粘贴到先前的窗口；点击 **Copy** 则只写入剪贴板。
+5. 在 **Settings… → Shortcuts…** 配置适合自己的全局快捷键。需要直接呼出快捷面板时，可创建命令 `copyq: palette()` 并设置全局快捷键。
 
-To install CopyQ, use the binary package or the installer provided for your operating system.
+`copyq:` 是兼容的脚本解释器前缀。实际产品与可执行文件名为 QClip / `qclip`。
 
-For unlisted operating systems, please follow the instructions in
-[Build from Source Code](https://copyq.readthedocs.io/en/latest/build-source-code.html).
+常用回复可以从选中历史条目的 **Save snippet** 保存，再在 **Snippets…** 编辑。自动展开初始关闭，应在普通文本编辑器中验证关键词、权限和应用例外后启用。
 
-### Windows
+## 命令行与自动化
 
-[![Chocolatey package](https://repology.org/badge/version-for-repo/chocolatey/copyq.svg)](https://repology.org/metapackage/copyq)
+Windows 在程序目录使用 `./qclip.exe`；macOS 使用 `/Applications/QClip.app/Contents/MacOS/QClip`。以下示例以加入 PATH 的 `qclip` 为例，大部分命令需要主程序已经运行。
 
-On Windows you can use any of the following options to install CopyQ:
-
-* [Installer (setup.exe)](https://github.com/hluk/CopyQ/releases)
-* [Portable zip package](https://github.com/hluk/CopyQ/releases)
-* [Scoop package](https://scoop.sh/) from the [extras bucket](https://github.com/lukesampson/scoop-extras).
-* [Chocolatey package](https://chocolatey.org/packages/copyq)
-
-Using Scoop:
-
-```
-scoop install copyq
+```sh
+qclip --help
+qclip palette
+qclip show
+qclip add -- '一段常用文字'
+qclip read 0
+qclip clipboard
+qclip snippets
 ```
 
-Using Chocolatey:
+完整操作与模板示例见[使用说明书](docs/USER_GUIDE.md)。兼容脚本接口参考仓库中的[脚本 API](docs/scripting-api.rst)，以及明确标注为上游参考的 [CopyQ API 文档](https://copyq.readthedocs.io/en/latest/scripting-api.html)。
 
-```
-choco install copyq
-```
+## 当前边界
 
-### macOS
+自动展开会在无法确认的输入法组合输入、安全输入或缺少权限时暂停。不同应用的粘贴、管理员权限窗口、多屏 DPI、旧主题样式和复杂 CopyQ 配置迁移仍存在平台差异；详见[说明书中的限制](docs/USER_GUIDE.md#已知限制)。QClip 不提供 Alfred Workflow 编辑器，也不承诺直接导入 `.alfredsnippets`。
 
-macOS 13 and above are supported (this mainly depends on the [Qt version](https://doc.qt.io/qt-6/macos.html)).
+构建、隔离聚焦测试和安装包依赖审计的执行方式见 [RELEASE.md](RELEASE.md)。完整产品场景的实施与验收记录见[项目 SPEC](docs/astack/INDEX.md)。
 
-[![Homebrew package](https://repology.org/badge/version-for-repo/homebrew_casks/copyq.svg)](https://repology.org/metapackage/copyq)
+## 开发与贡献
 
-On macOS you can use [Homebrew](https://brew.sh/) to install CopyQ:
+技术栈：C++17、Qt 6 Widgets / Quick / QML、CMake。Widgets 仍承载部分插件及辅助编辑界面，Qt Quick 承载快捷面板和主要管理界面。
 
-```bash
-brew install --cask copyq
-```
+提交问题时请附上系统版本、芯片/架构、QClip 版本、复现步骤和去除个人数据的日志。开发前阅读 [CLAUDE.md](CLAUDE.md) 和[迭代索引](docs/astack/INDEX.md)，并使用隔离配置验证剪贴板行为。
 
-If you encounter an issue where the app crashes with a dialog saying "CopyQ is
-damaged" or "CopyQ cannot be opened", you may need to run the following
-commands (for details, see #2652):
+## 许可与致谢
 
-```bash
-xattr -d com.apple.quarantine /Applications/CopyQ.app
-codesign --force --deep --sign - /Applications/CopyQ.app
-```
+QClip 是 CopyQ 的修改版本，采用 **GNU GPL v3 或更新版本（GPL-3.0-or-later）**。完整协议见 [LICENSE](LICENSE)。原有版权声明、[AUTHORS](AUTHORS)、源码中的 SPDX 标识与第三方许可继续保留；发布包附带许可文本，并提供与版本标签对应的完整项目源码。
 
-### Debian 11+, Ubuntu 22.04+, and their derivatives
+- **CopyQ**：由 Lukáš Holeček 和贡献者开发，提供 QClip 的剪贴板引擎、历史存储、脚本与插件基础。[上游仓库](https://github.com/hluk/CopyQ) · [上游作者](AUTHORS) · [保留的上游变更记录](docs/UPSTREAM-CHANGES.md)。
+- **QClip**：由 zerovoxxx 和 QClip 贡献者维护本分支的界面与增强功能；问题反馈请提交到 [QClip](https://github.com/zerovoxxx/QClip/issues)。
+- **第三方组件**：Qt、KDE Frameworks、QCA、QtKeychain、OpenSSL、ICU、LibQxt、FakeVim、Font Awesome 和 miniaudio 等，遵循各自许可。清单与文本见 [THIRD-PARTY-NOTICES](shared/THIRD-PARTY-NOTICES.txt) 和 [shared/licenses](shared/licenses)。
 
-Install `copyq` and `copyq-plugins` packages.
-
-#### Ubuntu PPA
-
-The official PPA (`ppa:hluk/copyq`) is no longer maintained. Install the
-packages provided for your distribution.
-
-See the [announcement](https://groups.google.com/g/copyq/c/KElH_U2hMO0/m/actmVpQcCQAJ).
-
-### Fedora
-
-Install `copyq` package.
-
-### Arch Linux
-
-Install `copyq` package.
-
-### Other Linux Distributions
-
-Download the latest **AppImage** from
-[GitHub Releases](https://github.com/hluk/CopyQ/releases):
-
-```bash
-chmod +x CopyQ-*.AppImage
-./CopyQ-*.AppImage
-```
-
-Alternatively, install [Flatpak](https://flatpak.org/) and `com.github.hluk.copyq` from
-[Flathub](https://flathub.org/apps/com.github.hluk.copyq).
-See [Flathub Setup](https://flathub.org/setup) for initial Flatpak/Flathub configuration.
-
-Start CopyQ from the menu or with the following command:
-
-```bash
-flatpak run com.github.hluk.copyq
-```
-
-## Using the App
-
-To start CopyQ, double-click the program icon or run `copyq` (on Windows, run `CopyQ.exe`, or launch it from the Start menu; no desktop icon is created by default).
-
-The list with the clipboard history is accessible by clicking on the system tray icon
-or by running `copyq toggle`.
-
-Copying text or image to the clipboard will create a new item in the list.
-
-Selected items can be:
-
-* edited (`F2`)
-* removed (`Delete`)
-* sorted (`Ctrl+Shift+S`, `Ctrl+Shift+R`)
-* repositioned (with mouse or `Ctrl+Up/Down`)
-* copied back to the clipboard (`Ctrl+C`)
-* pasted to the previously active window (`Enter`)
-
-All items will be restored when CopyQ is next started.
-
-To exit CopyQ, select Exit from the tray menu or press `Ctrl-Q` in the
-CopyQ window.
-
-Read more:
-
-- [Basic Usage](https://copyq.readthedocs.io/en/latest/basic-usage.html)
-- [Keyboard](https://copyq.readthedocs.io/en/latest/keyboard.html)
-
-### Adding Functionality
-
-To create custom actions that can be executed
-from the menu, with keyboard shortcuts, or when the clipboard changes:
-- go to the Command dialog (`F6` shortcut)
-- click the `Add` button, then select a predefined command, or create a new one
-- optionally change the command details (shortcut, name)
-- click `OK` to save the command
-
-One of the very useful predefined commands is "Show/hide main window".
-
-Read more:
-
-- [Writing Commands](https://copyq.readthedocs.io/en/latest/writing-commands-and-adding-functionality.html)
-- [CopyQ Commands Repository](https://github.com/hluk/copyq-commands)
-
-### Command Line
-
-CopyQ has a powerful command line and scripting interface.
-
-Note: The main application must be running to be able to issue commands using the
-command line.
-
-Print help for some useful command line arguments:
-
-    copyq --help
-    copyq --help add
-
-Insert some text in the history:
-
-    copyq add -- 'first item' 'second item' 'third item'
-
-Omitting the double-dash (`--`) in the command above would mean that slashes
-(`\`) in arguments will be treated as special characters.  For example, `\n` will be treated as
-the new line character, `\t` as tab, `\\` as slash, `\x` as `x`, etc.
-
-Create a single item containing two lines:
-
-    copyq add 'first line\nsecond line'
-
-Print the content of the first three items:
-
-    copyq read 0 1 2
-    copyq separator "," read 0 1 2
-
-Show the current clipboard content:
-
-    copyq clipboard
-    copyq clipboard text/html
-    copyq clipboard \?    # lists formats in clipboard
-
-Copy text to the clipboard:
-
-    copyq copy "Some Text"
-
-Load file content into the clipboard:
-
-    copyq copy - < file.txt
-    copyq copy text/html < index.html
-    copyq copy image/jpeg - < image.jpg
-
-Create image items:
-
-    copyq write image/gif - < image.gif
-    copyq write image/svg - < image.svg
-
-Read more:
-
-- [Scripting](https://copyq.readthedocs.io/en/latest/scripting.html)
-- [Scripting API](https://copyq.readthedocs.io/en/latest/scripting-api.html)
-
-## Build from Source Code
-
-See the documentation section [Build from Source
-Code](https://copyq.readthedocs.io/en/latest/build-source-code.html).
-
-## Contributions
-
-You can help translate CopyQ (click the banner below)
-or help [fix issues and implement new features](https://github.com/hluk/CopyQ/issues).
-
-[![Translations](https://hosted.weblate.org/widgets/copyq/-/287x66-white.png)](https://hosted.weblate.org/engage/copyq/?utm_source=widget)
-
-Read more:
-
-- [Build from Source Code](https://copyq.readthedocs.io/en/latest/build-source-code.html)
-- [Fixing Bugs and Adding Features](https://copyq.readthedocs.io/en/latest/fixing-bugs.html)
-- [Translations](https://copyq.readthedocs.io/en/latest/translations.html)
+Alfred 是交互设计的参考产品；QClip 与 Alfred 无隶属关系。

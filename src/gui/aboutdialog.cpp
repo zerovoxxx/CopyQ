@@ -20,11 +20,6 @@ QString helpUrl(const char *url)
     return QString::fromLatin1("<a href='%1'>%1</a>").arg(url);
 }
 
-QString helpMail(const char *url)
-{
-    return QString::fromLatin1("<a href='mailto:%1'>%1</a>").arg(url);
-}
-
 QString helpLink(const QString &name, const QString &link, ushort icon)
 {
     return "<tr>"
@@ -139,10 +134,12 @@ QString AboutDialog::aboutPage(const Theme &theme)
 
         "<p>"
         "<table class='links'>"
-            + helpLink( tr("Author"), QString::fromUtf8("Lukáš Holeček"), IconUser )
-            + helpLink( tr("E-mail"), helpMail("copyq@googlegroups.com"), IconEnvelope )
-            + helpLink( tr("Web"), helpUrl("https://hluk.github.io/CopyQ/"), IconHouse )
-            + helpLink( tr("Donate"), helpUrl("https://liberapay.com/CopyQ/"), IconGift )
+            + helpLink( tr("QClip maintainer"), QStringLiteral("zerovoxxx"), IconUser )
+            + helpLink( tr("Upstream author"), QString::fromUtf8("Lukáš Holeček"), IconUser )
+            + helpLink( tr("Report an issue"), helpUrl("https://github.com/zerovoxxx/QClip/issues"), IconEnvelope )
+            + helpLink( tr("Web"), helpUrl("https://github.com/zerovoxxx/QClip"), IconHouse )
+            + helpLink( tr("User guide"), helpUrl("https://github.com/zerovoxxx/QClip/blob/master/docs/USER_GUIDE.md"), IconBook )
+            + helpLink( tr("Support upstream CopyQ"), helpUrl("https://liberapay.com/CopyQ/"), IconGift )
             +
         "</table>"
         "</p>"

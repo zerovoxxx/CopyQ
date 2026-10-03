@@ -53,7 +53,7 @@ QJSValue ScriptableNetworkRequest::headers()
         m_headers = engine()->newObject();
         m_headers.setProperty(
             QStringLiteral("User-Agent"),
-            QStringLiteral("CopyQ/%1").arg(versionString));
+            QStringLiteral("QClip/%1").arg(versionString));
     }
     return m_headers;
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Assembles a deployable CopyQ directory on Windows (GitHub Actions).
+# Assembles a deployable QClip directory on Windows (GitHub Actions).
 # Copies dependencies, runs windeployqt, prepares for testing and packaging.
 #
 # Based on the proven Appveyor after_build.sh workflow.
@@ -88,6 +88,9 @@ cp -v "$BUILD_DIR/copyq-management-tests.exe" "$DEST/"
 cp -v "$BUILD_DIR/copyq-snippet-tests.exe" "$DEST/"
 cp -v "$QT_ROOT_DIR/bin/Qt6Test.dll" "$DEST/"
 cp -v "$BUILD_DIR/src/itemtests.dll" "$DEST/"
+
+python "$GITHUB_WORKSPACE/utils/collect-third-party-notices.py" \
+    --root "$DEST" --qt "$QT_ROOT_DIR" --dependencies "$GITHUB_WORKSPACE/deps/downloads"
 
 # Remove system-installed OpenSSL to verify bundled libs are used.
 rm -vf /c/Windows/System32/libcrypto-*

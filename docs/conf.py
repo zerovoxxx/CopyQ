@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# CopyQ documentation build configuration file, created by
+# QClip documentation build configuration file, created by
 # sphinx-quickstart on Sat May 27 07:37:30 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -46,10 +46,10 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'CopyQ'
-copyright = '2024, Lukas Holecek'
-author = 'Lukas Holecek'
-title = 'CopyQ Documentation'
+project = 'QClip'
+copyright = '2026 QClip contributors; original CopyQ documentation copyright 2024 Lukas Holecek'
+author = 'QClip contributors; based on CopyQ by Lukas Holecek and contributors'
+title = 'QClip Documentation'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -105,7 +105,7 @@ html_favicon = '../src/images/icon_32x32.png'
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'CopyQdoc'
+htmlhelp_basename = 'QClipdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -132,7 +132,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'CopyQ.tex', title, author, 'manual'),
+    (master_doc, 'QClip.tex', title, author, 'manual'),
 ]
 
 
@@ -141,7 +141,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'copyq', title, [author], 1)
+    (master_doc, 'qclip', title, [author], 1)
 ]
 
 
@@ -151,8 +151,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'CopyQ', title,
-     author, 'CopyQ', 'One line description of project.',
+    (master_doc, 'QClip', title,
+     author, 'QClip', 'One line description of project.',
      'Miscellaneous'),
 ]
 

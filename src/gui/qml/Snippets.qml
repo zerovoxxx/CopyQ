@@ -153,7 +153,7 @@ Pane {
                 Label { text: (root.selected.resolvedKeyword || "") + (root.selected.conflict ? " · " + root.selected.conflict : ""); color: root.selected.conflict ? theme.danger : theme.muted; font.pixelSize: 11; wrapMode: Text.Wrap; Layout.fillWidth: true; visible: text.length > 0 }
                 ThemeComboBox { values: root.controller.theme; id: collection; Layout.fillWidth: true; model: root.controller.collections; textRole: "name"; valueRole: "id" }
                 ThemeCheckBox { values: root.controller.theme; id: expansion; text: qsTr("Allow automatic expansion") }
-                ThemeTextField { values: root.controller.theme; id: command; Layout.fillWidth: true; placeholderText: qsTr("Optional CopyQ command name (runs instead of automatic paste)") }
+                ThemeTextField { values: root.controller.theme; id: command; Layout.fillWidth: true; placeholderText: qsTr("Optional QClip command name (runs instead of automatic paste)") }
                 Flow {
                     Layout.fillWidth: true
                     spacing: 6

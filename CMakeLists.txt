@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(copyq)
+project(QClip)
 
 if (APPLE)
     set(COPYQ_EXECUTABLE_NAME "QClip")

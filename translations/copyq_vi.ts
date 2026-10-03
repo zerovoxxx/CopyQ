@@ -338,8 +338,8 @@
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Không thể kết nối với máy chủ! Khởi động máy chủ CopyQ trước.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Không thể kết nối với máy chủ! Khởi động máy chủ QClip trước.</translation>
     </message>
 </context>
 <context>
@@ -380,8 +380,8 @@
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>Máy chủ CopyQ đang chạy.</translation>
+        <source>QClip server is already running.</source>
+        <translation>Máy chủ QClip đang chạy.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -467,8 +467,8 @@
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Lệnh (*.ini);; Cấu hình CopyQ (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Lệnh (*.ini);; Cấu hình QClip (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2384,8 +2384,8 @@ Set to 0 to disable.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>Mục CopyQ (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>Mục QClip (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -2431,8 +2431,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Bạn có muốn &lt;strong&gt;thoát&lt;/strong&gt; CopyQ không?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Bạn có muốn &lt;strong&gt;thoát&lt;/strong&gt; QClip không?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2502,9 +2502,9 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>Lỗi CopyQ</translation>
+        <translation>Lỗi QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -3016,8 +3016,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Tab %1 bị hỏng hoặc thiếu một số plugin CopyQ!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Tab %1 bị hỏng hoặc thiếu một số plugin QClip!</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="319"/>
@@ -3591,8 +3591,8 @@ Mặc định là tab đầu tiên.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>Trình quản lý bộ nhớ tạm CopyQ</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>Trình quản lý bộ nhớ tạm QClip</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

@@ -350,8 +350,8 @@
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Ní féidir ceangal leis an bhfreastalaí! Tosaigh freastalaí CopyQ ar dtús.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Ní féidir ceangal leis an bhfreastalaí! Tosaigh freastalaí QClip ar dtús.</translation>
     </message>
 </context>
 <context>
@@ -396,8 +396,8 @@
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>Tá freastalaí CopyQ ag rith cheana féin.</translation>
+        <source>QClip server is already running.</source>
+        <translation>Tá freastalaí QClip ag rith cheana féin.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -482,8 +482,8 @@
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Orduithe (*.ini);; Cumraíocht CopyQ (copyq.conf, copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Orduithe (*.ini);; Cumraíocht QClip (copyq.conf, copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2434,8 +2434,8 @@ Socraigh go 0 le díchumasú.</translation>
     <name>MainWindow</name>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>Míreanna CopyQ (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>Míreanna QClip (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -2483,8 +2483,8 @@ Beidh sé indéanta sonraí cluaisíní a chriptiú agus a dhíchriptiú.</trans
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>An bhfuil fonn ort CopyQ &lt;strong&gt;a scoIr&lt;/strong&gt;?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>An bhfuil fonn ort QClip &lt;strong&gt;a scoIr&lt;/strong&gt;?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2534,9 +2534,9 @@ Beidh sé indéanta sonraí cluaisíní a chriptiú agus a dhíchriptiú.</trans
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>Earráid CopyQ</translation>
+        <translation>Earráid QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -2608,8 +2608,8 @@ Beidh sé indéanta sonraí cluaisíní a chriptiú agus a dhíchriptiú.</trans
         <translation type="vanished">&amp;gearrthaisce: %1</translation>
     </message>
     <message>
-        <source>CopyQ Error</source>
-        <translation type="vanished">Earráid CopyQ</translation>
+        <source>QClip Error</source>
+        <translation type="vanished">Earráid QClip</translation>
     </message>
 </context>
 <context>
@@ -2984,8 +2984,8 @@ Beidh sé indéanta sonraí cluaisíní a chriptiú agus a dhíchriptiú.</trans
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Tá Cluaisín %1 truaillithe nó tá roinnt breiseán CopyQ ar iarraidh!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Tá Cluaisín %1 truaillithe nó tá roinnt breiseán QClip ar iarraidh!</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="319"/>
@@ -3735,8 +3735,8 @@ Is é an réamhshocrú an chéad chluaisín.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>Bainisteoir Gearrthaisce CopyQ</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>Bainisteoir Gearrthaisce QClip</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

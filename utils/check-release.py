@@ -121,8 +121,11 @@ else:
 require(executable.is_file(), "QClip executable exists")
 for name in ("itemencrypted", "itemfakevim", "itemimage", "itemnotes", "itempinned", "itemsync", "itemtags", "itemtext"):
     require(any(name in path.name and path.is_file() for path in plugins.glob("*")), "Plugin " + name)
-for name in ("LICENSE", "AUTHORS", "RELEASE.md", "THIRD-PARTY-NOTICES.txt"):
+for name in ("LICENSE", "AUTHORS", "README.md", "USER_GUIDE.md", "RELEASE.md", "THIRD-PARTY-NOTICES.txt"):
     require((licenses / name).is_file(), "Package attribution: " + name)
+if args.platform in ("windows", "macos"):
+    require((licenses / "THIRD-PARTY-INVENTORY.json").is_file(), "Matching dependency inventory")
+    require((licenses / "licenses/Qt-sbom").is_dir(), "Matching Qt SDK SBOM")
 for name in ("Qt-LGPL-3.0.txt", "QCA-COPYING.txt", "QtKeychain-COPYING.txt", "OpenSSL-LICENSE.txt", "ICU-LICENSE.txt", "Font-Awesome.txt", "miniaudio.txt", "LibQxt-COPYING.txt", "FakeVim-LGPL.txt"):
     require((licenses / "licenses" / name).is_file(), "Dependency license text: " + name)
 

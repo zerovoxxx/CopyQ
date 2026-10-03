@@ -3,7 +3,7 @@
 Password Protection
 ===================
 
-This page describes how to encrypt clipboard data stored by CopyQ. The
+This page describes how to encrypt clipboard data stored by QClip. The
 recommended approach is the built-in encryption available since version 14.0.0.
 A legacy plugin using GnuPG is also documented below for older versions or
 per-item encryption needs.
@@ -11,11 +11,11 @@ per-item encryption needs.
 Built-in Encryption
 -------------------
 
-CopyQ can encrypt all stored tab data with a user-set password. No external
+QClip can encrypt all stored tab data with a user-set password. No external
 software is required.
 
 To enable it, open **Preferences** and check the **Encrypt Tabs** option.
-You will be prompted to set a password. The password is needed when CopyQ
+You will be prompted to set a password. The password is needed when QClip
 starts and when changing the encryption password. If **Require password after
 an interval** is enabled (in the "History" configuration tab), the password is
 also requested periodically.
@@ -35,7 +35,7 @@ all tabs loaded by the application — there is no per-tab or per-item setup.
 
    Built-in encryption protects data at rest but does **not** encrypt exported
    data. The ``exportTab`` and ``exportData`` script commands always write
-   unencrypted files. When exporting from the GUI (**File — Export**), CopyQ
+   unencrypted files. When exporting from the GUI (**File — Export**), QClip
    prompts for an optional export password — if provided, tab data in the
    export file is encrypted with that password. See :ref:`backup` for details.
 
@@ -45,7 +45,7 @@ Encryption Plugin (Legacy)
 .. deprecated:: 14.0.0
    The Encryption plugin is obsolete. Use the built-in encryption described
    above instead. The plugin remains available for users who need per-item
-   encryption or are running CopyQ versions older than 14.0.0.
+   encryption or are running QClip versions older than 14.0.0.
 
 .. warning::
 

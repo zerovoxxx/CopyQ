@@ -338,8 +338,8 @@
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>לא ניתן להתחבר לשרת! נא לאתחל את שרת CopyQ תחילה.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>לא ניתן להתחבר לשרת! נא לאתחל את שרת QClip תחילה.</translation>
     </message>
 </context>
 <context>
@@ -380,8 +380,8 @@
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>שרת CopyQ כבר מופעל.</translation>
+        <source>QClip server is already running.</source>
+        <translation>שרת QClip כבר מופעל.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -467,8 +467,8 @@
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>פקודות (*.ini);; תצורת CopyQ (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>פקודות (*.ini);; תצורת QClip (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2405,8 +2405,8 @@ Set to 0 to disable.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>פרטי CopyQ (*cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>פרטי QClip (*cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -2452,8 +2452,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>האם &lt;strong&gt;לצאת&lt;/strong&gt; מ־CopyQ?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>האם &lt;strong&gt;לצאת&lt;/strong&gt; מ־QClip?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2523,7 +2523,7 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
         <translation>שגיאת copyQ</translation>
     </message>
@@ -3042,8 +3042,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>לשונית %1 פגומה או שכמה מתקעי CopyQ חסרים!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>לשונית %1 פגומה או שכמה מתקעי QClip חסרים!</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="319"/>
@@ -3622,8 +3622,8 @@ Default is the first tab.</source>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>מנהל לוח־גזירים CopyQ</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>מנהל לוח־גזירים QClip</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

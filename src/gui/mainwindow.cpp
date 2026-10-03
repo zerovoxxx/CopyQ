@@ -3394,7 +3394,7 @@ void MainWindow::loadTheme(const QSettings &themeSettings)
 
 void MainWindow::openHelp()
 {
-    QDesktopServices::openUrl( QUrl("https://copyq.readthedocs.io") );
+    QDesktopServices::openUrl( QUrl("https://github.com/zerovoxxx/QClip/blob/master/docs/USER_GUIDE.md") );
 }
 
 void MainWindow::showWindow()

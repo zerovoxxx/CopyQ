@@ -351,8 +351,8 @@ Puede configurar la orden desde las preferencias.</translation>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>¡No se pudo conectar al servidor! Inicie el servidor CopyQ primero.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>¡No se pudo conectar al servidor! Inicie el servidor QClip primero.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -403,8 +403,8 @@ Puede configurar la orden desde las preferencias.</translation>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>El servidor CopyQ ya está en ejecución.</translation>
+        <source>QClip server is already running.</source>
+        <translation>El servidor QClip ya está en ejecución.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -490,8 +490,8 @@ Puede configurar la orden desde las preferencias.</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Órdenes (*.ini);; Configuración CopyQ (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Órdenes (*.ini);; Configuración QClip (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2603,8 +2603,8 @@ Definir 0 para desactivar.</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <source>CopyQ</source>
-        <translation type="vanished">CopyQ</translation>
+        <source>QClip</source>
+        <translation type="vanished">QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="922"/>
@@ -2613,8 +2613,8 @@ Definir 0 para desactivar.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>¿Desea &lt;strong&gt;salir&lt;/strong&gt; de CopyQ?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>¿Desea &lt;strong&gt;salir&lt;/strong&gt; de QClip?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2656,9 +2656,9 @@ Definir 0 para desactivar.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>Error de CopyQ</translation>
+        <translation>Error de QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="1158"/>
@@ -2668,8 +2668,8 @@ Definir 0 para desactivar.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>Elementos CopyQ (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>Elementos QClip (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="1105"/>
@@ -3292,8 +3292,8 @@ como máximo que pueden ser letras, dígitos, «-» o «_»!</translation>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>¡La pestaña %1 está dañada o faltan algunos complementos de CopyQ!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>¡La pestaña %1 está dañada o faltan algunos complementos de QClip!</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/scriptable/scriptableproxy.cpp" line="2253"/>
@@ -3901,8 +3901,8 @@ Imprimir la versión del programa y de las bibliotecas.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ Clipboard Manager</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip Clipboard Manager</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="2771"/>
@@ -3981,14 +3981,14 @@ Imprimir la versión del programa y de las bibliotecas.</translation>
         <translation>*Almacenamiento en el portapapeles desactivado*</translation>
     </message>
     <message>
-        <source>%1 - CopyQ</source>
+        <source>%1 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label)</comment>
-        <translation type="obsolete">%1 - CopyQ</translation>
+        <translation type="obsolete">%1 - QClip</translation>
     </message>
     <message>
-        <source>%1 - %2 - CopyQ</source>
+        <source>%1 - %2 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label, %2 is session name)</comment>
-        <translation type="obsolete">%1 - %2 - CopyQ</translation>
+        <translation type="obsolete">%1 - %2 - QClip</translation>
     </message>
 </context>
 <context>

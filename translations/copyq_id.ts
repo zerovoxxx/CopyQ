@@ -338,8 +338,8 @@
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Tidak dapat terhubung ke server! Jalankan server CopyQ terlebih dahulu.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Tidak dapat terhubung ke server! Jalankan server QClip terlebih dahulu.</translation>
     </message>
 </context>
 <context>
@@ -380,8 +380,8 @@
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>Server CopyQ sudah berjalan.</translation>
+        <source>QClip server is already running.</source>
+        <translation>Server QClip sudah berjalan.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -467,8 +467,8 @@
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Perintah (*.ini);; Konfigurasi CopyQ (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Perintah (*.ini);; Konfigurasi QClip (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2450,8 +2450,8 @@ Atur ke 0 untuk menonaktifkan.</translation>
     <name>MainWindow</name>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>Item CopyQ (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>Item QClip (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -2499,8 +2499,8 @@ Data tab dapat dienkripsi dan didekripsi.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Apakah Anda ingin &lt;strong&gt;keluar&lt;/strong&gt; dari CopyQ?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Apakah Anda ingin &lt;strong&gt;keluar&lt;/strong&gt; dari QClip?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2570,9 +2570,9 @@ Data tab dapat dienkripsi dan didekripsi.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>Kesalahan CopyQ</translation>
+        <translation>Kesalahan QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -3088,8 +3088,8 @@ Data tab dapat dienkripsi dan didekripsi.</translation>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Tab %1 rusak atau beberapa plugin CopyQ hilang!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Tab %1 rusak atau beberapa plugin QClip hilang!</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="319"/>
@@ -3671,8 +3671,8 @@ Tab default adalah tab pertama.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ Pengelola Clipboard</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip Pengelola Clipboard</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

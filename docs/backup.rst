@@ -4,7 +4,7 @@ Backup
 ======
 
 This page describes how to back up tabs, configuration and commands in
-CopyQ.
+QClip.
 
 Back Up All Data Automatically on Exit
 --------------------------------------
@@ -35,17 +35,17 @@ Default paths since version 17.0.0:
      - Data
      - State
    * - Linux
-     - ``~/.config/copyq``
-     - ``~/.local/share/copyq``
-     - ``~/.local/state/copyq``
+     - ``~/.config/qclip``
+     - ``~/.local/share/qclip``
+     - ``~/.local/state/qclip``
    * - macOS
-     - ``~/Library/Preferences/copyq``
-     - ``~/Library/Application Support/copyq``
-     - ``~/Library/Application Support/copyq``
+     - ``~/Library/Preferences/qclip``
+     - ``~/Library/Application Support/qclip``
+     - ``~/Library/Application Support/qclip``
    * - Windows
-     - ``%APPDATA%\copyq``
-     - ``%LOCALAPPDATA%\copyq``
-     - ``%LOCALAPPDATA%\copyq``
+     - ``%APPDATA%\qclip``
+     - ``%LOCALAPPDATA%\qclip``
+     - ``%LOCALAPPDATA%\qclip``
    * - Windows (portable)
      - ``config``
      - ``config``
@@ -61,17 +61,17 @@ Default paths before version 17.0.0:
      - Item data
      - Logs
    * - Linux
-     - ``~/.config/copyq``
-     - ``~/.local/share/copyq/items``
-     - ``~/.local/share/copyq``
+     - ``~/.config/qclip``
+     - ``~/.local/share/qclip/items``
+     - ``~/.local/share/qclip``
    * - macOS
-     - ``~/Library/Preferences/copyq``
-     - ``~/Library/Application Support/copyq/items``
-     - ``~/Library/Application Support/copyq``
+     - ``~/Library/Preferences/qclip``
+     - ``~/Library/Application Support/qclip/items``
+     - ``~/Library/Application Support/qclip``
    * - Windows
-     - ``%APPDATA%\copyq``
-     - ``%APPDATA%\copyq\items``
-     - ``%APPDATA%\copyq``
+     - ``%APPDATA%\qclip``
+     - ``%APPDATA%\qclip\items``
+     - ``%APPDATA%\qclip``
    * - Windows (portable)
      - ``config``
      - ``config\items``
@@ -91,7 +91,7 @@ directories.
 
 .. warning::
 
-    Before making or restoring back up, always exit CopyQ
+    Before making or restoring back up, always exit QClip
     (don't only close the main window).
 
 Export and Import
@@ -103,7 +103,7 @@ configuration and commands within the application.
 .. warning::
 
     Exported data is **not encrypted by default**. When exporting from the GUI,
-    CopyQ prompts for an optional export password — if provided, tab data in the
+    QClip prompts for an optional export password — if provided, tab data in the
     export file is encrypted with that password. The ``exportData`` script
     command does not support this and always exports unencrypted. If a tab is
     synchronized with a directory on disk, the files themselves are not exported.
@@ -123,5 +123,5 @@ Alternatively you can use command line for export and import everything
 
 .. code-block:: bash
 
-    copyq exportData {FILE/PATH/TO/EXPORT}
-    copyq importData {FILE/PATH/TO/IMPORT}
+    qclip exportData {FILE/PATH/TO/EXPORT}
+    qclip importData {FILE/PATH/TO/IMPORT}

@@ -351,8 +351,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>無法連上伺服器！先啟動 CopyQ 伺服器。</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>無法連上伺服器！先啟動 QClip 伺服器。</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -403,8 +403,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>CopyQ 伺服器已運行。</translation>
+        <source>QClip server is already running.</source>
+        <translation>QClip 伺服器已運行。</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -490,8 +490,8 @@ You can set up the command in preferences.</source>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>命令 (*.ini);; CopyQ 設定 (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>命令 (*.ini);; QClip 設定 (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2609,8 +2609,8 @@ Set to 0 to disable.</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <source>CopyQ</source>
-        <translation type="vanished">CopyQ</translation>
+        <source>QClip</source>
+        <translation type="vanished">QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="922"/>
@@ -2619,8 +2619,8 @@ Set to 0 to disable.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>想要 &lt;strong&gt;結束&lt;/strong&gt; CopyQ？</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>想要 &lt;strong&gt;結束&lt;/strong&gt; QClip？</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2688,11 +2688,11 @@ Set to 0 to disable.</source>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="508"/>
         <source>Options for Import</source>
-        <translation>用於匯入 CopyQ 的選項</translation>
+        <translation>用於匯入 QClip 的選項</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
         <translation>Copyq 錯誤</translation>
     </message>
@@ -2738,12 +2738,12 @@ It will be possible to encrypt and decrypt tab data.</source>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
         <source>Options for Export</source>
-        <translation>用於匯出 CopyQ 的選項</translation>
+        <translation>用於匯出 QClip 的選項</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4431"/>
         <source>Export Error</source>
-        <translation>匯出 CopyQ 錯誤</translation>
+        <translation>匯出 QClip 錯誤</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4432"/>
@@ -2753,7 +2753,7 @@ It will be possible to encrypt and decrypt tab data.</source>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4540"/>
         <source>Import Error</source>
-        <translation>匯入 CopyQ 錯誤</translation>
+        <translation>匯入 QClip 錯誤</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4541"/>
@@ -2768,8 +2768,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ 項目 (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip 項目 (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4719"/>
@@ -3296,8 +3296,8 @@ which can be letters, digits, &apos;-&apos; or &apos;_&apos;!</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>%1 分頁已損壞或某些 CopyQ 外掛遺失！</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>%1 分頁已損壞或某些 QClip 外掛遺失！</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/scriptable/scriptableproxy.cpp" line="2253"/>
@@ -3911,8 +3911,8 @@ Print version of program and libraries.</source>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ 剪貼簿管理員</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip 剪貼簿管理員</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="2771"/>
@@ -3984,14 +3984,14 @@ Print version of program and libraries.</source>
         <translation>*已停用剪貼簿儲存*</translation>
     </message>
     <message>
-        <source>%1 - CopyQ</source>
+        <source>%1 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label)</comment>
-        <translation type="vanished">%1 - CopyQ</translation>
+        <translation type="vanished">%1 - QClip</translation>
     </message>
     <message>
-        <source>%1 - %2 - CopyQ</source>
+        <source>%1 - %2 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label, %2 is session name)</comment>
-        <translation type="vanished">%1 - %2 - CopyQ</translation>
+        <translation type="vanished">%1 - %2 - QClip</translation>
     </message>
 </context>
 <context>
@@ -4048,7 +4048,7 @@ Print version of program and libraries.</source>
     <message>
         <location filename="../src/ui/shortcutswidget.ui" line="83"/>
         <source>Application shortcuts can only be triggered from the main window.</source>
-        <translation>應用程式快鍵只在CopyQ主窗取得焦點時有作用。</translation>
+        <translation>應用程式快鍵只在QClip主窗取得焦點時有作用。</translation>
     </message>
     <message>
         <source>Application shortcuts can be triggered only from the main window.</source>

@@ -1,11 +1,11 @@
-set(copyq_version "16.0.0")
+set(copyq_version "1.0.0")
 
 set(copyq_git_describe_result 1)
 
 find_package(Git)
 if(GIT_FOUND)
     execute_process(COMMAND
-        "${GIT_EXECUTABLE}" describe --tags
+        "${GIT_EXECUTABLE}" describe --tags --match "v${copyq_version}" --match "v${copyq_version}.*"
         RESULT_VARIABLE copyq_git_describe_result
         OUTPUT_VARIABLE copyq_git_describe_output
         ERROR_QUIET

@@ -343,8 +343,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>لا يمكن الاتصال بالملقم! بدء تشغيل ملقم CopyQ أولاً.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>لا يمكن الاتصال بالملقم! بدء تشغيل ملقم QClip أولاً.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -390,7 +390,7 @@ You can set up the command in preferences.</source>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
+        <source>QClip server is already running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -477,7 +477,7 @@ You can set up the command in preferences.</source>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2376,7 +2376,7 @@ Set to 0 to disable.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2456,7 +2456,7 @@ Set to 0 to disable.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
         <translation type="unfinished"></translation>
     </message>
@@ -2478,7 +2478,7 @@ Set to 0 to disable.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
+        <source>QClip Items (*.cpq)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3014,7 +3014,7 @@ which can be letters, digits, &apos;-&apos; or &apos;_&apos;!</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -3572,7 +3572,7 @@ Default is the first tab.</source>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
+        <source>QClip Clipboard Manager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -3,7 +3,7 @@
 Writing Commands and Adding Functionality
 =========================================
 
-CopyQ allows you to extend its functionality through commands in
+QClip allows you to extend its functionality through commands in
 following ways:
 
 - Add custom commands to context menu for selected items in history.
@@ -47,7 +47,7 @@ opens list with predefined commands.
 "New Command" creates new empty command (but it won't do anything
 without being configured). One of the most frequently used predefined
 command is "Show/hide main window" which allows you to assign global
-shortcut for showing and hiding CopyQ window.
+shortcut for showing and hiding QClip window.
 
 If you double click a predefined command (or select one or multiple
 commands and click OK) it will be added to list of commands. The right
@@ -91,7 +91,7 @@ If enabled, the command is triggered whenever clipboard changes.
 
 Automatic items are run in order they appear in the command list. No
 other automatic commands will be run if a triggered automatic command
-has "Remove Item" option set or calls ``copyq ignore``.
+has "Remove Item" option set or calls ``qclip ignore``.
 
 The command is **applied on current clipboard data** - i.e. options
 below access text or other data in clipboard.
@@ -104,7 +104,7 @@ application shortcut, from context menu or "Item" menu. The command can
 be also run from tray menu.
 
 Shortcuts can be assigned by clicking on the button next to the option.
-These **application shortcuts work only while CopyQ window has focus**.
+These **application shortcuts work only while QClip window has focus**.
 
 If the command is run from **tray menu**, it is **applied on clipboard
 data**, otherwise it's **applied on data in selected items**.
@@ -194,27 +194,27 @@ The command to run.
 
 This can contain either:
 
-a. simple command line (e.g. ``copyq popup %1`` - expression ``%1`` means text of the selected item or clipboard)
+a. simple command line (e.g. ``qclip popup %1`` - expression ``%1`` means text of the selected item or clipboard)
 b. input for command interpreter (prefixed with ``bash:``, ``powershell:``, ``python:`` etc.)
-c. CopyQ script (prefixed with ``copyq:``)
+c. QClip script (prefixed with ``qclip:``)
 
 You can use ``COPYQ`` environment variable to get path of application
 binary.
 
-Current CopyQ session name is stored in ``COPYQ_SESSION_NAME``
+Current QClip session name is stored in ``COPYQ_SESSION_NAME``
 environment variable (see :ref:`sessions`).
 
-Example (call CopyQ from Python):
+Example (call QClip from Python):
 
 .. code-block:: python
 
     python:
     import os
     from subprocess import call
-    copyq = os.environ['COPYQ']
-    call([copyq, 'read', '0'])
+    qclip = os.environ['COPYQ']
+    call([qclip, 'read', '0'])
 
-Example (call CopyQ from PowerShell on Windows):
+Example (call QClip from PowerShell on Windows):
 
 ::
 

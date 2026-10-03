@@ -351,8 +351,8 @@ Příkaz je možné zmenit v nastavení.</translation>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Nelze se připojit k serveru! Nejdříve je nutné spustit CopyQ server.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Nelze se připojit k serveru! Nejdříve je nutné spustit QClip server.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -403,8 +403,8 @@ Příkaz je možné zmenit v nastavení.</translation>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>CopyQ server již běží.</translation>
+        <source>QClip server is already running.</source>
+        <translation>QClip server již běží.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -490,8 +490,8 @@ Příkaz je možné zmenit v nastavení.</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Příkazy (*.ini);; CopyQ nastavení (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Příkazy (*.ini);; QClip nastavení (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2638,8 +2638,8 @@ Nastav na 0 pro vypnutí.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Opravdu chcete aplikaci CopyQ &lt;strong&gt;ukončit&lt;/strong&gt;?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Opravdu chcete aplikaci QClip &lt;strong&gt;ukončit&lt;/strong&gt;?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2668,9 +2668,9 @@ Nastav na 0 pro vypnutí.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>CopyQ chyba</translation>
+        <translation>QClip chyba</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="1080"/>
@@ -2693,8 +2693,8 @@ Nastav na 0 pro vypnutí.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ prvky (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip prvky (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="1105"/>
@@ -3315,7 +3315,7 @@ které mohou být pouze písmena bez diakritiky, čísla, &apos;-&apos; nebo &ap
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
         <translation>Záložka %1 je poškozená nebo chybí některé zásuvné moduly!</translation>
     </message>
     <message numerus="yes">
@@ -3925,8 +3925,8 @@ Vytiskne verzi programu a jeho knihoven.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ Správce Schránky</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip Správce Schránky</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="2771"/>

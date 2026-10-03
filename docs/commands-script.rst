@@ -16,7 +16,7 @@ Extending Command Line Interface
 --------------------------------
 
 By adding following script command you can use ``hello()`` from other script
-or on command line (``copyq hello``):
+or on command line (``qclip hello``):
 
 .. code-block:: js
 
@@ -30,7 +30,7 @@ variables in the global scope which contains all functions like ``copy()`` or
 
 It's useful to move code used by multiple commands to a new script command.
 
-It can also simplify using ``copyq`` from another application or shell script.
+It can also simplify using ``qclip`` from another application or shell script.
 
 Override Functionality
 ----------------------
@@ -80,7 +80,7 @@ E.g. show custom notifications for clipboard and primary selection changes.
     function clipboardNotification(owns, hidden) {
         var id = isClipboard() ? 'clipboard' : 'selection'
         var icon = isClipboard() ? '\uf0ea' : '\uf246'
-        var owner = owns ? 'CopyQ' : str(data(mimeWindowTitle))
+        var owner = owns ? 'QClip' : str(data(mimeWindowTitle))
         var title = id + ' - ' + owner
         var message = hidden ? '<HIDDEN>' : data(mimeText).left(100)
         notification(

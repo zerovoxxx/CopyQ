@@ -4,14 +4,14 @@ Command Examples
 ================
 
 Here are some useful commands for creating custom menu items, global
-shortcuts and automatically process new clipboard content in CopyQ.
+shortcuts and automatically process new clipboard content in QClip.
 
 If you want to use any of the commands below, copy it to clipboard and
 paste it to the command list in Command dialog (opened with F6
 shortcut). For detailed info see :ref:`faq-share-commands`.
 
 All these and more commands are available at
-`CopyQ command repository <https://github.com/hluk/copyq-commands>`__.
+`QClip command repository <https://github.com/hluk/copyq-commands>`__.
 
 Join Selected Items
 ~~~~~~~~~~~~~~~~~~~
@@ -22,7 +22,7 @@ Creates new item containing concatenated text of selected items.
 
     [Command]
     Name=Join Selected Items
-    Command=copyq add -- %1
+    Command=qclip add -- %1
     InMenu=true
     Icon=\xf066
     Shortcut=Space

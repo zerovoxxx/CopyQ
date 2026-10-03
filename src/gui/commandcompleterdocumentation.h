@@ -160,8 +160,8 @@ void addDocumentation(AddDocumentationCallback addDocumentation)
     addDocumentation("iconTagColor", "iconTagColor() -> string", "Get current tray and window tag color name.");
     addDocumentation("iconTagColor", "iconTagColor(colorName)", "Set current tray and window tag color name.");
     addDocumentation("loadTheme", "loadTheme(path)", "Loads theme from an INI file.");
-    addDocumentation("onClipboardChanged", "onClipboardChanged()", "Called when clipboard or `primary selection`_ changes and is not set by CopyQ, is not marked as hidden nor secret (see the other callbacks).");
-    addDocumentation("onOwnClipboardChanged", "onOwnClipboardChanged()", "Called when clipboard or `primary selection`_ is set by CopyQ and is not marked as hidden nor secret (see the other callbacks).");
+    addDocumentation("onClipboardChanged", "onClipboardChanged()", "Called when clipboard or `primary selection`_ changes and is not set by QClip, is not marked as hidden nor secret (see the other callbacks).");
+    addDocumentation("onOwnClipboardChanged", "onOwnClipboardChanged()", "Called when clipboard or `primary selection`_ is set by QClip and is not marked as hidden nor secret (see the other callbacks).");
     addDocumentation("onHiddenClipboardChanged", "onHiddenClipboardChanged()", "Called when clipboard or `primary selection`_ changes and is marked as hidden but not secret (see the other callbacks).");
     addDocumentation("onSecretClipboardChanged", "onSecretClipboardChanged()", "Called if the clipboard or `primary selection`_ changes and contains a password or other secret (for example, copied from clipboard manager).");
     addDocumentation("onClipboardUnchanged", "onClipboardUnchanged()", "Called when clipboard or `primary selection`_ changes but data remained the same.");
@@ -211,7 +211,7 @@ void addDocumentation(AddDocumentationCallback addDocumentation)
     addDocumentation("mimeItems", "mimeItems", "Serialized items. Value: 'application/x-copyq-item'.");
     addDocumentation("mimeItemNotes", "mimeItemNotes", "Data contains notes for item. Value: 'application/x-copyq-item-notes'.");
     addDocumentation("mimeIcon", "mimeIcon", "Data contains icon for item. Value: 'application/x-copyq-item-icon'.");
-    addDocumentation("mimeOwner", "mimeOwner", "If available, the clipboard was set from CopyQ (from script or copied items). Value: 'application/x-copyq-owner'.");
+    addDocumentation("mimeOwner", "mimeOwner", "If available, the clipboard was set from QClip (from script or copied items). Value: 'application/x-copyq-owner'.");
     addDocumentation("mimeClipboardMode", "mimeClipboardMode", "Contains `selection` if data is from `primary selection`_. Value: 'application/x-copyq-clipboard-mode'.");
     addDocumentation("mimeCurrentTab", "mimeCurrentTab", "Current tab name when invoking command from main window. Value: 'application/x-copyq-current-tab'.");
     addDocumentation("mimeSelectedItems", "mimeSelectedItems", "Selected items when invoking command from main window. Value: 'application/x-copyq-selected-items'.");

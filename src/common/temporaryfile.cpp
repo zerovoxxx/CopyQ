@@ -15,7 +15,7 @@ Q_LOGGING_CATEGORY(tempFileCategory, "copyq.temporaryfile")
 
 bool openTemporaryFile(QTemporaryFile *file, const QString &suffix)
 {
-    const QString tmpFileName = "CopyQ.XXXXXX" + suffix;
+    const QString tmpFileName = "QClip.XXXXXX" + suffix;
     const QString tmpPath = QDir( QDir::tempPath() ).absoluteFilePath(tmpFileName);
     file->setFileTemplate(tmpPath);
 

@@ -1,10 +1,10 @@
 Keyboard
 ========
 
-This page lists useful default shortcuts and key mappings for CopyQ and
+This page lists useful default shortcuts and key mappings for QClip and
 describes how to change them.
 
-CopyQ is keyboard-friendly, i.e. it should be possible to quickly access
+QClip is keyboard-friendly, i.e. it should be possible to quickly access
 any functionality with keyboard without using mouse.
 
 Default Shortcuts
@@ -33,7 +33,7 @@ Search
 ------
 
 Start typing a text to search items. This works in main application
-window and ``copyq menu``.
+window and ``qclip menu``.
 
 Change Shortcuts
 ----------------

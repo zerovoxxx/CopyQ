@@ -348,8 +348,8 @@ You can set up the command in preferences.</source>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>서버에 연결할 수 없습니다! 먼저 CopyQ 서버를 시작합니다.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>서버에 연결할 수 없습니다! 먼저 QClip 서버를 시작합니다.</translation>
     </message>
 </context>
 <context>
@@ -390,8 +390,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>CopyQ 서버가 이미 실행중입니다.</translation>
+        <source>QClip server is already running.</source>
+        <translation>QClip 서버가 이미 실행중입니다.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -478,8 +478,8 @@ You can set up the command in preferences.</source>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>명령 (*.ini);; CopyQ 구성 (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>명령 (*.ini);; QClip 구성 (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2484,8 +2484,8 @@ Set to 0 to disable.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ 항목 (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip 항목 (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -2533,8 +2533,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>CopyQ를 &lt;strong&gt;종료&lt;/strong&gt;하시겠습니까?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>QClip를 &lt;strong&gt;종료&lt;/strong&gt;하시겠습니까?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2613,10 +2613,10 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
         <translatorcomment>알림 오류 메시지 제목</translatorcomment>
-        <translation>CopyQ 오류</translation>
+        <translation>QClip 오류</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -3145,8 +3145,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>%1 탭이 손상되었거나 일부 CopyQ 플러그인이 없습니다!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>%1 탭이 손상되었거나 일부 QClip 플러그인이 없습니다!</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="319"/>
@@ -3736,8 +3736,8 @@ Default is the first tab.</source>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ 클립보드 관리자</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip 클립보드 관리자</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

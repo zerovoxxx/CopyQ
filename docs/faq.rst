@@ -3,10 +3,10 @@ FAQ - Frequently Asked Questions
 
 .. _faq-show-app:
 
-How to open CopyQ window or tray menu using shortcut?
+How to open QClip window or tray menu using shortcut?
 -----------------------------------------------------
 
-Add new command to open the CopyQ window or menu with a global shortcut:
+Add new command to open the QClip window or menu with a global shortcut:
 
 1. Open "Command" dialog (``F6`` shortcut).
 2. Click "Add" button in the dialog.
@@ -20,14 +20,14 @@ For more information about commands see :ref:`writing-commands`.
 
 .. _faq-paste-from-window:
 
-How to paste double-clicked item from CopyQ window?
+How to paste double-clicked item from QClip window?
 ---------------------------------------------------
 
 1. Open "Preferences" (``Ctrl+P`` shortcut).
 2. Go to "History" tab.
 3. Enable "Paste to current window" option.
 
-Next time you open the CopyQ main window and activate an item,
+Next time you open the QClip main window and activate an item,
 it should be pasted.
 
 .. _faq-paste-text:
@@ -43,7 +43,7 @@ To **paste clipboard as plain text**:
 4. Click the button next to "Global Shortcut" label and set the shortcut.
 5. Click "OK" button to save the changes.
 
-To **paste selected items as plain text** (from CopyQ window) follow the steps above
+To **paste selected items as plain text** (from QClip window) follow the steps above
 but add "Paste as Plain Text" command instead and change "Shortcut".
 
 .. _faq-store-text:
@@ -74,11 +74,11 @@ Existing items won't be affected but **any data formats can be removed**:
 How to disable storing clipboard?
 ---------------------------------
 
-To temporarily disable storing the clipboard in the CopyQ item list,
+To temporarily disable storing the clipboard in the QClip item list,
 select menu item "File - Disable Clipboard Storing" (``Ctrl+Shift+X`` shortcut).
 To re-enable the functionality select "File - Enable Clipboard Storing" (same shortcut).
 
-To permanently disable storing the clipboard in CopyQ:
+To permanently disable storing the clipboard in QClip:
 
 1. Open "Preferences" (``Ctrl+P`` shortcut).
 2. Go to "History" tab.
@@ -130,8 +130,8 @@ You can stumble upon code that looks like this.
     Icon=\xf022
     GlobalShortcut=ctrl+shift+1
 
-This code represents a command that can used in CopyQ (specifically it
-opens main window on Ctrl+Shift+1). To use the command in CopyQ:
+This code represents a command that can used in QClip (specifically it
+opens main window on Ctrl+Shift+1). To use the command in QClip:
 
 1. Copy the code above.
 2. Open "Command" dialog (``F6`` shortcut).
@@ -186,29 +186,29 @@ Set environment variable ``COPYQ_LOG_LEVEL`` to ``DEBUG`` for verbose logging
 and set ``COPYQ_LOG_FILE`` to a file path for the log.
 
 You can copy current log file path to clipboard from Action dialog (F5 shortcut)
-by entering command ``copyq 'copy(info("log"))'``. Alternatively, press ``F12``
+by entering command ``qclip 'copy(info("log"))'``. Alternatively, press ``F12``
 to directly access the log.
 
-If you **cannot access GUI**, you can **restart CopyQ from terminal** and **log
+If you **cannot access GUI**, you can **restart QClip from terminal** and **log
 to a separate file**. On Linux and macOS:
 
 .. code-block:: zsh
 
-    copyq exit
+    qclip exit
     export COPYQ_LOG_LEVEL='DEBUG'
-    export COPYQ_LOG_FILE="$HOME/copyq.log"
+    export COPYQ_LOG_FILE="$HOME/qclip.log"
     echo "Logs will be written to $COPYQ_LOG_FILE"
-    copyq
+    qclip
 
 On Windows (in PowerShell):
 
 .. code-block:: powershell
 
-    & 'C:\Program Files\CopyQ\copyq.exe' exit
+    & 'C:\Program Files\QClip\qclip.exe' exit
     $env:COPYQ_LOG_LEVEL = 'DEBUG'
-    $env:COPYQ_LOG_FILE = [Environment]::GetFolderPath("MyDocuments") + '\copyq.log'
+    $env:COPYQ_LOG_FILE = [Environment]::GetFolderPath("MyDocuments") + '\qclip.log'
     echo "Logs will be written to $env:COPYQ_LOG_FILE"
-    & 'C:\Program Files\CopyQ\copyq.exe'
+    & 'C:\Program Files\QClip\qclip.exe'
 
 .. _faq-clipboard-size-limits:
 
@@ -216,7 +216,7 @@ How to limit clipboard data size?
 ---------------------------------
 
 Set the ``COPYQ_CLIPBOARD_MIME_SIZE_LIMIT`` environment variable to control the
-maximum size of clipboard data that CopyQ will store. The value is a
+maximum size of clipboard data that QClip will store. The value is a
 semicolon-delimited list of ``pattern:bytes`` entries, where each pattern is a
 regular expression matched against the MIME type. The byte value supports
 ``K``, ``M``, and ``G`` suffixes (case-insensitive, binary units: 1K = 1024).
@@ -237,9 +237,9 @@ the default only when at least one valid rule is parsed; otherwise the default
 applies. Set ``.*:-1`` to disable all limits. An empty size (e.g. ``text/plain:``)
 also means no limit.
 
-The same format can also be set from the CopyQ scripting API::
+The same format can also be set from the QClip scripting API::
 
-    copyq config clipboard_mime_size_limit "text/html.*:0;.*:100M"
+    qclip config clipboard_mime_size_limit "text/html.*:0;.*:100M"
 
 The environment variable takes precedence over the ``config`` option. If both
 are set, the environment variable value is used.
@@ -266,10 +266,10 @@ in future, like join HTML, images or other formats.
 
 See `#165 <https://github.com/hluk/CopyQ/issues/165#issuecomment-34957089>`__.
 
-Why does pasting from CopyQ not work?
+Why does pasting from QClip not work?
 -------------------------------------
 
-Pasting from CopyQ works only on Windows, macOS and X11 on Linux.
+Pasting from QClip works only on Windows, macOS and X11 on Linux.
 
 Specifically, this feature is not supported on Wayland, but you can use
 the workaround: :ref:`known-issue-wayland`
@@ -282,24 +282,24 @@ b. For pasting from tray menu, enable "Paste activated item to current window"
    in "Tray" configuration tab.
 
 If the pasting still doesn't work, check if ``Shift+Insert`` shortcut pastes to
-the target window. That's the shortcut CopyQ uses by default. To change this to
+the target window. That's the shortcut QClip uses by default. To change this to
 ``Ctrl+V`` see `#633
 <https://github.com/hluk/CopyQ/issues/633#issuecomment-278326916>`__.
 
 If pasting still doesn't work, it could be caused by either of these problems:
 
-- CopyQ fails to focus the target window correctly.
+- QClip fails to focus the target window correctly.
 - The format copied to the clipboard is not supported by the target application.
 
 How to open the context menu for selected items with only the keyboard?
 -----------------------------------------------------------------------
 
-In the main CopyQ window, press the ``Menu`` key (or ``Shift+F10``) to open
+In the main QClip window, press the ``Menu`` key (or ``Shift+F10``) to open
 the context menu for selected items.
 
 .. _faq-hide-menu-bar:
 
-How to hide the menu bar in the main CopyQ window?
+How to hide the menu bar in the main QClip window?
 --------------------------------------------------
 
 The menu bar can be hidden by modifying the style sheet of the current theme.
@@ -322,7 +322,7 @@ How to reuse file paths copied from a file manager?
 
 By default, only the text is stored in item list when you copy or cut
 files from a file manager. Other data is usually needed to be able to
-copy/paste files from CopyQ.
+copy/paste files from QClip.
 
 You have to add additional data formats (MIME) using an automatic command
 (similar to one below). The commonly used format in many file managers is
@@ -387,7 +387,7 @@ See: :ref:`known-issue-macos-paste-after-install`
 Why does my external editor fail to edit items?
 -----------------------------------------------
 
-CopyQ creates a temporary file with content of the edited item and passes it as
+QClip creates a temporary file with content of the edited item and passes it as
 argument to the custom editor command. If the file changes, the item is also
 modified.
 
@@ -398,7 +398,7 @@ Usual issues are:
 - Saving the file doesn't have any effect on the origin item.
 
 This happens if **the command to launch the editor exits, but the editor
-application itself is still running**. Since the command exited, CopyQ assumes
+application itself is still running**. Since the command exited, QClip assumes
 that the editor itself is no longer running, and stops monitoring the changes
 in the temporary file (and removes the file).
 
@@ -417,17 +417,17 @@ Where to find saved items and configuration?
 
 Configuration is stored in:
 
-a. Windows folder ``%APPDATA%\copyq`` for installed version of CopyQ.
-b. Windows sub-folder ``config`` in unzipped portable version of CopyQ.
-c. Linux directory ``~/.config/copyq``.
-d. In a directory specific to a given CopyQ instance — see :ref:`sessions`.
+a. Windows folder ``%APPDATA%\qclip`` for installed version of QClip.
+b. Windows sub-folder ``config`` in unzipped portable version of QClip.
+c. Linux directory ``~/.config/qclip``.
+d. In a directory specific to a given QClip instance — see :ref:`sessions`.
 
-Run ``copyq info config`` to get absolute path to the configuration file.
+Run ``qclip info config`` to get absolute path to the configuration file.
 
 .. versionchanged:: 17.0.0
    Tab data files and item data are in the data directory, and UI state
-   files and logs are in the state directory. Use ``copyq info data``,
-   ``copyq info state`` and ``copyq info log`` to find the exact paths.
+   files and logs are in the state directory. Use ``qclip info data``,
+   ``qclip info state`` and ``qclip info log`` to find the exact paths.
    See :ref:`sessions` for details.
 
 Why are items and configuration not saved?
@@ -462,7 +462,7 @@ To get the command to launch for a shortcut:
 
    ::
 
-      copyq -e "toggle()"
+      qclip -e "toggle()"
 
 .. _faq-force-hide-main-window:
 
@@ -482,12 +482,12 @@ To force hiding main window:
 
 Alternatively, run the following command::
 
-    copyq config hide_main_window true
+    qclip config hide_main_window true
 
 Why does encryption ask for password so often?
 ----------------------------------------------
 
-With built-in encryption (the recommended approach), CopyQ asks for the
+With built-in encryption (the recommended approach), QClip asks for the
 password at startup and when changing the encryption password. If **Require
 password after an interval** is enabled (in the "History" configuration tab),
 the password is also requested periodically. The startup prompt can be avoided
@@ -506,7 +506,7 @@ How to fix "copyq: command not found" errors?
 ---------------------------------------------
 
 If you're getting ``copyq: command not found`` or similar error, it means that
-the ``copyq`` executable cannot be found by the shell or a language interpreter.
+the ``qclip`` executable cannot be found by the shell or a language interpreter.
 
 This usually happens if the executable's directory is not in the ``PATH``
 environmental variable.
@@ -517,7 +517,7 @@ If this happens when running from within the command, e.g.
 
     bash:
     text="SOME TEXT"
-    copyq copy "$text"
+    qclip copy "$text"
 
 you can **fix it by using** ``COPYQ`` environment variable instead.
 
@@ -529,7 +529,7 @@ you can **fix it by using** ``COPYQ`` environment variable instead.
 
 .. _faq-memory-usage:
 
-How can I reduce CopyQ memory usage?
+How can I reduce QClip memory usage?
 ------------------------------------
 
 When a tab is loaded, its item data are kept in memory. This includes smaller
@@ -546,7 +546,7 @@ processing.
 In version 14.0.0 and later, you can copy memory statistics to the clipboard
 by running the following command in the Action dialog (``F5``) or a terminal::
 
-    copyq stats | copyq copy -
+    qclip stats | qclip copy -
 
 Key lines to look at:
 
@@ -575,7 +575,7 @@ Options to reduce memory usage:
   loaded only on demand, while inline data are loaded with the entire tab.
   For example, to store all item data as separate files::
 
-      copyq config item_data_threshold 0
+      qclip config item_data_threshold 0
 
   Conversely, ``-1`` disables the data directory and stores everything inline,
   which can speed up item lookups but increases memory usage.
@@ -584,10 +584,10 @@ Options to reduce memory usage:
 
 See also :ref:`faq-config-path` for finding data files.
 
-What to do when CopyQ crashes or misbehaves?
+What to do when QClip crashes or misbehaves?
 --------------------------------------------
 
-When CopyQ crashes or doesn't behave as expected, try to look up
+When QClip crashes or doesn't behave as expected, try to look up
 a similar `issue <https://github.com/hluk/CopyQ/issues>`__ first
 and provide details in a comment for that issue.
 
@@ -596,8 +596,8 @@ If you cannot find any such an issue, `report a new bug
 
 Try to provide the following details:
 
-- CopyQ version
+- QClip version
 - operating system (desktop environment, window manager, etc.)
 - steps to reproduce the issue
 - application log (see :ref:`faq-share-commands`)
-- stacktrace if available (e.g. on Linux ``coredumpctl dump --reverse copyq``)
+- stacktrace if available (e.g. on Linux ``coredumpctl dump --reverse qclip``)

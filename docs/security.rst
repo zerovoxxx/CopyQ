@@ -1,13 +1,13 @@
 Security
 ========
 
-This page describes how CopyQ handles the clipboard data and how to make the
+This page describes how QClip handles the clipboard data and how to make the
 clipboard safer.
 
 Data Storage
 ============
 
-By default, Any text or image in the clipboard is stored automatically in CopyQ.
+By default, Any text or image in the clipboard is stored automatically in QClip.
 
 You can completely disable automatic clipboard storing or avoid storing content
 copied from windows with matching window titles.
@@ -25,7 +25,8 @@ The data from all tabs are stored in the configuration directory unencrypted
     - :ref:`faq-config-path`
     - :ref:`encrypt`
 
-CopyQ does not collect any other data and does not send anything over network.
+History is stored locally. User-enabled commands and synchronization can access
+external files or networks; review their configuration before enabling them.
 
 .. _secret-clipboard:
 
@@ -34,7 +35,7 @@ Secret Clipboard Data
 
 Password managers, web browsers in private or incognito mode, remote desktop
 software (such as RDP or Citrix), and virtualization tools (such as VMware or
-VirtualBox) often mark clipboard content as secret. CopyQ recognizes this
+VirtualBox) often mark clipboard content as secret. QClip recognizes this
 and **silently ignores the clipboard change** — by default, the data is not
 stored, not shown, and not processed by automatic commands.
 
@@ -55,21 +56,21 @@ Detection is platform-specific. The clipboard formats that indicate secrets are:
   <https://learn.microsoft.com/en-us/windows/win32/dataxchg/clipboard-formats#cloud-clipboard-and-clipboard-history-formats>`__
   and used by Windows Credential Manager and most third-party password managers.
 
-In all cases, CopyQ adds the ``application/x-copyq-secret`` format (available in
+In all cases, QClip adds the ``application/x-copyq-secret`` format (available in
 scripts as :js:data:`mimeSecret`) and hands the data to the
 ``onSecretClipboardChanged()`` callback. The default implementation discards
-everything except the secret marker, so no sensitive content reaches CopyQ's
+everything except the secret marker, so no sensitive content reaches QClip's
 history or automatic commands.
 
 To check whether the current clipboard content is considered secret, open
 **File — Show Clipboard Content** (default shortcut ``Ctrl+Shift+C``) in the
 main window. If any of the formats listed above appear in the clipboard data,
-CopyQ treats the content as secret.
+QClip treats the content as secret.
 
 Overriding Secret Detection
 ----------------------------
 
-If CopyQ is ignoring clipboard data that you want to capture — for example,
+If QClip is ignoring clipboard data that you want to capture — for example,
 content from a private browser window or a remote desktop session — you can
 override the default behavior.
 
@@ -111,7 +112,7 @@ Alternatively, to process **all** secret clipboard data regardless of source:
 .. warning::
 
     Processing all secrets means **passwords from password managers will be
-    stored in CopyQ's unencrypted history**. If you enable this, consider also
+    stored in QClip's unencrypted history**. If you enable this, consider also
     enabling encryption (see :ref:`encrypt`) to protect stored items, or use
     selective automatic commands to filter what gets saved.
 

@@ -1,7 +1,7 @@
 [Global]
-IconName=copyq
-Comment=CopyQ Clipboard Manager
-Name=CopyQ
+IconName=qclip
+Comment=QClip Clipboard Manager
+Name=QClip
 
 [Event/generic]
 Name=Generic event

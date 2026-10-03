@@ -351,8 +351,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>サーバーに接続できません! 最初に CopyQ サーバーを起動してください。</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>サーバーに接続できません! 最初に QClip サーバーを起動してください。</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -403,8 +403,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>CopyQ サーバーは既に稼働中です。</translation>
+        <source>QClip server is already running.</source>
+        <translation>QClip サーバーは既に稼働中です。</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -490,8 +490,8 @@ You can set up the command in preferences.</source>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>コマンド (*.ini);; CopyQ 設定 (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>コマンド (*.ini);; QClip 設定 (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2609,8 +2609,8 @@ Set to 0 to disable.</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <source>CopyQ</source>
-        <translation type="vanished">CopyQ</translation>
+        <source>QClip</source>
+        <translation type="vanished">QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="922"/>
@@ -2619,8 +2619,8 @@ Set to 0 to disable.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>CopyQ を&lt;strong&gt;終了&lt;/strong&gt;しますか?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>QClip を&lt;strong&gt;終了&lt;/strong&gt;しますか?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2729,9 +2729,9 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>CopyQ エラー</translation>
+        <translation>QClip エラー</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -2766,8 +2766,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ アイテム (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip アイテム (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4719"/>
@@ -3285,7 +3285,7 @@ which can be letters, digits, &apos;-&apos; or &apos;_&apos;!</source>
     <message>
         <location filename="../src/gui/menuitems.cpp" line="150"/>
         <source>&amp;About</source>
-        <translation>CopyQ について(&amp;A)</translation>
+        <translation>QClip について(&amp;A)</translation>
     </message>
     <message>
         <location filename="../src/gui/menuitems.cpp" line="146"/>
@@ -3294,8 +3294,8 @@ which can be letters, digits, &apos;-&apos; or &apos;_&apos;!</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>タブ %1 が破損しているか、または CopyQ のプラグインがありません!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>タブ %1 が破損しているか、または QClip のプラグインがありません!</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/scriptable/scriptableproxy.cpp" line="2253"/>
@@ -3905,8 +3905,8 @@ Print version of program and libraries.</source>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ クリップボード管理</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip クリップボード管理</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="2771"/>
@@ -3978,14 +3978,14 @@ Print version of program and libraries.</source>
         <translation>*クリップボードの保存無効中*</translation>
     </message>
     <message>
-        <source>%1 - CopyQ</source>
+        <source>%1 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label)</comment>
-        <translation type="vanished">%1 - CopyQ</translation>
+        <translation type="vanished">%1 - QClip</translation>
     </message>
     <message>
-        <source>%1 - %2 - CopyQ</source>
+        <source>%1 - %2 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label, %2 is session name)</comment>
-        <translation type="vanished">%1 - %2 - CopyQ</translation>
+        <translation type="vanished">%1 - %2 - QClip</translation>
     </message>
 </context>
 <context>

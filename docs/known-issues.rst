@@ -8,10 +8,10 @@ This document lists known commonly occurring issues and possible solutions.
 On Windows, tray icon is hidden/repositioned after restart
 ----------------------------------------------------------
 
-With current official builds of CopyQ, the tray icon position and hide/show
+With current official builds of QClip, the tray icon position and hide/show
 status are not restored after the application is restarted or after logging in.
 
-**Workaround** is to use CopyQ binaries build with older Qt framework version (Qt
+**Workaround** is to use QClip binaries build with older Qt framework version (Qt
 5.9); these are provided in latest comments in the issue link below.
 
 .. seealso::
@@ -20,22 +20,22 @@ status are not restored after the application is restarted or after logging in.
 
 .. _known-issue-windows-console-output:
 
-On Windows, CopyQ does not print anything on console
+On Windows, QClip does not print anything on console
 ----------------------------------------------------
 
-On Windows, you may not see any output when executing CopyQ in a
+On Windows, you may not see any output when executing QClip in a
 console/terminal application (PowerShell or cmd).
 
 **Workarounds:**
 
 * Use different console application: Git Bash, Cygwin or similar.
-* Use Action dialog in CopyQ (``F5`` shortcut) and set "Store standard output"
+* Use Action dialog in QClip (``F5`` shortcut) and set "Store standard output"
   to "text/plain" to save the output as new item in current tab.
 * Append ``| Write-Output`` to commands in PowerShell:
 
   .. code-block:: powershell
 
-    & 'C:\Program Files\CopyQ\copyq.exe' help | Write-Output
+    & 'C:\Program Files\QClip\qclip.exe' help | Write-Output
 
 .. seealso::
 
@@ -43,10 +43,10 @@ console/terminal application (PowerShell or cmd).
 
 .. _known-issue-macos-paste-after-install:
 
-On macOS, CopyQ won't paste after installation/update
+On macOS, QClip won't paste after installation/update
 -----------------------------------------------------
 
-CopyQ is not signed app, you need to grant Accessibility again when it's
+QClip is not signed app, you need to grant Accessibility again when it's
 installed or updated.
 
 **To fix this**, try following steps:
@@ -54,7 +54,7 @@ installed or updated.
 1. Go to System Preferences -> Security & Privacy -> Privacy -> Accessibility
    (or just search for "Allow apps to use Accessibility").
 2. Click the unlock button.
-3. Select CopyQ from the list and remove it (with the "-" button).
+3. Select QClip from the list and remove it (with the "-" button).
 
 .. seealso::
 
@@ -66,14 +66,14 @@ installed or updated.
 On GNOME, new clipboard is not stored
 -------------------------------------
 
-The app requires the CopyQ Clipboard Monitor GNOME Shell extension to be
+The app requires the QClip Clipboard Monitor GNOME Shell extension to be
 enabled so it can watch clipboard changes and store them. The extension is
-shipped with CopyQ 14.0.0 and later.
+shipped with QClip 14.0.0 and later.
 
 .. note::
 
-    The GNOME extension is only available when CopyQ is installed on the system
-    (e.g. from a package manager). It will **not** work when running CopyQ as a
+    The GNOME extension is only available when QClip is installed on the system
+    (e.g. from a package manager). It will **not** work when running QClip as a
     Flatpak or AppImage because the extension cannot be registered with the
     GNOME Shell from a sandboxed environment.
 
@@ -86,7 +86,7 @@ shipped with CopyQ 14.0.0 and later.
 On Linux, some features do not work under Wayland
 --------------------------------------------------
 
-When running CopyQ under a **Wayland** compositor, some features may not work
+When running QClip under a **Wayland** compositor, some features may not work
 depending on the desktop environment and the protocols it supports.
 
 **Global shortcuts** work natively if the desktop environment provides
@@ -95,7 +95,7 @@ Portal support (``xdg-desktop-portal``).
 **Clipboard monitoring** works natively if the compositor supports the required
 Wayland protocol. This works on KDE Plasma, Sway, Hyprland and other
 wlroots-based compositors. On **GNOME**, this protocol is not supported, but
-CopyQ ships a GNOME Shell extension that provides clipboard monitoring instead
+QClip ships a GNOME Shell extension that provides clipboard monitoring instead
 (see :ref:`known-issue-gnome`). If clipboard monitoring does not work with
 either method, see :ref:`wayland-xwayland-fallback` below.
 
@@ -110,7 +110,7 @@ Workaround: Wayland Support command
 
 This can fix (depending on the desktop environment and installed tools):
 
-- pasting from CopyQ and issuing copy commands to other apps
+- pasting from QClip and issuing copy commands to other apps
 - screenshot functionality
 - retrieving and matching window titles
 
@@ -130,21 +130,21 @@ This can fix:
 - setting and restoring window position (only window size is supported by most
   Wayland compositors natively)
 
-Setting ``QT_QPA_PLATFORM=xcb`` environment variable forces CopyQ to run under
+Setting ``QT_QPA_PLATFORM=xcb`` environment variable forces QClip to run under
 XWayland mode. Unfortunately, it can cause clipboard monitoring to fail when
 the main window is closed, X11 connection errors, and other issues depending on
 the XWayland implementation.
 
-To start CopyQ under XWayland, use:
+To start QClip under XWayland, use:
 
 .. code-block:: bash
 
-    env QT_QPA_PLATFORM=xcb copyq
+    env QT_QPA_PLATFORM=xcb qclip
 
-If CopyQ autostarts, you can change the ``Exec=...`` line in
-``~/.config/autostart/copyq.desktop``::
+If QClip autostarts, you can change the ``Exec=...`` line in
+``~/.config/autostart/qclip.desktop``::
 
-    Exec=env QT_QPA_PLATFORM=xcb copyq
+    Exec=env QT_QPA_PLATFORM=xcb qclip
 
 For the **Flatpak** application, see `this workaround
 <https://github.com/hluk/CopyQ/issues/2948#issuecomment-2614271330>`__.
@@ -168,7 +168,7 @@ On GNOME, busy cursor after selecting tray menu item
 ----------------------------------------------------
 
 When using the AppIndicator/KStatusNotifierItem GNOME Shell extension, selecting
-an item from the CopyQ tray menu may cause a busy cursor for about 15 seconds.
+an item from the QClip tray menu may cause a busy cursor for about 15 seconds.
 This is a bug in the extension — it triggers startup notification unconditionally
 without checking the application's ``StartupNotify`` desktop entry key.
 
@@ -182,7 +182,7 @@ Scripting command "copy()" fails
 
 The command ``copy()`` sends the Ctrl+C shortcut to the current window.
 This can fail depending on the active application.
-If CopyQ won't detect a clipboard change, it throws an exception.
+If QClip won't detect a clipboard change, it throws an exception.
 The execution then fails with the message ``Failed to copy to clipboard!``.
 
 An alternative under Windows is to use a Powershell script to override the ``copy`` operation
@@ -208,10 +208,10 @@ The delays are added to make sure no focus issues occur and the text is copied t
 
 .. _known-issue-focus-stealing:
 
-CopyQ steals keyboard focus when showing window or menu
+QClip steals keyboard focus when showing window or menu
 -------------------------------------------------------
 
-When CopyQ shows its main window or tray menu (via global shortcut, tray icon
+When QClip shows its main window or tray menu (via global shortcut, tray icon
 click, or script), it transfers keyboard focus from the previously active
 window.  This can cause side effects in the target application such as:
 
@@ -227,7 +227,7 @@ window.  This can cause side effects in the target application such as:
 Workaround
 ^^^^^^^^^^
 Use global shortcuts to cycle through clipboard history and
-paste without showing the CopyQ window.
+paste without showing the QClip window.
 
 The `Cycle Items - Quick
 <https://github.com/hluk/copyq-commands/blob/master/README.md#cycle-items---quick>`__

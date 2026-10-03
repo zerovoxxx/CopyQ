@@ -27,6 +27,24 @@ PATCH_DIR=$GITHUB_WORKSPACE/utils/patches
 mkdir -p "$INSTALL_PREFIX" "$DOWNLOADS_DIR" "$BUILD_DIR"
 export PATH=$INSTALL_PREFIX/bin:$PATH
 
+# Runner Homebrew bottles can require a newer macOS than the declared target.
+# Build the QCA OpenSSL backend dependency with the same minimum OS instead.
+openssl_version=${OPENSSL_VERSION:-3.5.4}
+[[ "$openssl_version" == 3.5.4 ]] || { echo 'Update the pinned OpenSSL hash before changing its version'; exit 1; }
+openssl_archive="$DOWNLOADS_DIR/openssl-$openssl_version.tar.gz"
+curl -sSLo "$openssl_archive" --fail-with-body --retry 5 --retry-all-errors \
+    "https://github.com/openssl/openssl/releases/download/openssl-$openssl_version/openssl-$openssl_version.tar.gz"
+echo "967311f84955316969bdb1d8d4b983718ef42338639c621ec4c34fddef355e99  $openssl_archive" | shasum -a 256 -c -
+(cd "$DOWNLOADS_DIR" && tar xf "$openssl_archive")
+(
+    cd "$DOWNLOADS_DIR/openssl-$openssl_version"
+    CFLAGS="-mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET:-13.0}" \
+    LDFLAGS="-mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET:-13.0}" \
+        ./Configure --prefix="$INSTALL_PREFIX" --libdir=lib shared no-tests
+    make -j "$(sysctl -n hw.ncpu)"
+    make install_sw
+)
+
 # Generic dependency builder.
 #   build_dep NAME VERSION BASE_URL [CMAKE_ARGS...]
 # Override URL path:  BUILD_DEP_URL_PATH=... build_dep ...
@@ -61,6 +79,7 @@ build_dep() {
     # Configure + build.
     cmake -B "$BUILD_DIR/$name" -S "$src_dir" -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_OSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-13.0}" \
         -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
         -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
         -DBUILD_TESTING=OFF \
@@ -78,6 +97,7 @@ install_dep() {
 # Group A: No inter-dependencies, build in parallel.
 BUILD_DEP_URL_PATH="${QCA_VERSION}/qca-${QCA_VERSION}" \
     build_dep qca "$QCA_VERSION" "https://download.kde.org/stable/qca" \
+        -DOPENSSL_ROOT_DIR="$INSTALL_PREFIX" \
         -DBUILD_WITH_QT6=ON \
         -DBUILD_TESTS=OFF \
         -DBUILD_TOOLS=OFF \

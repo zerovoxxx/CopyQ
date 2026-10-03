@@ -67,6 +67,7 @@ compile_commands.json
 uv.lock
 
 # QClip deployment and release evidence
+/release-*/
 /AppDir/
 /squashfs-root/
 /deps/

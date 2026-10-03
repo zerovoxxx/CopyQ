@@ -1,6 +1,6 @@
 QClip is based on CopyQ, copyright 2009–2026 Lukáš Holeček and contributors.
 QClip and the CopyQ sources are licensed GPL-3.0-or-later; see LICENSE and AUTHORS.
-Corresponding QClip source: https://github.com/zerovoxxx/CopyQ
+Corresponding QClip source: https://github.com/zerovoxxx/QClip
 Upstream source and attribution: https://github.com/hluk/CopyQ
 
 Components used or optionally distributed by a build:

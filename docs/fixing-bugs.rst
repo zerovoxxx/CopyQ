@@ -35,9 +35,9 @@ Run the tests with the following command.
 
     copyq-tests
 
-This command will execute all test cases in a new special CopyQ session so
+This command will execute all test cases in a new special QClip session so
 that user configuration, tabs and items are not modified. It's better to
-close any other CopyQ session before running tests since they can affect
+close any other QClip session before running tests since they can affect
 test results.
 
 While running tests there must be **no keyboard and mouse interaction**.

@@ -1,7 +1,7 @@
 Images
 ======
 
-This page describes how to display and work with images in CopyQ.
+This page describes how to display and work with images in QClip.
 
 Display Image Items
 -------------------
@@ -42,7 +42,7 @@ You can use built-in functionality for `taking
 screenshots <https://github.com/hluk/copyq-commands/tree/master/Global#screenshot>`__
 of whole or part of the desktop.
 
-Paste taken screenshots to CopyQ to store them for later use.
+Paste taken screenshots to QClip to store them for later use.
 
 Save Image to a File
 --------------------
@@ -52,7 +52,7 @@ manager (if supported) or save it using command line.
 
 .. code-block:: bash
 
-    copyq read image/png 0 > image.png
+    qclip read image/png 0 > image.png
 
 Alternatively use `"Save Item/Clipboard To a File"
 command <https://github.com/hluk/copyq-commands/tree/master/Application#save-itemclipboard-to-a-file>`__.

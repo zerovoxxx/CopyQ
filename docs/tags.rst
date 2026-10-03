@@ -59,4 +59,4 @@ Example:
 
 ::
 
-    copyq write text/plain "Item with tag" application/x-copyq-tags "Some tag text"
+    qclip write text/plain "Item with tag" application/x-copyq-tags "Some tag text"

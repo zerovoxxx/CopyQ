@@ -1,7 +1,7 @@
-Welcome to CopyQ's documentation!
+Welcome to QClip's documentation!
 =================================
 
-CopyQ is clipboard manager -- a desktop application which stores content of the
+QClip is clipboard manager -- a desktop application which stores content of the
 system clipboard whenever it changes and allows to search the history and copy
 it back to the system clipboard or paste it directly to other applications.
 

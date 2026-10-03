@@ -19,7 +19,7 @@ enable option "Set colors for tabs, tool bar and menus".
 .. note::
 
     Some desktop environments handle the tray menu style by themselves and it
-    cannot be changed in CopyQ.
+    cannot be changed in QClip.
 
 You can change style in more detail by using "Edit Theme" button.
 
@@ -31,8 +31,8 @@ Style Sheets
 ------------
 
 The appearance options are the used in application CSS files installed with
-CopyQ (e.g.  placeholders in the files like ``${font}``). You can list the
-theme installation path with ``copyq info themes`` command.
+QClip (e.g.  placeholders in the files like ``${font}``). You can list the
+theme installation path with ``qclip info themes`` command.
 
 To override a CSS file, copy the file to your configuration directory under
 ``themes`` subdirectory. For example, override the style sheet for the item
@@ -40,17 +40,17 @@ list:
 
 .. code-block:: bash
 
-    $ copyq info themes
-    /usr/share/copyq/themes
+    $ qclip info themes
+    /usr/share/qclip/themes
 
-    $ copyq info config
-    /home/me/.config/copyq/copyq.conf
+    $ qclip info config
+    /home/me/.config/qclip/qclip.conf
 
-    $ cp /usr/share/copyq/themes/items.css /home/me/.config/copyq/themes/
+    $ cp /usr/share/qclip/themes/items.css /home/me/.config/qclip/themes/
 
-    $ $EDITOR /home/me/.config/copyq/themes/items.css
+    $ $EDITOR /home/me/.config/qclip/themes/items.css
 
-To reload the style sheets, you need to restart CopyQ or go to the
+To reload the style sheets, you need to restart QClip or go to the
 configuration dialog and click OK button.
 
 You can set ``COPYQ_THEME_PREFIX`` environment variable for the preferred path

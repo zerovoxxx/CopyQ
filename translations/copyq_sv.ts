@@ -351,8 +351,8 @@ Du kan konfigurera kommandot i inställningar.</translation>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Det går inte att ansluta till servern! Starta CopyQ-servern först.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Det går inte att ansluta till servern! Starta QClip-servern först.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -403,8 +403,8 @@ Du kan konfigurera kommandot i inställningar.</translation>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>CopyQ-servern körs redan.</translation>
+        <source>QClip server is already running.</source>
+        <translation>QClip-servern körs redan.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -490,8 +490,8 @@ Du kan konfigurera kommandot i inställningar.</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Kommandon (*.ini);; CopyQ-konfiguration (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Kommandon (*.ini);; QClip-konfiguration (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2603,8 +2603,8 @@ Ställ in till 0 för att inaktivera.</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <source>CopyQ</source>
-        <translation type="vanished">CopyQ</translation>
+        <source>QClip</source>
+        <translation type="vanished">QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="922"/>
@@ -2613,8 +2613,8 @@ Ställ in till 0 för att inaktivera.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Vill du &lt;strong&gt;avsluta&lt;/strong&gt; CopyQ?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Vill du &lt;strong&gt;avsluta&lt;/strong&gt; QClip?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2686,9 +2686,9 @@ Ställ in till 0 för att inaktivera.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>CopyQ-fel</translation>
+        <translation>QClip-fel</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="858"/>
@@ -2718,8 +2718,8 @@ Ställ in till 0 för att inaktivera.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ-objekt (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip-objekt (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -3292,8 +3292,8 @@ vilket kan vara bokstäver, siffror, ”-” eller ”_”!</translation>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Fliken %1 är skadad eller några CopyQ-plugins saknas!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Fliken %1 är skadad eller några QClip-plugins saknas!</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/scriptable/scriptableproxy.cpp" line="2253"/>
@@ -3913,8 +3913,8 @@ Skriv ut version på program och bibliotek.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ urklippshanterare</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip urklippshanterare</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>
@@ -3981,14 +3981,14 @@ Skriv ut version på program och bibliotek.</translation>
         <translation>*Urklippslagring inaktiverad*</translation>
     </message>
     <message>
-        <source>%1 - CopyQ</source>
+        <source>%1 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label)</comment>
-        <translation type="vanished">%1 — CopyQ</translation>
+        <translation type="vanished">%1 — QClip</translation>
     </message>
     <message>
-        <source>%1 - %2 - CopyQ</source>
+        <source>%1 - %2 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label, %2 is session name)</comment>
-        <translation type="vanished">%1 — %2 — CopyQ</translation>
+        <translation type="vanished">%1 — %2 — QClip</translation>
     </message>
 </context>
 <context>

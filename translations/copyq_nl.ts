@@ -351,8 +351,8 @@ U kunt de opdracht instellen in het voorkeurenvenster.</translation>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Het verbinden met de server is mislukt. Start de CopyQ-server.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Het verbinden met de server is mislukt. Start de QClip-server.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -403,8 +403,8 @@ U kunt de opdracht instellen in het voorkeurenvenster.</translation>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>De CopyQ-server draait al.</translation>
+        <source>QClip server is already running.</source>
+        <translation>De QClip-server draait al.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -490,8 +490,8 @@ U kunt de opdracht instellen in het voorkeurenvenster.</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Opdrachten (*.ini);; CopyQ-configuratie (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Opdrachten (*.ini);; QClip-configuratie (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -1119,7 +1119,7 @@ druk op F2 om te bewerken.</translation>
     <message>
         <location filename="../src/ui/configtabgeneral.ui" line="146"/>
         <source>Run the application on system startup</source>
-        <translation>Start CopyQ automatisch op na het inloggen</translation>
+        <translation>Start QClip automatisch op na het inloggen</translation>
     </message>
     <message>
         <location filename="../src/ui/configtabgeneral.ui" line="149"/>
@@ -1803,7 +1803,7 @@ Stel in op 0 om uit te schakelen.</translation>
     <message>
         <location filename="../src/gui/configurationmanager.cpp" line="626"/>
         <source>Language will be changed after application is restarted.</source>
-        <translation>Herstart CopyQ om de nieuwe taal te gebruiken.</translation>
+        <translation>Herstart QClip om de nieuwe taal te gebruiken.</translation>
     </message>
     <message>
         <location filename="../src/ui/configurationmanager.ui" line="20"/>
@@ -2610,8 +2610,8 @@ Stel in op 0 om uit te schakelen.</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <source>CopyQ</source>
-        <translation type="vanished">CopyQ</translation>
+        <source>QClip</source>
+        <translation type="vanished">QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="922"/>
@@ -2620,8 +2620,8 @@ Stel in op 0 om uit te schakelen.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Weet je zeker dat je CopyQ wilt &lt;strong&gt;afsluiten&lt;/strong&gt;?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Weet je zeker dat je QClip wilt &lt;strong&gt;afsluiten&lt;/strong&gt;?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2693,9 +2693,9 @@ Stel in op 0 om uit te schakelen.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>CopyQ-fout</translation>
+        <translation>QClip-fout</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="858"/>
@@ -2725,8 +2725,8 @@ Stel in op 0 om uit te schakelen.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ-items (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip-items (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -3293,8 +3293,8 @@ bestaande uit letters, getallen, &apos;-&apos; of &apos;_&apos;!</translation>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Tabblad &quot;%1&quot; is beschadigd geraakt of er ontbreken CopyQ-plug-ins!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Tabblad &quot;%1&quot; is beschadigd geraakt of er ontbreken QClip-plug-ins!</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/scriptable/scriptableproxy.cpp" line="2253"/>
@@ -3866,8 +3866,8 @@ Argumenten zijn toe te voegen door het gebruik van &quot;argumenten[0..N]&quot;.
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ-klembordbeheerder</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip-klembordbeheerder</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

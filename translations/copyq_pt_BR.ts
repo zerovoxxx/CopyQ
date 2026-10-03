@@ -351,8 +351,8 @@ Você pode configurar o comando nas preferências.</translation>
     <name>ClipboardClient</name>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Não é possível conectar ao servidor! Comece servidor CopyQ primeiro.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Não é possível conectar ao servidor! Comece servidor QClip primeiro.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="99"/>
@@ -403,8 +403,8 @@ Você pode configurar o comando nas preferências.</translation>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>O Servidor CopyQ já está em execução.</translation>
+        <source>QClip server is already running.</source>
+        <translation>O Servidor QClip já está em execução.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -490,8 +490,8 @@ Você pode configurar o comando nas preferências.</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Comandos (* ini) ;; Configuração CopyQ (copyq.conf copyq - *. Conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Comandos (* ini) ;; Configuração QClip (copyq.conf copyq - *. Conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2631,8 +2631,8 @@ Qualquer um dos outros arquivos desconhecidos ou ocultos são ignorados. &lt;/p&
 <context>
     <name>MainWindow</name>
     <message>
-        <source>CopyQ</source>
-        <translation type="vanished">CopyQ</translation>
+        <source>QClip</source>
+        <translation type="vanished">QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="922"/>
@@ -2641,8 +2641,8 @@ Qualquer um dos outros arquivos desconhecidos ou ocultos são ignorados. &lt;/p&
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Deseja realmente &lt;strong&gt;sair&lt;/strong&gt; do CopyQ?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Deseja realmente &lt;strong&gt;sair&lt;/strong&gt; do QClip?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2719,9 +2719,9 @@ Qualquer um dos outros arquivos desconhecidos ou ocultos são ignorados. &lt;/p&
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>Erro do CopyQ</translation>
+        <translation>Erro do QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -2746,8 +2746,8 @@ Qualquer um dos outros arquivos desconhecidos ou ocultos são ignorados. &lt;/p&
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>Itens do CopyQ (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>Itens do QClip (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -3320,8 +3320,8 @@ que podem ser letras, dígitos, &apos;-&apos; ou &apos;_&apos;!</translation>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>A aba %1 está corrompida ou alguns plugins do CopyQ estão faltando!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>A aba %1 está corrompida ou alguns plugins do QClip estão faltando!</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/scriptable/scriptableproxy.cpp" line="2253"/>
@@ -3936,8 +3936,8 @@ Imprimir versão do programa e bibliotecas.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ Clipboard Manager</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip Clipboard Manager</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>
@@ -4009,14 +4009,14 @@ Imprimir versão do programa e bibliotecas.</translation>
         <translation>*Armazenamento na área de transferência desativado*</translation>
     </message>
     <message>
-        <source>%1 - CopyQ</source>
+        <source>%1 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label)</comment>
-        <translation type="vanished">%1 - CopyQ</translation>
+        <translation type="vanished">%1 - QClip</translation>
     </message>
     <message>
-        <source>%1 - %2 - CopyQ</source>
+        <source>%1 - %2 - QClip</source>
         <comment>Main window title format (%1 is clipboard content label, %2 is session name)</comment>
-        <translation type="vanished">CopyQ - %1 - %2</translation>
+        <translation type="vanished">QClip - %1 - %2</translation>
     </message>
 </context>
 <context>

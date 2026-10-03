@@ -348,8 +348,8 @@ You can set up the command in preferences.</source>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Αδύνατη η σύνδεση στην εξυπηρετητή! Εκκινήστε πρωτίστως τον εξυπηρετητή CopyQ.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Αδύνατη η σύνδεση στην εξυπηρετητή! Εκκινήστε πρωτίστως τον εξυπηρετητή QClip.</translation>
     </message>
 </context>
 <context>
@@ -390,8 +390,8 @@ You can set up the command in preferences.</source>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>Ο εξυπηρετητής CopyQ εκτελείται ήδη.</translation>
+        <source>QClip server is already running.</source>
+        <translation>Ο εξυπηρετητής QClip εκτελείται ήδη.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -477,8 +477,8 @@ You can set up the command in preferences.</source>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Εντολές (*.ini);; Διαμόρφωση CopyQ (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Εντολές (*.ini);; Διαμόρφωση QClip (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2553,8 +2553,8 @@ Set to 0 to disable.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ Αντικείμενα (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip Αντικείμενα (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -2600,8 +2600,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Επιθυμείτε την &lt;strong&gt;έξοδο&lt;/strong&gt; από το CopyQ?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Επιθυμείτε την &lt;strong&gt;έξοδο&lt;/strong&gt; από το QClip?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2679,9 +2679,9 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>Σφάλμα CopyQ</translation>
+        <translation>Σφάλμα QClip</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -3211,8 +3211,8 @@ It will be possible to encrypt and decrypt tab data.</source>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Η καρτέλα %1 είναι κατεστραμμένη ή λείπουν μερικά πρόσθετα του CopyQ!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Η καρτέλα %1 είναι κατεστραμμένη ή λείπουν μερικά πρόσθετα του QClip!</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="319"/>
@@ -3804,8 +3804,8 @@ Default is the first tab.</source>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>Διαχειριστής πρόχειρου CopyQ</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>Διαχειριστής πρόχειρου QClip</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>

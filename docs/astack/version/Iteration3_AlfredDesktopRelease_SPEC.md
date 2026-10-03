@@ -7,12 +7,24 @@
 > | 文档类型 | SPEC |
 > | 文档状态 | 开发中 |
 > | 创建日期 | 2026-09-28 |
-> | 最后更新 | 2026-10-02 |
+> | 最后更新 | 2026-10-03 |
 > | 作者 | zerovoxxx |
 > | 关联文档 | [迭代索引](../INDEX.md)、[公共架构与面板](Iteration1_ClipboardPalette_SPEC.md)、[全界面与兼容](Iteration2_CopyQCompatibility_SPEC.md)、[项目入口](../../../CLAUDE.md) |
 > | 一句话目标 | 补齐 Snippet、自动展开和连续复制合并，完成品牌/数据迁移、性能及三端安装包验收，使三个阶段共同满足首版完整范围。 |
 
 ## 目标与非目标
+
+### v1.0.0 开源发布范围（2026-10-03）
+
+用户明确要求统一产品与项目品牌为 QClip，重写 README、提供完整新用户说明书，并公开发布 Windows/macOS v1.0.0；GitHub 仓库重命名由用户执行。本次发布不产出 Linux 二进制，源码中的 Linux 支持继续维护。
+
+- 品牌：CMake project、应用/安装器元数据、关于/帮助入口、产品文档、翻译中的产品名和发布资产统一为 QClip。CopyQ 的作者、协议、原始版权、历史记录和明确的迁移/兼容标识保留；COPYQ_*、MIME、序列化头、插件与脚本接口不做破坏性更名。
+- 版本：QClip 独立版本从 1.0.0 开始，git describe 仅接受该版本系列，避免继承上游 v16/v17 标签。仓库链接使用重命名后的 QClip 目的地址；实际 GitHub 发布始终显式指定当前用户仓库，禁止 CLI 默认落入 upstream。
+- 文档：MODIFY README.md、RELEASE.md、CHANGES.md 与关于/帮助/issue 模板；NEW docs/USER_GUIDE.md。说明书以实际 QML/菜单/配置/CLI 为依据，覆盖安装、历史/搜索/粘贴、集合、插件、命令、Snippet/模板/展开/合并、备份/迁移、退出/更新和故障排查。保留 LICENSE、AUTHORS 及第三方许可并随包安装。
+- 构建：MODIFY CMakeLists.txt、src/version.cmake、src/CMakeLists.txt、shared 安装元数据、三端品牌文档、Windows/macOS workflows 及部署/依赖/发布脚本。macOS 使用兼容 macOS 13 的 Qt 6.10.3；依赖同样设置 deployment target 13.0。Windows 产出 x64 安装器/便携包，macOS 产出 Intel/arm64 DMG，提供对应源码与 SHA-256。
+- 验证：git diff --check；pwsh -NoProfile -File utils/check-harness.ps1；SPEC lint（若本机入口存在）；Windows/macOS 编译、QML lint、各 CI 已列出的隔离聚焦测试、utils/check-release.py 安装包依赖/许可/源码审计；核对 tag SHA、发布资产名/哈希和 GitHub published 状态。只执行指定测试，测试配置与日常历史隔离。
+- 边界：自动展开初始关闭。未提供 Developer ID/公证/Windows 代码签名凭据，发行说明如实标注；CI 测试不能证明所有输入法、权限、DPI、实际第三方应用和旧 QSS 场景。v1.0.0 发布记录与 I1/I2/I3 原始完整产品验收状态分别维护，不将未执行项记为通过。
+
 
 本阶段依赖 Iteration1 的窗口/粘贴/平台输入原型，以及 Iteration2 的编辑、设置、插件与历史策略。复用已建立的 QML 组件和 C++ 接入契约，新增业务仍接入同一 CopyQ 服务进程及现有辅助进程。
 
@@ -114,7 +126,7 @@ I3-1 固定显示名、安装路径、可执行文件、应用/bundle ID、配�
 
 - QClip 与日常 CopyQ 可并存；导入先读取隔离副本，复制数据并验证后才完成导入，源文件保持可用。部分失败可重试，禁止清空原配置以修复迁移。
 - 旧配置、历史、标签、命令、主题、插件设置和加密材料均列入映射；新增 Snippet 进入后续 QClip 备份/恢复流程。不自动重绑或覆盖现有 CopyQ 的全局 CLI/自动启动入口。
-- 构建与许可沿用 [RELEASE.md](../../../RELEASE.md)、[LICENSE](../../../LICENSE)、[Windows 安装脚本](../../../shared/copyq.iss)及现有三端 CI，保留上游 GPL-3.0-or-later 和第三方归属信息。
+- 构建与许可沿用 [RELEASE.md](../../../RELEASE.md)、[LICENSE](../../../LICENSE)、[Windows 安装脚本](../../../shared/qclip.iss)及现有三端 CI，保留上游 GPL-3.0-or-later 和第三方归属信息。
 
 ### 平台与性能门
 
@@ -262,6 +274,16 @@ QClip 隐藏/显示进程组 RSS：1000 条约 153.0/152.5 MiB，10000 条约 15
 交接：本轮代码、聚焦测试和打包入口已实施；按表继续补原生设备/权限/正式 SDK 和发布候选场景，不放宽冻结门槛。SPEC3 与首版保持**开发中**，未将跳过、未执行或系统版本失败标为通过。2026-09-30 开发记录未包含提交、推送、安装到日常应用目录或公开发布；2026-10-02 按用户要求提交并推送当前代码，代码交付不改变产品验收状态，未执行安装或公开发布。
 
 ## 变更记录
+
+### v1.0.0 发布前验证（2026-10-03）
+
+- 已统一 CMake 项目名、应用/安装器/帮助/产品文档/翻译中的品牌，QClip 独立版本 1.0.0；保留 CopyQ 版权、作者、MIME、插件 ABI 与脚本兼容标识。已删除未使用的旧上游桌面/补全/manpage 副本及 Qt 5.9 / CopyQ 3.3 Flatpak 入口，Linux 主构建继续使用 QClip 元数据。
+- README、docs/USER_GUIDE.md、RELEASE.md、CHANGES.md 已按实际功能重写；完整旧 CHANGES 保存在 docs/UPSTREAM-CHANGES.md。README/手册与第三方许可收录到两端安装布局，Qt SDK SBOM 及下载依赖的原始许可由构建脚本收录。
+- Windows/macOS workflows YAML 解析、相关 bash -n、Python 编译检查、git diff --check 与 utils/check-harness.ps1 均通过。Windows 无原生 symlink 权限，本机按已记录规则恢复 AGENTS/CLAUDE 硬链接；Git 记录为相同内容的普通文件。
+- 本机 Windows CMake 构建退出 0，copyq-palette-ui_qmllint 退出 0；独立配置下 qclip.exe --version 输出 QClip 1.0.0 / Qt 6.10.3 / x64。本机构建仍关闭音频、加密、Keychain 和原生通知，仅用于源码更名回归，正式包由 CI 构建完整依赖。
+- 本机隔离聚焦 testCore:configPath、testCore:paletteCommands，以及 Snippet 的 storeRoundTrip、damagedStorage、dynamicDates、dynamicClipboardAndRandom、keywords 均退出 0。首次未显式指定 itemtests.dll 时误载 .exp/.lib，改用 COPYQ_PLUGINS 的完整 DLL 路径后通过；未使用该失败运行充当通过证据。
+- GitHub 仓库已由用户重命名为 zerovoxxx/QClip，两套 origin 地址与 gh 默认目的地已更新；上游 remote 保留。双平台正式 CI、最终资产审计与公开状态待下一步完成。
+
 
 | 日期 | 作者 | 内容 |
 |---|---|---|

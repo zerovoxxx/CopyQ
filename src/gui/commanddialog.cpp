@@ -254,7 +254,7 @@ void CommandDialog::onPushButtonLoadCommandsClicked()
 {
     const QStringList fileNames =
             QFileDialog::getOpenFileNames(this, tr("Open Files with Commands"),
-                                          QString(), tr("Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)"));
+                                          QString(), tr("Commands (*.ini);; QClip / CopyQ Configuration (qclip.conf qclip-*.conf copyq.conf copyq-*.conf)"));
 
     for (const auto &fileName : fileNames) {
         const auto commands = importCommandsFromFile(fileName);

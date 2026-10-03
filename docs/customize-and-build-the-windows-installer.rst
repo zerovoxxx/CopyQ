@@ -7,8 +7,8 @@ Translations
 Most of the translations for the installer are taken directly from the
 installer generator Inno Setup (http://www.jrsoftware.org/isinfo.php).
 
-You can add translations for CopyQ-specific messages in
-``shared/copyq.iss``. Just copy lines starting with ``en.`` from
+You can add translations for QClip-specific messages in
+``shared/qclip.iss``. Just copy lines starting with ``en.`` from
 ``[Custom Messages]`` section and change prefix to ``de.`` (for german
 translation).
 
@@ -24,14 +24,14 @@ You don't have to build the app again, you just need:
 2. Clone of this repository.
 3. Install `Inno Setup <http://www.jrsoftware.org/isinfo.php>`__.
 4. Open
-   `shared/copyq.iss <https://github.com/hluk/CopyQ/blob/master/shared/copyq.iss>`__
+   `shared/qclip.iss <https://github.com/zerovoxxx/QClip/blob/master/shared/qclip.iss>`__
    in Inno Setup and add few lines at the beginning of the file.
 
 ::
 
     #define AppVersion 2.8.1-beta
-    #define Source C:\path\to\CopyQ-repository-clone
-    #define Destination C:\path\to\CopyQ-portable
+    #define Source C:\path\to\QClip-repository-clone
+    #define Destination C:\path\to\QClip-portable
 
 You should now be able to modify the file in Inno Setup and run it
 easily.

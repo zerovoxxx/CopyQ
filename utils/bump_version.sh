@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Updates CopyQ version in source code.
+# Updates QClip version in source code.
 #
 # Argument is the new version.
 #
@@ -82,7 +82,7 @@ fix_appdata() {
 check_version_format
 check_changes
 fix_version_file
-fix_itemwidget
+# Plugin ABI is versioned independently; do not change it for a product release.
 fix_appdata
 git commit -a -m "v$version"
 git tag -s -a -m "v$version" "v$version"

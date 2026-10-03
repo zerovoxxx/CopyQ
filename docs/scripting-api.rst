@@ -3,7 +3,7 @@
 Scripting API
 =============
 
-CopyQ provides scripting capabilities to automatically handle clipboard
+QClip provides scripting capabilities to automatically handle clipboard
 changes, organize items, change settings and much more.
 
 Supported language features and functions can be found at `ECMAScript Reference
@@ -12,7 +12,7 @@ mostly equivalent to modern JavaScript. Some features may be missing but feel
 free to use for example `JavaScript reference on MDN
 <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/>`__.
 
-CopyQ-specific features described in this document:
+QClip-specific features described in this document:
 
 - `Functions`_
 - `Types`_
@@ -30,11 +30,11 @@ Execute Script
 The scripts can be executed from:
 
 a.  Action or Command dialogs (F5, F6 shortcuts), if
-    the first line starts with ``copyq:``
-b.  command line as ``copyq eval '<SCRIPT>'``
-c.  command line as ``cat script.js | copyq eval -``
+    the first line starts with ``qclip:``
+b.  command line as ``qclip eval '<SCRIPT>'``
+c.  command line as ``cat script.js | qclip eval -``
 d.  command line as
-    ``copyq <SCRIPT_FUNCTION> <FUNCTION_ARGUMENT_1> <FUNCTION_ARGUMENT_2> ...``
+    ``qclip <SCRIPT_FUNCTION> <FUNCTION_ARGUMENT_1> <FUNCTION_ARGUMENT_2> ...``
 
 When run from command line, result of last expression is printed on
 stdout.
@@ -54,7 +54,7 @@ use
 
 .. code-block:: bash
 
-    copyq <FUNCTION1> <FUNCTION1_ARGUMENT_1> <FUNCTION1_ARGUMENT_2> \
+    qclip <FUNCTION1> <FUNCTION1_ARGUMENT_1> <FUNCTION1_ARGUMENT_2> \
               <FUNCTION2> <FUNCTION2_ARGUMENT> \
                   <FUNCTION3> <FUNCTION3_ARGUMENTS> ...
 
@@ -66,7 +66,7 @@ Example:
 
 .. code-block:: bash
 
-    copyq tab clipboard separator "," read 0 1 2
+    qclip tab clipboard separator "," read 0 1 2
 
 After :js:func:`eval` no arguments are treated as functions since it can access
 all arguments.
@@ -103,7 +103,7 @@ unlike in GUI, where row numbers start from 1 by default.
 
    Example return value::
 
-       CopyQ Clipboard Manager 14.0.0.14-g0e004828
+       QClip Clipboard Manager 14.0.0.14-g0e004828
        Arch: x86_64-little_endian-lp64
        Audio: miniaudio 0.11.25
        Compiler: GCC
@@ -680,7 +680,7 @@ unlike in GUI, where row numbers start from 1 by default.
              '.title', 'Example',
              '.message', 'Notification with button',
              '.button', 'Cancel', '', '',
-             '.button', 'OK', 'copyq:popup(input())', 'OK Clicked'
+             '.button', 'OK', 'qclip:popup(input())', 'OK Clicked'
              )
 
 .. js:function:: exportTab(fileName)
@@ -711,11 +711,11 @@ unlike in GUI, where row numbers start from 1 by default.
 
    Returns help with list of available application options.
 
-   Users can change most of these options via the CopyQ GUI, mainly via
+   Users can change most of these options via the QClip GUI, mainly via
    the "Preferences" window.
 
    These options are persisted within the ``[Options]`` section of a corresponding
-   ``copyq.ini`` or ``copyq.conf`` file (``copyq.ini`` is used on Windows).
+   ``qclip.ini`` or ``qclip.conf`` file (``qclip.ini`` is used on Windows).
 
    :returns: Available options.
    :rtype: string
@@ -792,7 +792,7 @@ unlike in GUI, where row numbers start from 1 by default.
 
    .. code-block:: js
 
-       // File: c:/copyq/replace_clipboard_text.js
+       // File: c:/qclip/replace_clipboard_text.js
        replaceClipboardText = function(replaceWhat, replaceWith)
        {
            var text = str(clipboard())
@@ -803,7 +803,7 @@ unlike in GUI, where row numbers start from 1 by default.
 
    .. code-block:: js
 
-       source('c:/copyq/replace_clipboard_text.js')
+       source('c:/qclip/replace_clipboard_text.js')
        replaceClipboardText('secret', '*****')
 
 .. js:function:: currentPath()
@@ -816,7 +816,7 @@ unlike in GUI, where row numbers start from 1 by default.
    .. code-block:: bash
 
        cd /tmp
-       copyq currentPath
+       qclip currentPath
        # Prints: /tmp
 
 .. js:function:: /*set*/ currentPath(path)
@@ -1209,7 +1209,7 @@ unlike in GUI, where row numbers start from 1 by default.
    -  '.style' - Qt style sheet for dialog
    -  '.height', '.width', '.x', '.y' - dialog geometry
    -  '.label' - dialog message (can contain basic HTML)
-   -  '.modal' - set to true to make the dialog modal (to avoid other CopyQ windows to get input focus)
+   -  '.modal' - set to true to make the dialog modal (to avoid other QClip windows to get input focus)
    -  '.onTop' - set to true for the dialog to stay above other windows
 
    :returns: Value or values from accepted dialog or ``undefined`` if dialog
@@ -1327,7 +1327,7 @@ unlike in GUI, where row numbers start from 1 by default.
    options lastly selected by user in a custom dialog displayed by a command.
 
    These options are persisted within the ``[General]`` section of a corresponding
-   ``copyq-scripts.ini`` file. But if an option is named like ``group/...``,
+   ``qclip-scripts.ini`` file. But if an option is named like ``group/...``,
    then it is written to a section named ``[group]`` instead.
    By grouping options like this, we can avoid potential naming collisions
    with other commands.
@@ -1577,7 +1577,7 @@ unlike in GUI, where row numbers start from 1 by default.
 .. js:function:: onClipboardChanged()
 
    Called when clipboard or `primary selection`_ changes and is not set by
-   CopyQ, is not marked as hidden nor secret (see the other callbacks).
+   QClip, is not marked as hidden nor secret (see the other callbacks).
 
    Default implementation is:
 
@@ -1594,7 +1594,7 @@ unlike in GUI, where row numbers start from 1 by default.
 
 .. js:function:: onOwnClipboardChanged()
 
-   Called when clipboard or `primary selection`_ is set by CopyQ and is not
+   Called when clipboard or `primary selection`_ is set by QClip and is not
    marked as hidden nor secret (see the other callbacks).
 
    Owned clipboard data contains :js:data:`mimeOwner` format.
@@ -1910,7 +1910,7 @@ Types
    .. code-block:: js
 
        var dataToWrite = 'Hello, World!'
-       var filePath = Dir().homePath() + '/copyq.txt'
+       var filePath = Dir().homePath() + '/qclip.txt'
        var f = new File(filePath)
        if (!f.openWriteOnly() || f.write(dataToWrite) == -1)
          throw 'Failed to save the file: ' + f.errorString()
@@ -1951,7 +1951,7 @@ Types
    .. code-block:: js
 
        // Open INI file
-       var configPath = Dir().homePath() + '/copyq.ini'
+       var configPath = Dir().homePath() + '/qclip.ini'
        var settings = new Settings(configPath)
 
        // Save an option
@@ -2302,7 +2302,7 @@ Types
    Wrapper for a command (from Command dialog).
 
    Properties are same as members of `Command
-   struct <https://github.com/hluk/CopyQ/blob/master/src/common/command.h>`__.
+   struct <https://github.com/zerovoxxx/QClip/blob/master/src/common/command.h>`__.
 
 Objects
 -------
@@ -2386,9 +2386,9 @@ These MIME types values are assigned to global variables prefixed with
 
 .. js:data:: mimeOwner
 
-   If available, the clipboard was set from CopyQ (from script or copied items). Value: 'application/x-copyq-owner'.
+   If available, the clipboard was set from QClip (from script or copied items). Value: 'application/x-copyq-owner'.
 
-   Such clipboard is ignored in CopyQ, i.e. it won't be stored in clipboard
+   Such clipboard is ignored in QClip, i.e. it won't be stored in clipboard
    tab and automatic commands won't be executed on it.
 
 .. js:data:: mimeClipboardMode
@@ -2403,8 +2403,8 @@ These MIME types values are assigned to global variables prefixed with
 
    ::
 
-       copyq data application/x-copyq-current-tab
-       copyq selectedTab
+       qclip data application/x-copyq-current-tab
+       qclip selectedTab
 
 .. js:data:: mimeSelectedItems
 
@@ -2424,7 +2424,7 @@ These MIME types values are assigned to global variables prefixed with
 
    ::
 
-       copyq copy application/x-copyq-hidden 1 plain/text "This is secret"
+       qclip copy application/x-copyq-hidden 1 plain/text "This is secret"
 
 .. js:data:: mimeSecret
 
@@ -2507,17 +2507,17 @@ places it in the *primary selection*, which can be pasted with a middle mouse
 button click. This is separate from the regular clipboard used by copy/paste
 shortcuts.
 
-CopyQ supports reading and writing the primary selection on platforms that
+QClip supports reading and writing the primary selection on platforms that
 provide it (X11 and Wayland). On Wayland, support depends on the compositor
 and the `KGuiAddons <https://invent.kde.org/frameworks/kguiaddons>`_ library;
-notably, GNOME does not support it natively, but CopyQ 14.0.0 and later work
-around this via the bundled *CopyQ Clipboard Monitor* GNOME extension.
+notably, GNOME does not support it natively, but QClip 14.0.0 and later work
+around this via the bundled *QClip Clipboard Monitor* GNOME extension.
 
 On unsupported platforms, functions that use the primary selection do nothing
 (for example :js:func:`copySelection`) or return ``undefined`` (in case of
 :js:func:`selection`).
 
-CopyQ can synchronize the clipboard with the primary selection. This can be
+QClip can synchronize the clipboard with the primary selection. This can be
 enabled in Preferences on the General tab under *Clipboard Manipulation*, or
 from the command line:
 
@@ -2526,8 +2526,8 @@ from the command line:
    config('copy_clipboard', 'true')  // clipboard to primary selection
    config('copy_selection', 'true')  // primary selection to clipboard
 
-For synchronization, CopyQ runs a helper process (for example
-``copyq --clipboard-access synchronizeToSelection``). Running helpers can be
+For synchronization, QClip runs a helper process (for example
+``qclip --clipboard-access synchronizeToSelection``). Running helpers can be
 inspected from *File — Process Manager*.
 
 Custom automatic commands run on primary selection changes by default. This
@@ -2538,7 +2538,7 @@ line:
 
    config('run_selection', 'false')
 
-CopyQ can also store primary selection data automatically. Enable it in the
+QClip can also store primary selection data automatically. Enable it in the
 *Clipboard Manipulation* section or from the command line:
 
 .. code-block:: js

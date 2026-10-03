@@ -229,7 +229,7 @@ void MainWindow::runSnippetCommand(const QString &name, const QVariantMap &data,
     for (const auto &command : loadAllCommands()) {
         if (command.enable && command.name == name && !command.isScript && !command.cmd.isEmpty()) { selected = command; ++count; }
     }
-    if (count != 1 || (erase && selected.wait)) { showError(tr("Choose one enabled, unambiguous CopyQ command. Automatic triggers cannot open an action dialog.")); return; }
+    if (count != 1 || (erase && selected.wait)) { showError(tr("Choose one enabled, unambiguous QClip command. Automatic triggers cannot open an action dialog.")); return; }
     if (!allowedSnippetTarget(target)) { showError(tr("The Snippet command target is unavailable.")); return; }
     const auto generation = m_snippetGeneration;
     if (!erase) { if (m_snippets) m_snippets->hide(); target->raise(); }

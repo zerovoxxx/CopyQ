@@ -6,7 +6,7 @@
 #define Output                   "."
 #define MyAppName                "QClip"
 #define MyAppNameMin             "qclip"
-#define MyAppCopyright           "Lukas Holecek"
+#define MyAppCopyright           "QClip contributors; based on CopyQ by Lukas Holecek and contributors"
 #define MyAppCopyrightStartYear  "2009"
 #define MyAppCopyrightEndYear    GetDateTimeString('yyyy','','')
 
@@ -23,11 +23,11 @@ AppVersion={#AppVersion}
 AppVerName={#MyAppName} {#AppVersion}
 
 AppCopyright={#MyAppCopyright} {#MyAppCopyrightStartYear}-{#MyAppCopyrightEndYear}
-AppPublisher={#MyAppCopyright}
+AppPublisher=zerovoxxx / QClip contributors
 
-AppPublisherURL=https://github.com/zerovoxxx/CopyQ
-AppSupportURL=https://github.com/zerovoxxx/CopyQ/issues
-AppUpdatesURL=https://github.com/zerovoxxx/CopyQ/releases
+AppPublisherURL=https://github.com/zerovoxxx/QClip
+AppSupportURL=https://github.com/zerovoxxx/QClip/issues
+AppUpdatesURL=https://github.com/zerovoxxx/QClip/releases
 
 VersionInfoDescription={#MyAppName} installer
 VersionInfoProductName={#MyAppName} {#AppVersion}
@@ -150,12 +150,15 @@ Name: "startup"; Description: {cm:AutoStartProgram,QClip}; Flags: unchecked
 
 [Files]
 Source: "{#Root}\THIRD-PARTY-NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#Root}\THIRD-PARTY-INVENTORY.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Root}\RELEASE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Root}\licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#Root}\qclip.exe"; DestDir: "{app}"; Components: program; Flags: ignoreversion
 Source: "{#Root}\snoretoast.exe"; DestDir: "{app}"; Components: program; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#Root}\AUTHORS"; DestDir: "{app}"; Components: program; Flags: ignoreversion
 Source: "{#Root}\LICENSE"; DestDir: "{app}"; Components: program; Flags: ignoreversion
+Source: "{#Root}\USER_GUIDE.md"; DestDir: "{app}"; Components: program; Flags: ignoreversion
+Source: "{#Root}\qml\*"; DestDir: "{app}\qml"; Components: program; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#Root}\README.md"; DestDir: "{app}"; Components: program; Flags: ignoreversion
 Source: "{#Root}\themes\*"; DestDir: "{app}\themes"; Components: program; Flags: ignoreversion
 Source: "{#Root}\translations\*.qm"; DestDir: "{app}\translations"; Components: translations; Flags: ignoreversion

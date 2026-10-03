@@ -1,19 +1,19 @@
 Basic Usage
 ===========
 
-This page describes the basic functionality of CopyQ clipboard manager.
+This page describes the basic functionality of QClip clipboard manager.
 
 First Start
 -----------
 
-To start CopyQ, double-click the program icon or run command ``copyq``
-(on Windows, run ``CopyQ.exe`` directly or launch it from the Start menu; no desktop icon is created by default).
+To start QClip, double-click the program icon or run command ``qclip``
+(on Windows, run ``QClip.exe`` directly or launch it from the Start menu; no desktop icon is created by default).
 This starts the graphical interface which can be accessed from the tray (NOTE: on macOS the tray defaults to the top-right of the screen and is not to be confused with Launchpad).
-Click the tray icon to show application window or right-click the tray icon and select "Show/Hide" or run ``copyq show`` command.
+Click the tray icon to show application window or right-click the tray icon and select "Show/Hide" or run ``qclip show`` command.
 
-.. image:: images/copyq-show.png
+.. image:: images/qclip-show.png
   :width: 400
-  :alt: copyq show
+  :alt: qclip show
 
 The central element in the application window is **item list** containing
 **clipboard history**. By default, the application **stores any new clipboard
@@ -55,11 +55,11 @@ Tray
 
 To quickly copy item to clipboard, you can select the item from tray
 menu. To display the menu either right-click on tray icon, run command
-``copyq menu`` or use a custom system shortcut.
+``qclip menu`` or use a custom system shortcut.
 
-.. image:: images/copyq-menu.png
+.. image:: images/qclip-menu.png
   :width: 400
-  :alt: copyq menu
+  :alt: qclip menu
 
 
 After selecting an item in tray menu and pressing enter (pressing a

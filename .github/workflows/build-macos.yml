@@ -2,8 +2,8 @@
 name: macOS
 
 on:
+  workflow_dispatch:
   push:
-    branches: [master]
     tags: ['v*']
   pull_request:
     branches: [master]
@@ -14,12 +14,14 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  QT_VERSION: '6.11.1'
+  MACOSX_DEPLOYMENT_TARGET: '13.0'
+  QT_VERSION: '6.10.3'
   KF_VERSION: '6.29'
   KF_PATCH: '0'
   KF_BRANCH: stable
   QCA_VERSION: '2.3.10'
   QTKEYCHAIN_VERSION: '0.17.0'
+  OPENSSL_VERSION: '3.5.4'
 
 jobs:
   build:
@@ -84,8 +86,11 @@ jobs:
         id: cache-deps
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ github.workspace }}/deps/install
+          path: |
+            ${{ github.workspace }}/deps/install
+            ${{ github.workspace }}/deps/downloads
           key: >-
+            qt${{ env.QT_VERSION }}-macos${{ env.MACOSX_DEPLOYMENT_TARGET }}-openssl${{ env.OPENSSL_VERSION }}-
             macos-deps-kf${{ env.KF_VERSION }}.${{ env.KF_PATCH
             }}-qca${{ env.QCA_VERSION
             }}-qtkeychain${{ env.QTKEYCHAIN_VERSION
@@ -100,8 +105,11 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ github.workspace }}/deps/install
+          path: |
+            ${{ github.workspace }}/deps/install
+            ${{ github.workspace }}/deps/downloads
           key: >-
+            qt${{ env.QT_VERSION }}-macos${{ env.MACOSX_DEPLOYMENT_TARGET }}-openssl${{ env.OPENSSL_VERSION }}-
             macos-deps-kf${{ env.KF_VERSION }}.${{ env.KF_PATCH
             }}-qca${{ env.QCA_VERSION
             }}-qtkeychain${{ env.QTKEYCHAIN_VERSION
@@ -109,7 +117,7 @@ jobs:
             }}-${{ hashFiles('utils/patches/**') }}
 
       - name: Download miniaudio
-        uses: $/.github/actions/download-miniaudio
+        uses: ./.github/actions/download-miniaudio
 
       - name: Build with CMake
         run: |
@@ -117,12 +125,18 @@ jobs:
           cmake --build --preset '${{ matrix.cmake_preset }}'
           cmake --build build/copyq/${{ matrix.cmake_preset }} --target copyq-palette-ui_qmllint
 
+      - name: Include matching dependency notices
+        run: |
+          app="build/copyq/${{ matrix.cmake_preset }}/QClip.app"
+          python3 utils/collect-third-party-notices.py --root "$app/Contents/Resources" --qt "$QT_ROOT_DIR" --dependencies deps/downloads
+          codesign --force --deep --sign - "$app"
+
       - name: Create gnupg directory for tests
         run: mkdir -p ~/.gnupg && chmod go-rwx ~/.gnupg
 
       - name: Get version string
         id: version
-        uses: $/.github/actions/get-version
+        uses: ./.github/actions/get-version
         with:
           build_dir: ${{ github.workspace }}/build/copyq/${{ matrix.cmake_preset }}
 

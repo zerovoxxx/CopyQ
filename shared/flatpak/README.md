@@ -1,29 +1,5 @@
-This directory contains source files for building CopyQ Flatpak package.
+# QClip Flatpak
 
-# Build
+QClip v1.0.0 does not ship a Flatpak build. The obsolete upstream Qt 5.9 / CopyQ 3.3 manifest has been removed to avoid installing the wrong product. Linux source and native integration remain supported; see [build instructions](../../RELEASE.md#从源码构建).
 
-Install `flatpak-builder`.
-
-Option `--user` can be omitted.
-
-```bash
-flatpak install --user flathub org.freedesktop.Platform//1.6 org.freedesktop.Sdk//1.6
-flatpak remote-add --user --if-not-exists kdeapps --from https://distribute.kde.org/kdeapps.flatpakrepo
-flatpak install --user flathub org.kde.Platform//5.9
-flatpak install --user flathub org.kde.Sdk//5.9
-```
-
-Build the app.
-
-```bash
-mkdir copyq repo
-flatpak-builder --ccache --force-clean --repo=repo --subject="Build of copyq" copyq com.github.hluk.copyq.json
-```
-
-Install the app.
-
-```bash
-flatpak remote-add --user copyq repo --no-gpg-verify
-flatpak install --user --reinstall copyq com.github.hluk.copyq
-flatpak run com.github.hluk.copyq
-```
+Upstream CopyQ Flatpak is a separate product: https://github.com/flathub/com.github.hluk.copyq

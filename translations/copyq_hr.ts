@@ -348,8 +348,8 @@ Naredbu je moguće postaviti u postavkama.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardclient.cpp" line="106"/>
-        <source>Cannot connect to server! Start CopyQ server first.</source>
-        <translation>Nije moguće povezati se s poslužiteljem. Najprije pokreni poslužitelj CopyQ-a.</translation>
+        <source>Cannot connect to server! Start QClip server first.</source>
+        <translation>Nije moguće povezati se s poslužiteljem. Najprije pokreni poslužitelj QClip-a.</translation>
     </message>
 </context>
 <context>
@@ -390,8 +390,8 @@ Naredbu je moguće postaviti u postavkama.</translation>
     <name>ClipboardServer</name>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="135"/>
-        <source>CopyQ server is already running.</source>
-        <translation>CopyQ poslužitelj je već pokrenut.</translation>
+        <source>QClip server is already running.</source>
+        <translation>QClip poslužitelj je već pokrenut.</translation>
     </message>
     <message>
         <location filename="../src/app/clipboardserver.cpp" line="417"/>
@@ -477,8 +477,8 @@ Naredbu je moguće postaviti u postavkama.</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="257"/>
-        <source>Commands (*.ini);; CopyQ Configuration (copyq.conf copyq-*.conf)</source>
-        <translation>Naredbe (*.ini);; CopyQ konfiguracija (copyq.conf copyq-*.conf)</translation>
+        <source>Commands (*.ini);; QClip Configuration (copyq.conf copyq-*.conf)</source>
+        <translation>Naredbe (*.ini);; QClip konfiguracija (copyq.conf copyq-*.conf)</translation>
     </message>
     <message>
         <location filename="../src/gui/commanddialog.cpp" line="268"/>
@@ -2581,8 +2581,8 @@ Postavi 0 za deaktiviranje prikaza.</translation>
     <name>MainWindow</name>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="301"/>
-        <source>CopyQ Items (*.cpq)</source>
-        <translation>CopyQ elementi (*.cpq)</translation>
+        <source>QClip Items (*.cpq)</source>
+        <translation>QClip elementi (*.cpq)</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="528"/>
@@ -2630,8 +2630,8 @@ Bit će moguće šifrirati i dešifrirati podatke kartica.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="923"/>
-        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; CopyQ?</source>
-        <translation>Želiš li &lt;strong&gt;zatvoriti&lt;/strong&gt; CopyQ?</translation>
+        <source>Do you want to &lt;strong&gt;exit&lt;/strong&gt; QClip?</source>
+        <translation>Želiš li &lt;strong&gt;zatvoriti&lt;/strong&gt; QClip?</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="981"/>
@@ -2709,9 +2709,9 @@ Bit će moguće šifrirati i dešifrirati podatke kartica.</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="2823"/>
-        <source>CopyQ Error</source>
+        <source>QClip Error</source>
         <comment>Notification error message title</comment>
-        <translation>CopyQ greška</translation>
+        <translation>QClip greška</translation>
     </message>
     <message>
         <location filename="../src/gui/mainwindow.cpp" line="4400"/>
@@ -3242,8 +3242,8 @@ Bit će moguće šifrirati i dešifrirati podatke kartica.</translation>
     </message>
     <message>
         <location filename="../src/item/itemfactory.cpp" line="463"/>
-        <source>Tab %1 is corrupted or some CopyQ plugins are missing!</source>
-        <translation>Kartica „%1” je pokvarena ili neki CopyQ dodaci nedostaju!</translation>
+        <source>Tab %1 is corrupted or some QClip plugins are missing!</source>
+        <translation>Kartica „%1” je pokvarena ili neki QClip dodaci nedostaju!</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="319"/>
@@ -3841,8 +3841,8 @@ Standardno se koristi prva kartica.</translation>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="667"/>
         <location filename="../src/scriptable/scriptable.cpp" line="683"/>
-        <source>CopyQ Clipboard Manager</source>
-        <translation>CopyQ upravljač međuspremnika</translation>
+        <source>QClip Clipboard Manager</source>
+        <translation>QClip upravljač međuspremnika</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="695"/>
