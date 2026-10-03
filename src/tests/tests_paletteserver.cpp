@@ -139,6 +139,7 @@ void CoreTests::palettePaste()
         return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
     };
     const auto focus = [&path](const QByteArray &command) {
+        QFile::remove(path + QStringLiteral(".control-ack"));
         QSaveFile file(path + QStringLiteral(".control"));
         if (!file.open(QIODevice::WriteOnly))
             return false;
@@ -161,6 +162,7 @@ void CoreTests::palettePaste()
     // A paste() override still receives the palette's item and its captured external window.
     RUN("eval" << "setCommands([{isScript:true,cmd:'const originalPaste = global.paste; global.paste = function() { copy(\"OVERRIDE\"); originalPaste(); }'}])", "");
     QVERIFY(focus("first"));
+    QTRY_COMPARE(read(path + QStringLiteral(".control-ack")), QByteArray("first"));
     QTRY_VERIFY(focused(QStringLiteral("QClip input target")));
     RUN("palette", "true\n");
     WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests', 'paletteState').filtering", "false\n");
@@ -171,14 +173,17 @@ void CoreTests::palettePaste()
     // Switching to another window of the same application cancels, without sending input.
     RUN("eval" << "setCommands([])", "");
     QVERIFY(focus("first"));
+    QTRY_COMPARE(read(path + QStringLiteral(".control-ack")), QByteArray("first"));
     QTRY_VERIFY(focused(QStringLiteral("QClip input target")));
     RUN("palette", "true\n");
     QVERIFY(focus("second"));
+    QTRY_COMPARE(read(path + QStringLiteral(".control-ack")), QByteArray("second"));
     QTRY_VERIFY(focused(QStringLiteral("QClip second target")));
     WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests', 'paletteState').visible", "false\n");
     QCOMPARE(read(path + QStringLiteral(".other")), QByteArray("other"));
     RUN("palette", "true\n");
     QVERIFY(focus("close-second"));
+    QTRY_COMPARE(read(path + QStringLiteral(".control-ack")), QByteArray("close-second"));
     WAIT_ON_OUTPUT("eval" << "callPlugin('itemtests', 'paletteState').filtering", "false\n");
     RUN("eval" << "callPlugin('itemtests', 'paletteInput', 'RETURN')", "true\n");
     WAIT_ON_OUTPUT("eval" << "!!callPlugin('itemtests', 'paletteState').error", "true\n");

@@ -262,8 +262,9 @@ jobs:
           $setup = Get-Item "qclip-$env:APP_VERSION-setup.exe"
           $setup.VersionInfo | Select-Object ProductName, ProductVersion, FileVersion, FileDescription | ConvertTo-Json
           if ($app.VersionInfo.ProductName -ne 'QClip' -or $app.VersionInfo.ProductVersion -ne $env:APP_VERSION) { throw 'Incorrect QClip executable version' }
-          if ($setup.VersionInfo.ProductName -ne 'QClip' -or $setup.VersionInfo.ProductVersion -ne $env:APP_VERSION) { throw 'Incorrect QClip installer product or version' }
-          if ([version]$setup.VersionInfo.FileVersion -ne [version]"$env:APP_VERSION.0") { throw 'Incorrect installer version' }
+          if ($setup.VersionInfo.ProductName.Trim() -ne 'QClip' -or $setup.VersionInfo.ProductVersion.Trim() -ne $env:APP_VERSION) { throw 'Incorrect QClip installer product or version' }
+          $setupVersion = [version]::new($setup.VersionInfo.FileMajorPart, $setup.VersionInfo.FileMinorPart, $setup.VersionInfo.FileBuildPart, $setup.VersionInfo.FilePrivatePart)
+          if ($setupVersion -ne [version]"$env:APP_VERSION.0") { throw 'Incorrect installer version' }
           $files = @{}
           foreach ($path in @($app.FullName, $setup.FullName, "qclip-$env:APP_VERSION.zip")) {
             $files[(Split-Path -Leaf $path)] = @{ sha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLowerInvariant(); bytes=(Get-Item -LiteralPath $path).Length }

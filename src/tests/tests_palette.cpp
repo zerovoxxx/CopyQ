@@ -859,14 +859,23 @@ int main(int argc, char **argv)
             const auto command = file.readAll();
             file.close();
             file.remove();
+            const auto acknowledge = [&]() {
+                QSaveFile ack(path + QStringLiteral(".control-ack"));
+                if (ack.open(QIODevice::WriteOnly)) {
+                    ack.write(command);
+                    ack.commit();
+                }
+            };
             if (command == "close-second") {
                 second.close();
+                acknowledge();
                 return;
             }
-            if (command == "select-first") { receiver.selectAll(); return; }
+            if (command == "select-first") { receiver.selectAll(); acknowledge(); return; }
             auto widget = command == "first" ? &receiver : &second;
             if (auto window = platformNativeInterface()->getWindow(widget->winId()))
                 window->raise();
+            acknowledge();
         });
         control.start(50);
         return app->exec();
