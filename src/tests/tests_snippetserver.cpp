@@ -76,6 +76,10 @@ void CoreTests::snippetExpansion()
     receiver.start(helpers + QStringLiteral("/copyq-palette-tests") + suffix, {QStringLiteral("--input-target"), path});
     QVERIFY(receiver.waitForStarted());
     const auto cleanup = qScopeGuard([&] { receiver.terminate(); if (!receiver.waitForFinished(1000)) { receiver.kill(); receiver.waitForFinished(1000); } });
+    const auto diagnostics = qScopeGuard([&] {
+        if (QTest::currentTestFailed())
+            qDebug().noquote() << m_test->readServerErrors(TestInterface::ReadAllStderr);
+    });
     const auto read = [&] { QFile file(path); return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray(); };
     QTRY_COMPARE(read(), QByteArray("qclip"));
     const auto focused = [] { const auto target = platformNativeInterface()->getCurrentWindow(); return target && target->isActive() && target->getTitle().contains(QStringLiteral("QClip input target")); };

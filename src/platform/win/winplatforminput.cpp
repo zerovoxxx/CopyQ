@@ -43,8 +43,12 @@ public:
         wchar_t className[64]{};
         if (GetClassNameW(gui.hwndFocus, className, 64) && QString::fromWCharArray(className).compare(QLatin1String("Edit"),Qt::CaseInsensitive)==0
                 && (GetWindowLongPtrW(gui.hwndFocus,GWL_STYLE) & ES_PASSWORD)) return false;
-        // IMM does not provide reliable cross-process composition confirmation.
-        return normal && layout && !ImmIsIME(layout);
+        // ImmIsIME also reports ordinary keyboards on modern Windows. IMM's
+        // file query identifies legacy IMEs; East Asian locales remain paused
+        // because cross-process TSF composition cannot be confirmed here.
+        const auto language = PRIMARYLANGID(LOWORD(quintptr(layout)));
+        return normal && layout && ImmGetIMEFileNameW(layout, nullptr, 0) == 0
+            && language != LANG_CHINESE && language != LANG_JAPANESE && language != LANG_KOREAN;
     }
     bool sendKey(int key, int count, const std::function<bool()> &guard) override
     {

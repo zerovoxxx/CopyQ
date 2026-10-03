@@ -123,6 +123,10 @@ void CoreTests::palettePaste()
     QProcess receiver;
     receiver.start(helper, {QStringLiteral("--input-target"), path});
     QVERIFY(receiver.waitForStarted());
+    const auto diagnostics = qScopeGuard([&] {
+        if (QTest::currentTestFailed())
+            qDebug().noquote() << m_test->readServerErrors(TestInterface::ReadAllStderr);
+    });
     const auto cleanup = qScopeGuard([&]() {
         receiver.terminate();
         if (!receiver.waitForFinished(1000)) {

@@ -3675,7 +3675,7 @@ Default is the first tab.</source>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="112"/>
-        <source>Usage: copyq [%1]</source>
+        <source>Usage: qclip [%1]</source>
         <translation>사용량: copyq [%1]</translation>
     </message>
     <message>

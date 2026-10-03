@@ -3888,7 +3888,7 @@ Imprimir versão do programa e bibliotecas.</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="112"/>
-        <source>Usage: copyq [%1]</source>
+        <source>Usage: qclip [%1]</source>
         <translation>Modo de Uso: copyq [%1]</translation>
     </message>
     <message>

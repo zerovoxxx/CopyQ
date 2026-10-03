@@ -3780,7 +3780,7 @@ Standardno se koristi prva kartica.</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="112"/>
-        <source>Usage: copyq [%1]</source>
+        <source>Usage: qclip [%1]</source>
         <translation>Upotreba: copyq [%1]</translation>
     </message>
     <message>

@@ -109,7 +109,7 @@ private:
 
 QString helpHead()
 {
-    return Scriptable::tr("Usage: copyq [%1]").arg(Scriptable::tr("COMMAND")) + "\n\n"
+    return Scriptable::tr("Usage: qclip [%1]").arg(Scriptable::tr("COMMAND")) + "\n\n"
         + Scriptable::tr("Starts server if no command is specified.") + "\n"
         + Scriptable::tr("  COMMANDs:");
 }

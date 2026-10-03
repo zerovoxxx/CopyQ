@@ -21,7 +21,7 @@
 - 品牌：CMake project、应用/安装器元数据、关于/帮助入口、产品文档、翻译中的产品名和发布资产统一为 QClip。CopyQ 的作者、协议、原始版权、历史记录和明确的迁移/兼容标识保留；COPYQ_*、MIME、序列化头、插件与脚本接口不做破坏性更名。
 - 版本：QClip 独立版本从 1.0.0 开始，git describe 仅接受该版本系列，避免继承上游 v16/v17 标签。仓库链接使用重命名后的 QClip 目的地址；实际 GitHub 发布始终显式指定当前用户仓库，禁止 CLI 默认落入 upstream。
 - 文档：MODIFY README.md、RELEASE.md、CHANGES.md 与关于/帮助/issue 模板；NEW docs/USER_GUIDE.md。说明书以实际 QML/菜单/配置/CLI 为依据，覆盖安装、历史/搜索/粘贴、集合、插件、命令、Snippet/模板/展开/合并、备份/迁移、退出/更新和故障排查。保留 LICENSE、AUTHORS 及第三方许可并随包安装。
-- 构建：MODIFY CMakeLists.txt、src/version.cmake、src/CMakeLists.txt、shared 安装元数据、三端品牌文档、Windows/macOS workflows 及部署/依赖/发布脚本。macOS 使用兼容 macOS 13 的 Qt 6.10.3；依赖同样设置 deployment target 13.0。Windows 产出 x64 安装器/便携包，macOS 产出 Intel/arm64 DMG，提供对应源码与 SHA-256。
+- 构建：MODIFY CMakeLists.txt、src/version.cmake、src/CMakeLists.txt、shared 安装元数据、三端品牌文档、Windows/macOS workflows 及部署/依赖/发布脚本。macOS 使用兼容 macOS 13 的 Qt 6.10.3；依赖同样设置 deployment target 13.0。按 2026-10-03 用户要求，Windows 产出 x64 安装器/便携包，macOS 本次仅产出 Apple Silicon arm64 DMG，提供对应源码与 SHA-256。
 - 验证：git diff --check；pwsh -NoProfile -File utils/check-harness.ps1；SPEC lint（若本机入口存在）；Windows/macOS 编译、QML lint、各 CI 已列出的隔离聚焦测试、utils/check-release.py 安装包依赖/许可/源码审计；核对 tag SHA、发布资产名/哈希和 GitHub published 状态。只执行指定测试，测试配置与日常历史隔离。
 - 边界：自动展开初始关闭。未提供 Developer ID/公证/Windows 代码签名凭据，发行说明如实标注；CI 测试不能证明所有输入法、权限、DPI、实际第三方应用和旧 QSS 场景。v1.0.0 发布记录与 I1/I2/I3 原始完整产品验收状态分别维护，不将未执行项记为通过。
 
@@ -291,6 +291,11 @@ QClip 隐藏/显示进程组 RSS：1000 条约 153.0/152.5 MiB，10000 条约 15
 - 第二次 Apple Silicon 的 DMG 已生成；逐依赖审计拦截 Qt SDK 自动复制的 Mimer、ODBC、PostgreSQL 三个未使用 SQL 驱动，它们引用 SDK 外的数据库库。部署阶段仅移除这三项，保留 SQLite，重新签名和严格逐依赖审计，未绕过审计。
 - 本机展开正式发布的指定测试后，历史采集的 HTML 预期同样需使用 Windows 片段标记，修正后通过。加密插件测试发现 Git/MSYS GnuPG 在 Windows GNUPGHOME 下被误识别为原生程序；隔离入口检测 gpg 同目录的 msys-2.0.dll 并仅为其使用 /c/... 临时 GnuPG 路径，产品加密实现与用户配置保持不变。
 - Windows 管理 UI 的指定测试另暴露两个发布问题：首次原生窗口创建把持久客户区几何当外框处理，以及命令导出的 CRLF 行尾进入加引号的命令正文。管理窗口先创建平台窗口再设置持久几何；导出 INI 时只规范文件行尾，保留命令内部转义和全部字段。继续使用 managementGeometry、commandDraftRoundTrip 严格回归，不放宽几何或命令相等断言。
+- 自动展开的受控 Windows 接收器必须使用确认的非 IME 键盘布局，仅设置测试接收器线程，不改变日常应用输入法；保留产品的 IME 暂停门。macOS 崩溃报告显示退出期间 Action 的嵌套事件循环触发应用状态过滤器，已销毁的主窗口被访问；ClipboardServer 开始析构时移除过滤器并断开应用信号，保留正常运行的自动保存行为。
+- Windows 原生探针确认 ImmIsIME 对 US 04090409 也返回非零，旧门使英语输入永久暂停。改用 ImmGetIMEFileName 确认没有 IMM 文件，并对中文/日文/韩文输入 locale 保守暂停，避免把 TSF 输入法误当普通布局。前台/密码/默认桌面/修饰键和目标身份检查保持；严格验证服务实际展开、中文输出、光标、后续用户复制、合并及命令覆盖。
+- 用户已明确本次 macOS 只发布 M 系列：workflow 仅保留 Apple Silicon，发行脚本和公开安装文档不再列 Intel 资产；原有 Intel 源码 preset 保留。
+- macOS Qt 6.10 日志确认装饰窗口会反复 unset/setColorScheme，触发 ThemeChange→完整配置重载，清空选择、取消待粘贴并破坏编辑焦点。按应用记录最后请求的颜色方案，仅在请求变化时调用系统外观 API；初始自动方案不重复重置。保留真实系统主题事件与显式主题设置，现有 paletteSearchAndCopy/palettePaste/FakeVim/主题映射严格测试作为回归。
+- Windows 自动展开修复后单项隔离服务回归 3 passed / 0 failed / 0 skipped，覆盖实际关键词替换、中文正文、光标、复制合并和脚本覆盖。之后同时检查界面焦点的本机批次受到前台 Chrome 操作干扰，不能作为通过证据；由原生 CI 的受控桌面重新执行全部指定发行测试。诊断构建日志曾因缺少 log.h 编译失败，未把旧二进制当成修复成功。
 
 
 | 日期 | 作者 | 内容 |

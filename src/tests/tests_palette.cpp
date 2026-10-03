@@ -808,6 +808,11 @@ int main(int argc, char **argv)
         : platformNativeInterface()->createServerApplication(argc, argv));
     initSession(app.get(), QStringLiteral("test"));
     if (inputTarget) {
+#ifdef Q_OS_WIN
+        // The controlled receiver uses a confirmed non-IME layout. Do not
+        // change the user's foreground application's input source.
+        LoadKeyboardLayoutW(L"00000409", KLF_ACTIVATE);
+#endif
         const auto path = QString::fromLocal8Bit(argv[2]);
         QLineEdit receiver;
         QLineEdit second;
@@ -841,6 +846,9 @@ int main(int argc, char **argv)
         QTimer::singleShot(100, &receiver, [&]() {
             if (auto window = platformNativeInterface()->getWindow(receiver.winId()))
                 window->raise();
+#ifdef Q_OS_WIN
+            LoadKeyboardLayoutW(L"00000409", KLF_ACTIVATE);
+#endif
             write();
         });
         QTimer control;

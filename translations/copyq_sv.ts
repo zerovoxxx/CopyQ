@@ -3860,7 +3860,7 @@ Skriv ut version på program och bibliotek.</translation>
     </message>
     <message>
         <location filename="../src/scriptable/scriptable.cpp" line="112"/>
-        <source>Usage: copyq [%1]</source>
+        <source>Usage: qclip [%1]</source>
         <translation>Användning: copyq [%1]</translation>
     </message>
     <message>

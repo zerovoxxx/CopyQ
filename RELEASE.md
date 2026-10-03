@@ -5,7 +5,6 @@
 | 平台 | 发行文件 | 最低系统 |
 |---|---|---|
 | Windows x64 | qclip-1.0.0-setup.exe、qclip-1.0.0.zip | Windows 10 1903 |
-| macOS Intel | QClip-1.0.0-macos-13.dmg | macOS 13 |
 | macOS Apple Silicon | QClip-1.0.0-macos-13-m1.dmg | macOS 13 |
 | 对应源码 | QClip-1.0.0.tar.gz | 按源码依赖构建 |
 | 校验 | checksums-sha256.txt | 校验所有上述文件 |
@@ -36,7 +35,7 @@ Windows workflow 使用 utils/github/deploy-windows.sh 部署 Qt、QML、插件�
 
 ### macOS
 
-安装 Xcode 命令行工具、Qt、Ninja/ccache 和依赖。主程序与所有第三方依赖设置 MACOSX_DEPLOYMENT_TARGET=13.0。Intel 使用 macOS-13；Apple Silicon 使用 macOS-13-m1：
+安装 Xcode 命令行工具、Qt、Ninja/ccache 和依赖。主程序与所有第三方依赖设置 MACOSX_DEPLOYMENT_TARGET=13.0。本次仅构建 Apple Silicon（M 系列），使用 macOS-13-m1：
 
 ```sh
 cmake --preset macOS-13-m1

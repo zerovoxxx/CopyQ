@@ -27,7 +27,6 @@ QClip is an open-source clipboard manager built on CopyQ, with a Qt Quick interf
 |---|---|---|
 | Windows 10 1903 / Windows 11，x64 | `qclip-1.0.0-setup.exe` | 运行安装器，按提示安装 |
 | Windows，x64 | `qclip-1.0.0.zip` | 完整解压到可写目录，运行 `qclip.exe` |
-| macOS 13+，Intel | `QClip-1.0.0-macos-13.dmg` | 打开 DMG，将 QClip 拖入 Applications |
 | macOS 13+，Apple Silicon | `QClip-1.0.0-macos-13-m1.dmg` | 打开 DMG，将 QClip 拖入 Applications |
 
 macOS 可在 **Apple menu → About This Mac** 查看芯片类型。当前发行包未提供 Windows 商业代码签名或 Apple Developer ID 公证；首次启动可能需要按系统提示确认来源。macOS 的自动粘贴和后台展开需要相关系统权限，详见[安装说明](docs/USER_GUIDE.md#安装与首次启动)。

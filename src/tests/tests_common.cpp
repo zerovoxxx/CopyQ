@@ -37,8 +37,8 @@ bool testStderr(
     // Ignore exceptions and errors from clients in application log
     // (these are expected in some tests).
     static const std::array ignoreList{
-        plain("CopyQ server is already running"),
-        plain("Cannot connect to server! Start CopyQ server first."),
+        plain("QClip server is already running"),
+        plain("Cannot connect to server! Start QClip server first."),
         plain("Aborting clipboard cloning"),
         plain("Failed to provide clipboard"),
         plain("Failed to provide selection"),

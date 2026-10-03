@@ -230,6 +230,10 @@ ClipboardServer::ClipboardServer(QApplication *app, const QString &sessionName)
 
 ClipboardServer::~ClipboardServer()
 {
+    // Child actions can pump events while being destroyed. Stop callbacks
+    // before the main window and shared services are released.
+    qApp->removeEventFilter(this);
+    disconnect(qApp, nullptr, this, nullptr);
     qApp->setProperty("CopyQ_server", QVariant());
 
     removeGlobalShortcuts();

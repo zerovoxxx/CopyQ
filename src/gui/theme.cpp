@@ -306,12 +306,15 @@ void Theme::decorateMainWindow(QWidget *mainWindow) const
 #if QT_VERSION >= QT_VERSION_CHECK(6,8,0)
     // Change window dark/light title scheme if supported.
     QStyleHints *styleHints = QGuiApplication::styleHints();
-    if ( !isMainWindowThemeEnabled() )
-        styleHints->unsetColorScheme();
-    else if (bg.lightness() < lightThreshold)
-        styleHints->setColorScheme(Qt::ColorScheme::Dark);
-    else
-        styleHints->setColorScheme(Qt::ColorScheme::Light);
+    const auto scheme = !isMainWindowThemeEnabled() ? Qt::ColorScheme::Unknown
+        : bg.lightness() < lightThreshold ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light;
+    const auto previous = styleHints->property("QClip_requestedColorScheme");
+    if ((!previous.isValid() && scheme != Qt::ColorScheme::Unknown)
+            || (previous.isValid() && previous.value<Qt::ColorScheme>() != scheme))
+        styleHints->setColorScheme(scheme);
+    // Repeating a request, including unsetColorScheme(), causes Cocoa theme
+    // events and a configuration reload even when the appearance is unchanged.
+    styleHints->setProperty("QClip_requestedColorScheme", QVariant::fromValue(scheme));
 #endif
 
     const auto quick = quickTheme();

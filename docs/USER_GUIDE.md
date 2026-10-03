@@ -43,7 +43,7 @@ Get-FileHash ./qclip-1.0.0-setup.exe -Algorithm SHA256
 
 ### macOS
 
-要求 macOS 13 或更新版本。**Apple menu → About This Mac** 中显示 Intel 的设备选择 `macos-13.dmg`；显示 Apple M 系列芯片的设备选择 `macos-13-m1.dmg`。
+要求 macOS 13 或更新版本，芯片为 Apple M 系列（Apple Silicon）。在 **Apple menu → About This Mac** 中确认芯片，下载 `macos-13-m1.dmg`；M1、M2 及后续 M 系列使用同一 arm64 版本。本次不提供 Intel 安装包。
 
 1. 下载对应 DMG 并打开。
 2. 把 **QClip.app** 拖入 **Applications**，再从 Applications 启动；不要长期从 DMG 直接运行。
@@ -201,6 +201,8 @@ QClip 的 `.qcs` 与 Alfred 的 `.alfredsnippets` 不同，当前不承诺直接
 
 组合输入、安全输入、无权限、目标改变或键盘状态不明确会暂停/取消展开。正文可包含中文，但不等于所有中文输入法触发流程均已验证。遇到问题用手动 Copy/Paste，或关闭 Automatically expand。
 
+Windows 自动展开请切换到普通键盘布局（例如英语 US）；中文、日文、韩文输入 locale 及带 IMM 文件的输入法会保守暂停，输入法中的英文模式也可能暂停。手动复制和粘贴仍可使用中文正文。
+
 ## 连续复制合并
 
 在 Snippets 底部启用 **Merge double copy**。先复制一段文字，再选择下一段，按住 Ctrl（macOS 为 ⌘）快速连续按两次 C；程序尝试合并前后两段。
@@ -323,7 +325,7 @@ Windows 安装版在 **Settings → Apps → Installed apps → QClip → Uninst
 ## 已知限制
 
 - Windows 包为 x64，不提供原生 ARM64 包。
-- macOS 分 Intel/Apple Silicon，采用 ad-hoc 签名，没有 Developer ID 公证。
+- macOS 本次仅提供 Apple Silicon（M 系列），采用 ad-hoc 签名，没有 Developer ID 公证。
 - 自动展开/合并依赖输入监控；输入法、安全输入、权限、多屏 DPI 与第三方应用场景仍需实机验证。
 - 不提供 Alfred Workflow 编辑器，不承诺 `.alfredsnippets` 互通。
 - 任意旧 QSS、复杂加密 CopyQ 配置和插件外部路径不能保证完全互通。
