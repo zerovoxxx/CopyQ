@@ -53,6 +53,14 @@ fi
 
 notes="$workdir/release-notes.md"
 awk '/^# / {if (seen) exit; seen=1; next} seen {print}' "$repo_root/CHANGES.md" > "$notes"
+python3 - "$notes" "$repo" "$tag" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+text = path.read_text()
+text = text.replace('(docs/UPSTREAM-CHANGES.md)', f'(https://github.com/{sys.argv[2]}/blob/{sys.argv[3]}/docs/UPSTREAM-CHANGES.md)')
+path.write_text(text)
+PY
 printf '\n使用说明：[QClip 用户手册](https://github.com/%s/blob/%s/docs/USER_GUIDE.md)\n' "$repo" "$tag" >> "$notes"
 if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
     draft="$(gh release view "$tag" --repo "$repo" --json isDraft --jq .isDraft)"

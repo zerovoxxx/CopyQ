@@ -260,8 +260,9 @@ jobs:
         run: |
           $app = Get-Item "qclip-$env:APP_VERSION/qclip.exe"
           $setup = Get-Item "qclip-$env:APP_VERSION-setup.exe"
+          $setup.VersionInfo | Select-Object ProductName, ProductVersion, FileVersion, FileDescription | ConvertTo-Json
           if ($app.VersionInfo.ProductName -ne 'QClip' -or $app.VersionInfo.ProductVersion -ne $env:APP_VERSION) { throw 'Incorrect QClip executable version' }
-          if ($setup.VersionInfo.ProductName -ne "QClip $env:APP_VERSION") { throw 'Incorrect QClip installer product' }
+          if ($setup.VersionInfo.ProductName -ne 'QClip' -or $setup.VersionInfo.ProductVersion -ne $env:APP_VERSION) { throw 'Incorrect QClip installer product or version' }
           if ([version]$setup.VersionInfo.FileVersion -ne [version]"$env:APP_VERSION.0") { throw 'Incorrect installer version' }
           $files = @{}
           foreach ($path in @($app.FullName, $setup.FullName, "qclip-$env:APP_VERSION.zip")) {

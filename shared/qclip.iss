@@ -30,7 +30,9 @@ AppSupportURL=https://github.com/zerovoxxx/QClip/issues
 AppUpdatesURL=https://github.com/zerovoxxx/QClip/releases
 
 VersionInfoDescription={#MyAppName} installer
-VersionInfoProductName={#MyAppName} {#AppVersion}
+VersionInfoProductName={#MyAppName}
+VersionInfoProductVersion={#AppVersionNumeric}
+VersionInfoProductTextVersion={#AppVersion}
 VersionInfoVersion={#AppVersionNumeric}
 
 UninstallDisplayName={#MyAppName} {#AppVersion}
