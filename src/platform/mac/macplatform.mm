@@ -246,6 +246,8 @@ QString MacPlatform::themePrefix()
 PlatformWindowPtr MacPlatform::getCurrentWindow()
 {
     NSRunningApplication *runningApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
+    COPYQ_LOG(QStringLiteral("Native frontmost PID: %1 (current %2)")
+        .arg(runningApp.processIdentifier).arg(QCoreApplication::applicationPid()));
     if (runningApp && ![runningApp isEqual:[NSRunningApplication currentApplication]])
         return PlatformWindowPtr(new MacPlatformWindow(runningApp));
     if (auto focus = QGuiApplication::focusWindow())

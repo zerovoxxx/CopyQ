@@ -36,8 +36,10 @@ ClipboardPalette::ClipboardPalette(ItemFactory *factory)
     connect(this, &QWindow::visibleChanged, this, [this] { m_model.setDisplayEnabled(isVisible()); });
     engine()->addImageProvider(QStringLiteral("palette"), new PaletteImageProvider(&m_model));
     connect(&m_model, &ClipboardPaletteModel::selectionInvalidated, this, [this]() {
-        if (m_busy && !pendingValid())
+        if (m_busy && !pendingValid()) {
+            COPYQ_LOG("Palette selection became invalid");
             cancel();
+        }
     });
     connect(this, &QWindow::activeChanged, this, [this]() {
         if (isActive())
@@ -49,8 +51,15 @@ ClipboardPalette::ClipboardPalette(ItemFactory *factory)
                     if (window == this)
                         return;
                 }
-                if (isVisible() && !isActive())
+                if (isVisible() && !isActive()) {
+                    const auto native = platformNativeInterface()->getWindow(winId());
+                    const auto current = platformNativeInterface()->getCurrentWindow();
+                    COPYQ_LOG(QStringLiteral("Palette focus lost: Qt focus %1, native active %2, frontmost application %3")
+                        .arg(focus ? focus->objectName() : QStringLiteral("<null>"))
+                        .arg(native && native->isActive())
+                        .arg(current ? current->getApplicationId() : QStringLiteral("<null>")));
                     cancel();
+                }
             });
         }
     });

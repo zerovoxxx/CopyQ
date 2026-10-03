@@ -85,7 +85,7 @@ elif args.platform == "windows":
     require((root / "platforms/qwindows.dll").is_file(), "Windows platform plugin")
     require((root / "qml/QtQuick/Controls/Basic/qmldir").is_file(), "Qt Quick Basic QML metadata")
     system_directory = Path(os.environ.get("WINDIR", "C:/Windows")) / "System32"
-    system = re.compile(r"^(api-ms-|ext-ms-|kernel32|user32|advapi32|gdi32|gdi32full|shell32|ole32|oleaut32|ntdll|comdlg32|comctl32|imm32|icu|ws2_32|msvcrt|ucrtbase|bcrypt|crypt32|secur32|rpcrt4|dwmapi|winmm|version|shlwapi|uxtheme|netapi32|userenv|wtsapi32|iphlpapi|dnsapi|d3d\d+|dxgi|dxcore|opengl32|glu32|normaliz|winhttp|powrprof|propsys|cfgmgr32|setupapi)\.dll$", re.I)
+    system = re.compile(r"^((api-ms-|ext-ms-)[\w-]+|kernel32|user32|advapi32|gdi32|gdi32full|shell32|ole32|oleaut32|ntdll|comdlg32|comctl32|imm32|icu|ws2_32|msvcrt|ucrtbase|bcrypt|crypt32|secur32|rpcrt4|dwmapi|winmm|version|shlwapi|uxtheme|netapi32|userenv|wtsapi32|iphlpapi|dnsapi|d3d\d+|dxgi|dxcore|opengl32|glu32|normaliz|winhttp|powrprof|propsys|cfgmgr32|setupapi)\.dll$", re.I)
     for path in files:
         if path.suffix.lower() not in (".exe", ".dll"):
             continue
