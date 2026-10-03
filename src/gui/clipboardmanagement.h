@@ -5,14 +5,14 @@
 #include "gui/menuitems.h"
 
 #include <QFont>
-#include <QQuickView>
+#include "gui/clipboardwindow.h"
 #include <QSet>
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
 class QMenu;
 
-class ClipboardManagement final : public QQuickView
+class ClipboardManagement final : public ClipboardWindow
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(ClipboardManagementWindow)

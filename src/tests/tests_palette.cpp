@@ -8,6 +8,7 @@
 #include "gui/clipboardpalette.h"
 #include "gui/clipboarditempreview.h"
 #include "gui/mainwindow.h"
+#include "gui/theme.h"
 #include "item/clipboardmodel.h"
 #include "item/itemfactory.h"
 #include "item/itemeditorwidget.h"
@@ -30,6 +31,8 @@
 #include <QFile>
 #include <QSaveFile>
 #include <QDesktopServices>
+#include <QDir>
+#include <QScreen>
 #include <QStandardItemModel>
 #include <qscopeguard.h>
 
@@ -107,6 +110,73 @@ private slots:
         QVERIFY2(stats.contains(QStringLiteral("PLUGIN itemfakevim: enabled")), qPrintable(stats));
         QVERIFY2(stats.contains(QStringLiteral("PLUGIN itemimage: enabled")), qPrintable(stats));
         qInfo().noquote() << stats;
+    }
+
+    void glassWindowLifecycle()
+    {
+        ClipboardModel source;
+        source.insertItem(textData(QStringLiteral("A quieter place for everything you copy.")), 0);
+        source.insertItem(textData(QStringLiteral("https://github.com/p0deje/Maccy")), 1);
+        source.insertItem(textData(QStringLiteral("把灵感留住，随时找回。")), 2);
+        source.insertItem(textData(QStringLiteral("Meeting notes — Friday, 10:30")), 3);
+        ClipboardPalette palette(&m_factory);
+        Settings settings;
+        auto theme = Theme(settings).quickTheme();
+        theme.insert(QStringLiteral("custom_style"), false);
+        palette.setTheme(theme);
+        palette.open(&source, QStringLiteral("History"), {QStringLiteral("History"), QStringLiteral("Work")}, {});
+        QCOMPARE(palette.status(), QQuickView::Ready);
+        QVERIFY(QTest::qWaitForWindowExposed(&palette));
+        QVERIFY(palette.format().alphaBufferSize() >= 8);
+        auto background = palette.rootObject()->property("background").value<QQuickItem*>();
+        QVERIFY(background);
+        QTRY_COMPARE(palette.materialColor(), theme.value(QStringLiteral("bg")).value<QColor>());
+        const auto checkSurface = [&] {
+            const auto color = background->property("color").value<QColor>();
+            return palette.blurAvailable() ? color.alphaF() < 0.9 : color.alphaF() == 1.0;
+        };
+        QTRY_VERIFY(checkSurface());
+        const auto screenshots = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
+        QWidget wallpaper;
+        if (!screenshots.isEmpty()) {
+            QVERIFY(QDir().mkpath(screenshots));
+            wallpaper.setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+            wallpaper.setGeometry(palette.geometry().adjusted(-30, -30, 30, 30));
+            wallpaper.setStyleSheet(QStringLiteral("background: qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #6a87d0,stop:0.4 #b7ccec,stop:0.65 #dcb8c3,stop:1 #bfdcc8);"));
+            wallpaper.show();
+            QVERIFY(QTest::qWaitForWindowExposed(&wallpaper));
+            // Showing the controlled wallpaper may cancel the palette; open it again.
+            palette.open(&source, QStringLiteral("History"), {QStringLiteral("History"), QStringLiteral("Work")}, {});
+            palette.raise();
+            QTest::qWait(250);
+            qInfo() << "Native material available=" << palette.blurAvailable() << "active=" << palette.isActive();
+            const auto rect = palette.geometry();
+            QVERIFY(palette.screen()->grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height())
+                .save(QDir(screenshots).filePath(QStringLiteral("palette-light.png"))));
+        }
+        theme.insert(QStringLiteral("bg"), QColor(QStringLiteral("#25272d")));
+        theme.insert(QStringLiteral("fg"), QColor(QStringLiteral("#f0f1f5")));
+        palette.setTheme(theme);
+        QTRY_COMPARE(palette.materialColor(), QColor(QStringLiteral("#25272d")));
+        QTRY_VERIFY(checkSurface());
+        auto preview = palette.rootObject()->findChild<ClipboardItemPreview *>(QStringLiteral("palette_preview"));
+        QVERIFY(preview);
+        QTRY_VERIFY(preview->previewWidget());
+        QTRY_COMPARE(preview->previewWidget()->palette().color(QPalette::WindowText), QColor(QStringLiteral("#f0f1f5")));
+        if (!screenshots.isEmpty()) {
+            QTest::qWait(250);
+            const auto rect = palette.geometry();
+            QVERIFY(palette.screen()->grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height())
+                .save(QDir(screenshots).filePath(QStringLiteral("palette-dark.png"))));
+        }
+        palette.cancel();
+        palette.destroy();
+        QVERIFY(!palette.blurAvailable());
+        palette.open(&source, QStringLiteral("History"), {QStringLiteral("History")}, {});
+        QVERIFY(QTest::qWaitForWindowExposed(&palette));
+        QTRY_VERIFY(checkSurface());
+        QCOMPARE(palette.history()->count(), 4);
+        palette.cancel();
     }
 
     void modelIdentity()

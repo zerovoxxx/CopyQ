@@ -56,6 +56,14 @@ QWidget *ClipboardItemPreview::previewWidget() const
     return m_item ? m_item->widget() : nullptr;
 }
 
+void ClipboardItemPreview::setTheme(const QVariantMap &theme)
+{
+    if (m_theme == theme) return;
+    m_theme = theme;
+    rebuild();
+    emit themeChanged();
+}
+
 void ClipboardItemPreview::rebuild()
 {
     m_mouseTarget.clear();
@@ -73,6 +81,19 @@ void ClipboardItemPreview::rebuild()
         m_item = m_history->itemFactory()->createItem(data,
             m_scroll.get(), theme.isAntialiasingEnabled(), true, true);
         m_scroll->setWidget(m_item->widget());
+        if (!m_theme.isEmpty() && !m_theme.value(QStringLiteral("custom_style")).toBool()) {
+            auto palette = m_scroll->palette();
+            const auto foreground = m_theme.value(QStringLiteral("fg")).value<QColor>();
+            const bool dark = m_theme.value(QStringLiteral("bg")).value<QColor>().lightnessF() < 0.5;
+            const auto surface = dark ? QColor("#30323a") : QColor(Qt::white);
+            palette.setColor(QPalette::Window, surface);
+            palette.setColor(QPalette::Base, surface);
+            palette.setColor(QPalette::Text, foreground);
+            palette.setColor(QPalette::WindowText, foreground);
+            m_scroll->setPalette(palette);
+            m_item->widget()->setPalette(palette);
+            m_item->widget()->setStyleSheet(QStringLiteral("color: %1; background: transparent;").arg(foreground.name()));
+        }
         m_scroll->show(); // WA_DontShowOnScreen: no native preview window or focus target.
         watchWidgets();
     }

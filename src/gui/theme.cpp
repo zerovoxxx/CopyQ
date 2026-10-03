@@ -314,6 +314,40 @@ void Theme::decorateMainWindow(QWidget *mainWindow) const
         styleHints->setColorScheme(Qt::ColorScheme::Light);
 #endif
 
+    const auto quick = quickTheme();
+    if (!quick.value(QStringLiteral("custom_style")).toBool()) {
+        const auto surface = quick.value(QStringLiteral("bg")).value<QColor>();
+        const auto foreground = quick.value(QStringLiteral("fg")).value<QColor>();
+        const auto accent = quick.value(QStringLiteral("sel_bg")).value<QColor>();
+        const bool dark = surface.lightnessF() < 0.5;
+        const auto field = dark ? QStringLiteral("#30323a") : QStringLiteral("#ffffff");
+        const auto border = dark ? QStringLiteral("#454750") : QStringLiteral("#dfe2e9");
+        palette.setColor(QPalette::Window, surface);
+        palette.setColor(QPalette::WindowText, foreground);
+        palette.setColor(QPalette::Base, QColor(field));
+        palette.setColor(QPalette::Text, foreground);
+        palette.setColor(QPalette::ButtonText, foreground);
+        palette.setColor(QPalette::Highlight, accent);
+        palette.setColor(QPalette::HighlightedText, Qt::white);
+        mainWindow->setPalette(palette);
+        mainWindow->setStyleSheet(QStringLiteral(
+            "QPushButton, QToolButton { color: %1; background: %2; border: 1px solid %3; border-radius: 6px; padding: 4px 10px; }"
+            "QPushButton:hover, QToolButton:hover { border-color: %4; }"
+            "QPushButton:default { background: %4; color: white; border-color: %4; }"
+            "QLineEdit, QComboBox, QSpinBox, QPlainTextEdit, QTextEdit { color: %1; background: %2; border: 1px solid %3; border-radius: 6px; padding: 4px; }"
+            "QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus { border-color: %4; }"
+            "QGroupBox { border: 1px solid %3; border-radius: 8px; margin-top: 12px; padding-top: 12px; }"
+            "QGroupBox::title { subcontrol-origin: margin; left: 12px; }"
+            "QTabWidget::pane { border: 1px solid %3; border-radius: 8px; }"
+            "QTabBar::tab { color: %1; padding: 5px 10px; border: 0; }"
+            "QTabBar::tab:selected { color: %4; }"
+            "QScrollBar:vertical { background: transparent; width: 8px; margin: 2px; }"
+            "QScrollBar::handle:vertical { background: %3; border-radius: 3px; min-height: 24px; }"
+            "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
+            "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }")
+            .arg(foreground.name(), field, border, accent.name()));
+        return;
+    }
     if ( !isMainWindowThemeEnabled() ) {
         const QString cssTemplate = QStringLiteral("main_window_simple");
         mainWindow->setStyleSheet(getStyleSheet(cssTemplate));
@@ -345,10 +379,28 @@ void Theme::decorateScrollArea(QAbstractScrollArea *scrollArea) const
 
 QVariantMap Theme::quickTheme() const
 {
+    if (m_theme.isEmpty()) {
+        Theme defaults;
+        defaults.resetTheme();
+        defaults.updateTheme();
+        return defaults.quickTheme();
+    }
     QVariantMap result;
     for (const auto name : {"bg", "fg", "alt_bg", "sel_bg", "sel_fg", "edit_bg", "edit_fg",
             "find_bg", "find_fg", "notes_bg", "notes_fg"})
         result.insert(QLatin1String(name), color(QLatin1String(name)));
+    const bool dark = QApplication::palette().color(QPalette::Window).lightnessF() < 0.5;
+    for (const auto &entry : QList<QPair<QString, QString>>{
+            {QStringLiteral("bg"), dark ? QStringLiteral("#25272d") : QStringLiteral("#f4f5f7")},
+            {QStringLiteral("fg"), dark ? QStringLiteral("#f0f1f5") : QStringLiteral("#252832")},
+            {QStringLiteral("alt_bg"), dark ? QStringLiteral("#34363e") : QStringLiteral("#e9ebf0")},
+            {QStringLiteral("sel_bg"), QStringLiteral("#3975ed")}}) {
+        if (value(entry.first).toString().startsWith(QLatin1String("default_")))
+            result.insert(entry.first, QColor(entry.second));
+    }
+    if (value(QStringLiteral("find_fg")).toString() == QLatin1String("black"))
+        result.insert(QStringLiteral("find_fg"), result.value(QStringLiteral("fg")));
+    result.insert(QStringLiteral("custom_style"), isCustomStyleEnabled());
     result.insert(QStringLiteral("font"), font(QStringLiteral("font")));
     result.insert(QStringLiteral("edit_font"), editorFont());
     result.insert(QStringLiteral("find_font"), searchFont());
@@ -408,8 +460,33 @@ void Theme::decorateItemPreview(QAbstractScrollArea *itemPreview) const
 
 QString Theme::getMenuStyleSheet() const
 {
+    if (!isCustomStyleEnabled()) {
+        const bool dark = color(QStringLiteral("bg")).lightnessF() < 0.5;
+        return QStringLiteral(
+            "QMenu { background: %1; color: %2; border: 1px solid %3; border-radius: 10px; padding: 6px; }"
+            "QMenu::item { padding: 8px 28px; border-radius: 6px; }"
+            "QMenu::item:selected { background: %4; color: white; }"
+            "QMenu::item:disabled { color: %3; }"
+            "QMenu::separator { height: 1px; background: %3; margin: 5px 8px; }")
+            .arg(dark ? QStringLiteral("#30323a") : QStringLiteral("#ffffff"),
+                color(QStringLiteral("fg")).name(), dark ? QStringLiteral("#454750") : QStringLiteral("#dfe2e9"),
+                color(QStringLiteral("sel_bg")).name());
+    }
     const QString cssTemplate = value("css_template_menu").toString();
     return getStyleSheet(cssTemplate);
+}
+
+bool Theme::isCustomStyleEnabled() const
+{
+    if (isMainWindowThemeEnabled()) return true;
+    Theme defaults;
+    defaults.resetTheme();
+    for (auto key = m_theme.keyBegin(); key != m_theme.keyEnd(); ++key) {
+        if ((key->endsWith(QLatin1String("_css")) || key->startsWith(QLatin1String("css"))
+                || key->startsWith(QLatin1String("search_bar"))) && value(*key) != defaults.value(*key))
+            return true;
+    }
+    return false;
 }
 
 QString Theme::getNotificationStyleSheet() const
@@ -578,8 +655,8 @@ void Theme::resetTheme()
     m_theme["font_antialiasing"] = Option(true, "checked", ui ? ui->checkBoxAntialias : nullptr);
     m_theme["style_main_window"] = Option(false, "checked", ui ? ui->checkBoxStyleMainWindow : nullptr);
     for (const auto &field : QList<QPair<QString,int>>{
-            {QStringLiteral("quick_spacing"), 12}, {QStringLiteral("quick_margin"), 20},
-            {QStringLiteral("quick_row_height"), 64}, {QStringLiteral("quick_radius"), 6}})
+            {QStringLiteral("quick_spacing"), 8}, {QStringLiteral("quick_margin"), 12},
+            {QStringLiteral("quick_row_height"), 48}, {QStringLiteral("quick_radius"), 8}})
         m_theme[field.first] = Option(field.second, "value",
             ui ? ui->scrollAreaThemeContents->findChild<QSpinBox *>(field.first) : nullptr);
 

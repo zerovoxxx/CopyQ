@@ -113,7 +113,7 @@ bool ClipboardSettings::event(QEvent *event)
 {
     if (event->type() == QEvent::Close)
         cancel();
-    return QQuickView::event(event);
+    return ClipboardWindow::event(event);
 }
 
 void ClipboardSettings::setPluginEnabled(const QString &id, bool enabled)

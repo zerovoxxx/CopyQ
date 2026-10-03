@@ -3,12 +3,12 @@
 #include "gui/clipboardbrowsershared.h"
 #include "common/snippets.h"
 #include "platform/platformnativeinterface.h"
-#include <QQuickView>
+#include "gui/clipboardwindow.h"
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 class SnippetStore;
 
-class ClipboardSnippets final : public QQuickView
+class ClipboardSnippets final : public ClipboardWindow
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(ClipboardSnippetsWindow)

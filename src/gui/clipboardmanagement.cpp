@@ -480,11 +480,11 @@ bool ClipboardManagement::event(QEvent *event)
         m_dropData.clear();
     if (event->type() == QEvent::KeyPress) {
         if (rootObject() && rootObject()->property("popupActive").toBool())
-            return QQuickView::event(event);
+            return ClipboardWindow::event(event);
         const auto key = static_cast<QKeyEvent*>(event);
         const auto focus = activeFocusItem();
         if (focus && focus->property("inputMethodComposing").toBool())
-            return QQuickView::event(event);
+            return ClipboardWindow::event(event);
         const bool editing = focus && focus->flags().testFlag(QQuickItem::ItemAcceptsInputMethod)
             && focus->property("text").isValid()
             && !focus->property("readOnly").toBool();
@@ -564,5 +564,5 @@ bool ClipboardManagement::event(QEvent *event)
                 emit searchRequested();
         }
     }
-    return QQuickView::event(event);
+    return ClipboardWindow::event(event);
 }

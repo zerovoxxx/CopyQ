@@ -54,6 +54,15 @@ void ClipboardStyle::geometryChange(const QRectF &next, const QRectF &previous)
 void ClipboardStyle::renderStyle()
 {
     if (!isVisible()) return;
+    if (!m_theme.value(QStringLiteral("custom_style"), true).toBool()) {
+        m_snapshot = {};
+        m_foreground = m_theme.value(QStringLiteral("fg")).value<QColor>();
+        setImplicitWidth(qMax(60, QFontMetrics(m_font).horizontalAdvance(m_text) + 24));
+        setImplicitHeight(m_kind == Item ? m_theme.value(QStringLiteral("quick_row_height"), 48).toInt() : 32);
+        emit metricsChanged();
+        update();
+        return;
+    }
     if (!m_root) {
         m_root = std::make_unique<QWidget>();
         m_root->setObjectName(QStringLiteral("qclip_style_scope"));
@@ -269,4 +278,54 @@ void ClipboardStyle::renderStyle()
     update();
 }
 
-void ClipboardStyle::paint(QPainter *painter) { painter->drawImage(QPointF(), m_snapshot); }
+void ClipboardStyle::paint(QPainter *painter)
+{
+    if (m_theme.value(QStringLiteral("custom_style"), true).toBool()) {
+        painter->drawImage(QPointF(), m_snapshot);
+        return;
+    }
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setFont(m_font);
+    const auto foreground = m_theme.value(QStringLiteral("fg"), QColor("#252832")).value<QColor>();
+    const auto background = m_theme.value(QStringLiteral("bg"), QColor("#f4f5f7")).value<QColor>();
+    const auto accent = m_theme.value(QStringLiteral("sel_bg"), QColor("#3975ed")).value<QColor>();
+    const bool dark = background.lightnessF() < 0.5;
+    auto line = foreground;
+    line.setAlphaF(0.1);
+    auto fill = foreground;
+    fill.setAlphaF(m_pressed ? 0.09 : m_hovered ? 0.055 : 0.0);
+    if (m_selected || (m_kind == MenuItem && m_hovered)) {
+        fill = accent;
+        fill.setAlphaF(dark ? 0.24 : 0.12);
+    }
+    if (m_kind == Menu || m_kind == Search || m_kind == Button)
+        fill = dark ? QColor("#30323a") : QColor(Qt::white);
+    painter->setPen(m_focused ? QPen(accent, 1) :
+        (m_kind == Menu || m_kind == Search || m_kind == Button) ? QPen(line, 1) : QPen(Qt::NoPen));
+    painter->setBrush(fill);
+    painter->drawRoundedRect(boundingRect().adjusted(0.5, 0.5, -0.5, -0.5),
+        m_theme.value(QStringLiteral("quick_radius"), 8).toInt(), m_theme.value(QStringLiteral("quick_radius"), 8).toInt());
+    if (m_kind == Menu || m_kind == Search) return;
+    painter->setPen(foreground);
+    const auto rect = boundingRect().adjusted(8, 0, -8, 0);
+    const QFontMetrics metrics(m_font);
+    if (m_kind == Item) {
+        auto numberColor = foreground;
+        numberColor.setAlphaF(0.5);
+        const int numberWidth = m_rowNumber.isEmpty() ? 0 : metrics.horizontalAdvance(m_rowNumber) + 18;
+        const auto titleRect = rect.adjusted(0, 0, -numberWidth, 0);
+        painter->drawText(QRectF(titleRect.x(), 4, titleRect.width(), (height() - 8) / 2),
+            Qt::AlignVCenter, metrics.elidedText(m_text.section('\n', 0, 0), Qt::ElideRight, qRound(titleRect.width())));
+        painter->setPen(numberColor);
+        painter->drawText(QRectF(titleRect.x(), height() / 2, titleRect.width(), (height() - 8) / 2),
+            Qt::AlignVCenter, metrics.elidedText(m_text.section('\n', 1), Qt::ElideRight, qRound(titleRect.width())));
+        painter->drawText(rect, Qt::AlignRight | Qt::AlignVCenter, m_rowNumber);
+    } else {
+        painter->drawText(rect, Qt::AlignVCenter | (m_kind == Button || m_kind == ToolbarButton ? Qt::AlignHCenter : Qt::AlignLeft),
+            metrics.elidedText(m_text, Qt::ElideRight, qRound(rect.width())));
+        if (!m_rowNumber.isEmpty()) {
+            painter->setPen(accent);
+            painter->drawText(rect, Qt::AlignRight | Qt::AlignVCenter, m_rowNumber);
+        }
+    }
+}

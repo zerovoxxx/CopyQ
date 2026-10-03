@@ -7,7 +7,7 @@ MenuItem {
     id: control
     required property var values
     implicitWidth: Math.max(200, contentItem.implicitWidth)
-    implicitHeight: contentItem.implicitHeight
+    implicitHeight: Math.max(32, contentItem.implicitHeight)
     padding: 0
     contentItem: ClipboardStyle {
         theme: control.values

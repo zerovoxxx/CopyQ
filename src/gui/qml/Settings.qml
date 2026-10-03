@@ -19,7 +19,7 @@ Pane {
     palette.buttonText: theme.foreground
     palette.highlight: theme.highlight
     palette.highlightedText: theme.highlightedText
-    background: Rectangle { color: theme.background }
+    background: GlassBackground { values: root.controller.theme; controller: root.controller }
     Theme { id: theme; values: root.controller.theme }
     Keys.onEscapePressed: root.controller.cancel()
     Keys.onReturnPressed: root.controller.apply(true)
@@ -27,15 +27,16 @@ Pane {
 
     ColumnLayout {
         anchors.fill: parent; anchors.margins: theme.margin; spacing: theme.spacing
-        Label { text: qsTr("Settings"); font.pixelSize: 24; font.bold: true }
-        Label { text: qsTr("Apply saves your changes. Cancel discards changes since the last Apply."); wrapMode: Text.Wrap; Layout.fillWidth: true }
+        Label { text: qsTr("Settings"); font.pixelSize: 18; font.bold: true }
+        Label { text: qsTr("General preferences, history and shortcuts"); color: theme.muted; Layout.fillWidth: true }
         RowLayout {
             Layout.fillWidth: true; Layout.fillHeight: true
+            spacing: theme.spacing
             ColumnLayout {
-                Layout.preferredWidth: 165; Layout.fillHeight: true
+                Layout.preferredWidth: 160; Layout.fillHeight: true; spacing: 2
                 Repeater {
                     model: ["General", "History", "Layout", "Tray", "Notifications", "Plugins", "Advanced"]
-                    ItemDelegate {
+                    ThemeDelegate { values: root.controller.theme;
                         required property string modelData
                         text: modelData; Layout.fillWidth: true; highlighted: root.section === modelData
                         onClicked: root.section = modelData
@@ -46,15 +47,17 @@ Pane {
                 ThemeButton { values: root.controller.theme; text: qsTr("Shortcuts…"); Layout.fillWidth: true; onClicked: root.controller.openPage("Shortcuts") }
                 ThemeButton { values: root.controller.theme; text: qsTr("Collections…"); Layout.fillWidth: true; onClicked: root.controller.openPage("Tabs") }
             }
-            Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.alternate }
+            Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.line }
             ScrollView {
+                id: settingsFields
                 Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                 ColumnLayout {
-                    width: parent.width; spacing: theme.spacing
+                    width: settingsFields.availableWidth; spacing: theme.spacing
                     RowLayout {
                         visible: root.section === "General"
+                        spacing: theme.spacing
                         Label { text: qsTr("Language") }
-                        ComboBox {
+                        ThemeComboBox { values: root.controller.theme;
                             model: root.controller.languages; textRole: "name"; valueRole: "id"
                             onActivated: root.controller.setLanguage(currentValue)
                             Component.onCompleted: currentIndex = indexOfValue(root.controller.language)
@@ -68,35 +71,47 @@ Pane {
                             id: field
                             required property var modelData
                             Layout.fillWidth: true
+                            spacing: 4
                             visible: modelData.section === root.section
                             enabled: modelData.available
-                            Label { text: field.modelData.label; font.bold: true; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: theme.spacing
+                                Label { text: field.modelData.label; font.bold: true; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                                ThemeCheckBox {
+                                    values: root.controller.theme
+                                    visible: field.modelData.kind === "bool"
+                                    checked: !!field.modelData.value
+                                    onClicked: root.controller.setValue(field.modelData.name, checked)
+                                    Accessible.name: field.modelData.label
+                                }
+                            }
                             Label { text: field.modelData.description; wrapMode: Text.Wrap; opacity: 0.7; Layout.fillWidth: true; visible: text.length > 0 }
-                            CheckBox { visible: field.modelData.kind === "bool"; checked: !!field.modelData.value; text: qsTr("Enabled"); onClicked: root.controller.setValue(field.modelData.name, checked) }
-                            ComboBox { visible: field.modelData.choices !== undefined; model: field.modelData.choices || []; currentIndex: Number(field.modelData.value); onActivated: root.controller.setValue(field.modelData.name, currentIndex) }
-                            TextField {
+                            ThemeComboBox { values: root.controller.theme; visible: field.modelData.choices !== undefined; model: field.modelData.choices || []; currentIndex: Number(field.modelData.value); onActivated: root.controller.setValue(field.modelData.name, currentIndex) }
+                            ThemeTextField { values: root.controller.theme;
                                 visible: field.modelData.kind !== "bool" && field.modelData.kind !== "list" && field.modelData.choices === undefined
                                 Layout.fillWidth: true; objectName: "settings_" + field.modelData.name
                                 text: String(field.modelData.value)
                                 onEditingFinished: if (text !== String(field.modelData.value)) root.controller.setValue(field.modelData.name, text)
                                 Accessible.name: field.modelData.label
                             }
-                            TextArea {
+                            ThemeTextArea { values: root.controller.theme;
                                 visible: field.modelData.kind === "list"; Layout.fillWidth: true
                                 text: field.modelData.kind === "list" ? field.modelData.value.join("\n") : ""
                                 onActiveFocusChanged: if (!activeFocus && visible) root.controller.setValue(field.modelData.name, text)
                                 Accessible.name: field.modelData.label
                             }
-                            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: theme.alternate }
+                            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: theme.line }
                         }
                     }
                     Repeater {
                         model: root.controller.plugins
                         RowLayout {
                             id: plugin
+                            spacing: 6
                             required property var modelData
                             visible: root.section === "Plugins"; Layout.fillWidth: true
-                            CheckBox { text: plugin.modelData.name; checked: plugin.modelData.enabled; onClicked: root.controller.setPluginEnabled(plugin.modelData.id, checked) }
+                            ThemeCheckBox { values: root.controller.theme; text: plugin.modelData.name; checked: plugin.modelData.enabled; onClicked: root.controller.setPluginEnabled(plugin.modelData.id, checked) }
                             Item { Layout.fillWidth: true }
                             ThemeButton { values: root.controller.theme; text: qsTr("Configure…"); onClicked: root.controller.openPage(plugin.modelData.id) }
                             ThemeButton { values: root.controller.theme; text: "↑"; onClicked: root.controller.movePlugin(plugin.modelData.id, -1); Accessible.name: qsTr("Increase plugin priority") }
@@ -109,14 +124,15 @@ Pane {
         Label { text: root.controller.error; visible: text.length > 0; color: "#df7b6a"; Layout.fillWidth: true; wrapMode: Text.Wrap }
         RowLayout {
             Layout.fillWidth: true
+            spacing: theme.spacing
             ThemeButton { values: root.controller.theme; text: qsTr("Restore defaults…"); onClicked: reset.open() }
             Item { Layout.fillWidth: true }
             ThemeButton { values: root.controller.theme; text: qsTr("Cancel"); onClicked: root.controller.cancel() }
             ThemeButton { values: root.controller.theme; text: qsTr("Apply"); onClicked: root.controller.apply(false) }
-            ThemeButton { values: root.controller.theme; text: qsTr("Save and close"); onClicked: root.controller.apply(true) }
+            ThemeButton { values: root.controller.theme; primary: true; text: qsTr("Save and close"); onClicked: root.controller.apply(true) }
         }
     }
-    Dialog {
+    ThemeDialog { values: root.controller.theme;
         id: reset; anchors.centerIn: parent; title: qsTr("Restore option defaults?")
         modal: true; standardButtons: Dialog.Yes | Dialog.No
         onAccepted: root.controller.resetDefaults()

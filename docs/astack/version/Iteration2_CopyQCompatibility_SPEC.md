@@ -551,6 +551,67 @@ build/copyq-tests "testItemEncrypted:encryptDecryptItems" "testItemFakeVim:undoG
 | 2026-09-28 | 源码范围及既有测试名称核对 | 已确认八插件、配置/显示命令耦合、expire_tab 卸载语义及表中测试入口；产品源码未改，尚未运行应用/构建/产品测试。 |
 | 2026-09-28 | 三份 SPEC 文档质量门 | harness、目录级 SPEC lint、git diff --check 均退出 0；三份 SPEC 0 errors/0 warnings，P1–P14 唯一归属及 18 个既有测试声明核对通过。仅文档/静态检查，产品验收仍待实施。 |
 
+## 2026-10-03 毛玻璃与视觉重构
+
+用户要求参考 [Maccy](https://github.com/p0deje/Maccy) 与 [DeskBox](https://github.com/Tianyu199509/DeskBox)，彻底优化界面并实现毛玻璃。沿用现有 Qt Quick、CopyQ 数据与插件桥接；本轮不改变历史、脚本、粘贴或存储契约。
+
+设计：快捷面板采用独立搜索行、集合切换、图标/两行列表、独立预览与紧凑操作栏；次要操作收进菜单。管理、设置、命令、Snippet 共用柔和中性色、蓝色强调、细描边、圆角、统一控件与留白。支持现有主题颜色/字体/密度，自定义 QSS 仍经 ClipboardStyle 解释。材质由系统合成：Windows 11 Desktop Acrylic，macOS NSVisualEffectView behindWindow/popover；不支持的平台、关闭透明或高对比度时使用实色，避免只透明而无模糊。
+
+影响面与文件清单（本轮必然跨十个以上文件）：
+
+| 类型 | 文件 | 原因 |
+|---|---|---|
+| NEW | src/gui/clipboardwindow.h、clipboardwindow.cpp；src/platform/platformwindoweffects.h、win/winwindoweffects.cpp、mac/macwindoweffects.mm、dummy/dummywindoweffects.cpp | 共享 Quick 窗口材质生命周期与两端原生模糊、失败回退。 |
+| MODIFY | src/gui/clipboardpalette.h、clipboardmanagement.h、clipboardsettings.h、clipboardcommands.h、clipboardsnippets.h | 五个窗口继承统一材质层，复用原控制器。 |
+| NEW | src/gui/qml/GlassBackground.qml、ThemeTextField.qml、ThemeTextArea.qml、ThemeComboBox.qml、ThemeCheckBox.qml、ThemeDelegate.qml、ThemeDialog.qml | 共享材质表面、输入/选择/弹窗控件。 |
+| MODIFY | src/gui/qml/Theme.qml、ThemeButton.qml、ThemeMenu.qml、ThemeMenuItem.qml、ClipboardPalette.qml、ManagementWindow.qml、Settings.qml、Commands.qml、Snippets.qml | 五个界面布局、主题与交互状态统一。 |
+| MODIFY | src/gui/theme.h、theme.cpp、clipboardstyle.cpp、clipboarditempreview.h、clipboarditempreview.cpp；src/CMakeLists.txt、src/platform/platform.cmake、win/winplatform.cmake | 主题/QSS 兼容、插件预览深浅色、旧渲染入口现代化及 QML/原生源码注册。 |
+| MODIFY | src/gui/clipboardpalette.cpp、clipboardmanagement.cpp、clipboardsettings.cpp、clipboardcommands.cpp | 已有 event override 转发共享材质生命周期；焦点/粘贴分支保持原行为。 |
+| MODIFY | src/tests/tests_palette.cpp、tests_management.cpp、tests_snippets.cpp；utils/check-compatibility.py | 材质销毁/重建与深色预览断言、五窗口截图；修复清单脚本 Windows UTF-8/路径分隔符导致的误报。 |
+
+验证计划：Windows 本机构建指定 QML lint 与 palette/management/snippet 聚焦测试；检查实际 QML 加载、搜索/选择/IME/主题/QSS 回归。通过隔离原生窗口截图检查浅色/深色布局和背景模糊，测试数据路径均隔离。命令：`cmake --build build/copyq/Windows --target qclip copyq-palette-tests copyq-management-tests copyq-snippet-tests copyq-palette-ui_qmllint`、`pwsh -NoProfile -File utils/check-harness.ps1`、`python utils/check-compatibility.py`、`git diff --check`。macOS 材质与 Linux 桌面回退须据实记录，Windows 截图不等于三端验收。
+
+### 本轮验证记录
+
+Windows 11 build 26300 / x64、Qt 6.10.3 / MSVC 19.51、150% DPI。使用仓库内 `build/toolchain/Qt/6.10.3/msvc2022_64` 和 VS 18 工具链。配置从 Windows preset 出发，本机开发构建关闭 QCA、Keychain、原生通知、音频与 sccache；不改变源码中正式构建默认开关，不作为正式发布包。
+
+测试均通过 `utils/run-isolated.ps1 -Executable ... -Arguments @(...)` 运行；QtTest 报告使用 `-o ...txt,txt`，截图使用既有 `COPYQ_TESTS_ARTIFACT_DIR`。桌面模糊由原生 Acrylic 合成，窗口 framebuffer 请求 alpha=8，Windows 24H2+ 同时开启 redirection bitmap 的预乘 alpha；自定义 QSS 表面保持不透明。
+
+| 日期 | 命令 / 范围 | 结果 |
+|---|---|---|
+| 2026-10-03 | `cmake --build build/copyq/Windows -j 8`；`cmake --build build/copyq/Windows --target copyq-palette-ui_qmllint` | 构建退出 0，QML 0 warnings；完整八插件产物存在。日志 `build/ui-build.log`、`build/ui-lint.log`。首次链接发现共享窗口被同时加入 common GLOB 与 QML 模块，已按现有模块的排除方式修正并重新构建。 |
+| 2026-10-03 | `copyq-palette-tests glassWindowLifecycle qmlKeyboardAndIme explicitCommands standardPreviews` | 6 passed / 0 failed；覆盖原生表面销毁重建、可用时半透明/否则实色、深色预览实际 palette、搜索/IME、命令与插件预览。隔离窗口日志 `Native material available=true active=true`，截图 `build/ui-screenshots/palette-{light,dark}.png`。 |
+| 2026-10-03 | `copyq-management-tests qmlSelectionAndActions themeMapping legacyStyleRules settingsDraftTransaction commandDraftRoundTrip pluginPreviewBridge managementGeometry` | 7 passed / 2 failed；管理点击/IME/800×520 布局、主题、自定义 QSS、设置草稿及插件桥接通过。`commandDraftRoundTrip` 在命令文本交换回环失败；`managementGeometry` 期望 QRect(100,160 900×600)，实际 QRect(107,190 885×563)。日志 `build/ui-management-results.txt`。 |
+| 2026-10-03 | 修改前 `HEAD=51d9869d` 的独立 archive / 相同 Qt、MSVC、开关，仅运行 `commandDraftRoundTrip managementGeometry` | 两项出现完全相同失败（2 passed / 2 failed，含初始化/清理），证明本机既有失败；未删除断言或将失败记为通过。日志 `build/ui-baseline-results.txt`。 |
+| 2026-10-03 | `copyq-snippet-tests qmlSnippets` | 3 passed / 0 failed；Snippet 浏览/详情/使用流程通过。截图检查修正默认未初始化 Theme 的无效颜色回退；五窗口截图保留在 `build/ui-screenshots/`，管理含正常/紧凑尺寸。 |
+| 2026-10-03 | `python utils/check-compatibility.py`、`git diff --check` | 均退出 0，49 动作 / 90 配置 / 24 表单 / 7 插件表单 / 150 API / 8 插件。清单脚本原 Windows GBK 解码与反斜杠路径误报已修复。 |
+| 2026-10-03 | `pwsh -NoProfile -File utils/check-harness.ps1`；本机/WSL spec-lint 路径发现 | harness 未通过：本 checkout 的 AGENTS.md 是 Git 在 `core.symlinks=false` 下生成的 `CLAUDE.md` 占位文件，而非原生链接；本机创建原生符号链接返回需要管理员权限。未改写治理入口或 Git 设置。astack spec-lint 脚本在已登记的本机/WSL 路径不可用，未声称执行通过。 |
+| 2026-10-03 | `cmake --install ... --prefix build/ui-preview`、`windeployqt --release --no-translations --qmldir src/gui/qml`；补齐 Windows 部署脚本惯例的八插件和 themes；在预览目录运行上述 4 个 palette 方法 | 独立开发预览目录 `build/ui-preview/` 已部署 Qt/QML/八插件；不依赖工具链 PATH 的运行结果 6 passed / 0 failed，`qclip.exe --version` 退出 0。首次 install 不含 Windows 插件（该平台由部署流程复制），补齐后重新验证。可执行 SHA-256 `0f9a0382a7437052ee631aec58c45f4de07405f82777f1ec58f59dc00d3d12fc`。仅开发预览，未安装/设置自启动/提交/推送。 |
+
+本轮覆盖 Windows 原生窗口的布局与材质接入，未重新验收外部应用真实粘贴、全局输入/IME、多屏或性能。macOS 原生材质源码与 Linux 不透明回退已接入，未在对应平台编译/实机验证；仍保持本 SPEC 开发中与三端总验收未完成。
+
+### 2026-10-03 紧凑布局与对齐修订
+
+用户根据本轮截图指出控件过于宽松、元素未对齐。将默认间距从 12 改为 8、外边距从 20 改为 12、历史行高从 64 改为 48；按钮和输入控件统一 32px 基准高度，字体放大时保留内容所需高度。快捷面板默认收紧为 740×440，搜索框 36px，History/Preview 两栏标题等高、列表和预览卡片顶部/底部对齐，图标按钮等宽。保留用户显式密度与字体、原生材质及原有操作。
+
+影响文件：`Theme.qml`、`ThemeButton.qml`、`ThemeTextField.qml`、`ThemeTextArea.qml`、`ThemeComboBox.qml`、`ThemeCheckBox.qml`、`ThemeDelegate.qml`、`ThemeMenuItem.qml`、`ThemeDialog.qml` 调整共享尺寸；`ClipboardPalette.qml`、`ManagementWindow.qml`、`Settings.qml`、`Commands.qml`、`Snippets.qml` 统一局部留白、标题及列对齐；`theme.cpp`、`clipboardstyle.cpp` 同步默认密度与辅助 Widgets/绘制尺寸，`clipboardpalette.cpp` 同步原生面板尺寸。无新增设置、业务接口或功能变化。
+
+验证计划：Windows 增量构建、`copyq-palette-ui_qmllint`；隔离运行既有 `glassWindowLifecycle qmlKeyboardAndIme explicitCommands standardPreviews`、管理布局/主题/设置/命令及 `qmlSnippets` 指定方法；重新截图检查浅深色、紧凑管理窗口、设置/命令/片段控件裁切与对齐，`python utils/check-compatibility.py` 和 `git diff --check`。
+
+设置/命令的布尔选项改为左侧标签、右侧勾选框，减少重复的 Enabled 行；复选框取消默认左内边距，片段列表使用独立标题/关键字两行呈现，避免文本省略吞掉关键字。现有对象名称与控制器调用保留。
+
+本次验证（同上 Windows/Qt/MSVC 环境）：
+
+| 命令 / 范围 | 结果 |
+|---|---|
+| `cmake --build build/copyq/Windows -j 8`；`copyq-palette-ui_qmllint` | 均退出 0，QML 无警告；日志 `build/ui-density-build.log`、`build/ui-density-lint.log`。 |
+| palette 指定上述四个方法 | 6 passed / 0 failed，原生 Acrylic 日志 available=true、active=true；`build/ui-density-palette-results.txt`。 |
+| management：`qmlSelectionAndActions themeMapping legacyStyleRules settingsDraftTransaction commandDraftRoundTrip pluginPreviewBridge` | 7 passed / 1 failed；失败仍为前述 baseline 已复现的 `commandDraftRoundTrip`，未放宽或跳过断言；`build/ui-density-management-results.txt`。本次仅尺寸/呈现修订，未重复独立窗口位置存储测试。 |
+| snippets：`qmlSnippets` | 3 passed / 0 failed；`build/ui-density-snippet-results.txt`。 |
+| `cmake --install ... --prefix build/ui-preview` 后在部署目录运行 palette 四个方法，不注入 Qt 工具链 PATH | 6 passed / 0 failed；开发预览已更新，保持前述可选组件关闭配置；`build/ui-density-packaged-results.txt`。EXE SHA-256 `f94efffcf4bee1ca4623012e2fe1c3026fb3c1c54a6d2f2b55c45718d2664806`。 |
+| 视觉检查 | `build/ui-density-screenshots/` 内浅深色 palette、management/management-compact、settings、commands、snippets 截图已检查：标题基线、两栏起止边界、控件高度与复选框对齐，片段关键字完整；未发现本轮收紧引起的裁切。仍非 macOS/Linux 或外部真实粘贴的验收。 |
+| 清单/差异/治理 | `python utils/check-compatibility.py`、`git diff --check` 退出 0；harness 入口链接限制及本机 spec-lint 不可用仍如前述记录。 |
+
 ## 变更记录
 
 | 日期 | 作者 | 内容 |

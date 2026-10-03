@@ -28,7 +28,7 @@ Pane {
     palette.buttonText: theme.foreground
     palette.highlight: theme.highlight
     palette.highlightedText: theme.highlightedText
-    background: Rectangle { color: theme.background }
+    background: GlassBackground { values: root.controller.theme; controller: root.controller }
     Theme { id: theme; values: root.controller.theme }
 
     function actionName(id) { return controller.actions[id] ? controller.actions[id].name : "" }
@@ -56,10 +56,8 @@ Pane {
             Layout.fillWidth: true
             Layout.margins: theme.margin
             spacing: theme.spacing
-            ThemeButton { values: root.controller.theme; text: qsTr("Snippets…"); onClicked: root.controller.showSnippets() }
-            ThemeButton { values: root.controller.theme; text: qsTr("Save snippet"); enabled: root.hasSelection; onClicked: root.controller.saveSnippet() }
-            Label { text: "QClip"; font.bold: true; font.pixelSize: 22 }
-            Label { text: qsTr("Clipboard manager"); opacity: 0.7; visible: root.width >= 950 }
+            Label { text: "QClip"; font.bold: true; font.pixelSize: 18 }
+            Label { text: qsTr("Clipboard manager"); color: theme.muted; visible: root.width >= 1050 }
             Item { Layout.fillWidth: true }
             ThemeButton { values: root.controller.theme;
                 text: root.controller.monitoring ? qsTr("Pause recording") : qsTr("Resume recording")
@@ -70,15 +68,14 @@ Pane {
                 onClicked: root.action(ClipboardManagementWindow.File_Preferences)
             }
             ThemeButton { values: root.controller.theme;
-                text: qsTr("Clear history…")
-                enabled: root.controller.tabName === root.options.historyTab
-                onClicked: clearHistory.open()
-            }
-            ThemeButton { values: root.controller.theme;
                 text: qsTr("More…")
                 onClicked: globalMenu.open()
                 ThemeMenu { values: root.controller.theme;
                     id: globalMenu
+                    ThemeMenuItem { values: root.controller.theme; text: qsTr("Snippets…"); onTriggered: root.controller.showSnippets() }
+                    ThemeMenuItem { values: root.controller.theme; text: qsTr("Save snippet"); enabled: root.hasSelection; onTriggered: root.controller.saveSnippet() }
+                    ThemeMenuItem { values: root.controller.theme; text: qsTr("Clear history…"); enabled: root.controller.tabName === root.options.historyTab; onTriggered: clearHistory.open() }
+                    MenuSeparator {}
                     Repeater {
                         model: [ClipboardManagementWindow.File_Import, ClipboardManagementWindow.File_Export,
                             ClipboardManagementWindow.File_Commands, ClipboardManagementWindow.File_ShowClipboardContent,
@@ -95,17 +92,18 @@ Pane {
                 }
             }
         }
-        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: theme.alternate }
+        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: theme.line }
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 0
             ColumnLayout {
-                Layout.preferredWidth: 195
+                Layout.preferredWidth: 180
                 visible: !root.options.hideTabs
                 Layout.fillHeight: true
-                Layout.margins: theme.spacing
-                Label { text: qsTr("Collections"); font.bold: true }
+                Layout.margins: theme.margin
+                spacing: theme.spacing
+                Label { text: qsTr("COLLECTIONS"); color: theme.muted; font.pixelSize: 10; font.letterSpacing: 1 }
                 ListView {
                     id: tabs
                     objectName: "management_tabs"
@@ -113,12 +111,13 @@ Pane {
                     Layout.fillHeight: true
                     model: root.controller.tabTree
                     clip: true
-                    spacing: 4
+                    spacing: 2
                     ScrollBar.vertical: ScrollBar { policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
-                    delegate: ItemDelegate {
+                    delegate: ThemeDelegate { values: root.controller.theme;
                         id: tabRow
                         required property var modelData
                         width: ListView.view.width
+                        implicitHeight: theme.customStyle ? Math.max(theme.controlHeight, contentItem.implicitHeight + 8) : theme.controlHeight
                         highlighted: modelData.path === root.controller.selectedTabPath
                         onClicked: root.controller.selectTabPath(modelData.path)
                         Accessible.name: modelData.path
@@ -148,8 +147,8 @@ Pane {
                                 text: tabRow.modelData.name
                                 rowNumber: root.options.showTabCounts === true && tabRow.modelData.collection ? (tabRow.modelData.count < 0 ? "?" : String(tabRow.modelData.count)) : ""
                                 font: tabRow.font
-                                selected: tabRow.highlighted
-                                hovered: tabRow.hovered
+                                selected: theme.customStyle && tabRow.highlighted
+                                hovered: theme.customStyle && tabRow.hovered
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                             }
@@ -188,7 +187,7 @@ Pane {
                     }
                 }
             }
-            Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.alternate }
+            Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.line }
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -196,7 +195,8 @@ Pane {
                 spacing: theme.spacing
                 RowLayout {
                     Layout.fillWidth: true
-                    TextField {
+                    spacing: theme.spacing
+                    ThemeTextField { values: root.controller.theme;
                         id: search
                         objectName: "management_search"
                         KeyNavigation.tab: results
@@ -208,13 +208,13 @@ Pane {
                         selectByMouse: true
                         font: theme.searchFont
                         color: theme.searchText
-                        background: ClipboardStyle { theme: root.controller.theme; kind: ClipboardStyle.Search; focused: search.activeFocus; hovered: search.hovered }
                         Accessible.name: qsTr("Search collection")
                     }
                     ThemeButton { values: root.controller.theme; text: qsTr("New item…"); onClicked: root.action(ClipboardManagementWindow.File_New) }
                 }
                 RowLayout {
                     visible: !root.options.hideToolbar
+                    spacing: 6
                     ThemeButton { values: root.controller.theme; text: qsTr("Select all"); enabled: !root.history.filtering; onClicked: { root.history.selectAll(); results.forceActiveFocus() } }
                     ThemeButton { values: root.controller.theme; toolbar: true; text: root.toolbarText(ClipboardManagementWindow.Edit_CopySelectedItems, qsTr("Copy")); font: root.options.hideToolbarLabels ? root.controller.iconFont : theme.textFont; Accessible.name: qsTr("Copy"); ToolTip.visible: hovered; ToolTip.text: qsTr("Copy"); objectName: "management_copy"; enabled: root.hasSelection; onClicked: root.action(ClipboardManagementWindow.Edit_CopySelectedItems) }
                     ThemeButton { values: root.controller.theme; toolbar: true; text: root.toolbarText(ClipboardManagementWindow.Item_Edit, qsTr("Edit…")); font: root.options.hideToolbarLabels ? root.controller.iconFont : theme.textFont; Accessible.name: qsTr("Edit…"); ToolTip.visible: hovered; ToolTip.text: qsTr("Edit…"); enabled: root.hasSelection; onClicked: root.action(ClipboardManagementWindow.Item_Edit) }
@@ -263,7 +263,7 @@ Pane {
                         onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
                         focus: true
                         clip: true
-                        spacing: 4
+                        spacing: 2
                         boundsBehavior: Flickable.StopAtBounds
                         ScrollBar.vertical: ScrollBar { policy: theme.showScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
                         delegate: Rectangle {
@@ -285,8 +285,7 @@ Pane {
                             width: ListView.view.width
                             height: theme.rowHeight
                             radius: theme.radius
-                            color: itemSelected ? theme.highlight : index % 2 ? theme.alternate : theme.background
-                            border.color: index === root.history.selectedRow ? theme.highlight : "transparent"
+                            color: "transparent"
                             ClipboardStyle {
                                 anchors.fill: parent
                                 kind: ClipboardStyle.Item
@@ -348,30 +347,39 @@ Pane {
                             text: root.history.filtering ? qsTr("Searching…") : root.history.sourceCount === 0 ? qsTr("This collection is empty") : qsTr("No matches")
                         }
                     }
-                    Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.alternate; visible: root.width >= 1000 }
-                    ColumnLayout {
+                    Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: theme.line; visible: root.width >= 1000 }
+                    Rectangle {
                         Layout.fillHeight: true
                         Layout.preferredWidth: 270
                         visible: root.width >= 1000 && root.options.preview !== false
-                        Label { text: qsTr("Preview"); font.bold: true }
-                        ClipboardItemPreview {
-                            objectName: "management_preview"
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            history: root.controller.history
-                            Accessible.name: root.preview.text || qsTr("Item preview")
+                        radius: theme.radius + 2
+                        color: theme.surface
+                        border.color: theme.line
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: theme.spacing
+                            Label { text: qsTr("Preview"); font.bold: true }
+                            ClipboardItemPreview {
+                                objectName: "management_preview"
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                history: root.controller.history
+                                theme: root.controller.theme
+                                Accessible.name: root.preview.text || qsTr("Item preview")
+                            }
+                            Label { Layout.fillWidth: true; visible: !!root.preview.notes; text: root.preview.notes || ""; wrapMode: Text.Wrap; color: theme.notesText }
+                            Label { visible: !!root.preview.tags; text: qsTr("Tags: ") + (root.preview.tags || "") }
+                            Label { visible: !!root.preview.pinned; text: qsTr("Pinned item") }
+                            Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: root.preview.copiedAt >= 0 ? qsTr("Copied: ") + new Date(root.preview.copiedAt).toLocaleString() : qsTr("Copy time unknown") }
+                            Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: root.preview.application || qsTr("Source application unknown") }
                         }
-                        Label { Layout.fillWidth: true; visible: !!root.preview.notes; text: root.preview.notes || ""; wrapMode: Text.Wrap; color: theme.notesText }
-                        Label { visible: !!root.preview.tags; text: qsTr("Tags: ") + (root.preview.tags || "") }
-                        Label { visible: !!root.preview.pinned; text: qsTr("Pinned item") }
-                        Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: root.preview.copiedAt >= 0 ? qsTr("Copied: ") + new Date(root.preview.copiedAt).toLocaleString() : qsTr("Copy time unknown") }
-                        Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: root.preview.application || qsTr("Source application unknown") }
                     }
                 }
                 RowLayout {
                     visible: root.hasSelection && root.controller.tabs.length > 1
                     Label { text: qsTr("To collection") }
-                    ComboBox { id: targetTab; Layout.fillWidth: true; model: root.controller.tabs }
+                    ThemeComboBox { values: root.controller.theme; id: targetTab; Layout.fillWidth: true; model: root.controller.tabs }
                     ThemeButton { values: root.controller.theme; text: qsTr("Copy"); enabled: targetTab.currentText !== root.controller.tabName; onClicked: root.controller.transferItems(targetTab.currentText, false) }
                     ThemeButton { values: root.controller.theme; text: qsTr("Move"); enabled: targetTab.currentText !== root.controller.tabName; onClicked: root.controller.transferItems(targetTab.currentText, true) }
                 }
@@ -381,7 +389,7 @@ Pane {
         Label { Layout.margins: theme.spacing; text: qsTr("%1 of %2 items · %3 selected").arg(root.history.count).arg(root.history.sourceCount).arg(root.history.selectedCount) + (root.controller.monitoring ? "" : qsTr(" · Recording paused")); opacity: 0.7 }
     }
 
-    Dialog {
+    ThemeDialog { values: root.controller.theme;
         id: tabDialog
         property bool rename: false
         property string sourceTab
@@ -397,9 +405,9 @@ Pane {
             else if (group) root.controller.renameGroup(sourceTab, tabName.text, members)
             else root.controller.renameTab(tabName.text, sourceTab)
         }
-        TextField { id: tabName; objectName: "management_tab_name"; width: 320; placeholderText: qsTr("Collection name; / creates a group"); Accessible.name: qsTr("Collection name"); onAccepted: tabDialog.accept() }
+        ThemeTextField { values: root.controller.theme; id: tabName; objectName: "management_tab_name"; width: 320; placeholderText: qsTr("Collection name; / creates a group"); Accessible.name: qsTr("Collection name"); onAccepted: tabDialog.accept() }
     }
-    Dialog {
+    ThemeDialog { values: root.controller.theme;
         id: removeTab
         property string sourceTab
         property bool group: false
@@ -413,7 +421,7 @@ Pane {
         onAccepted: group ? root.controller.removeGroup(sourceTab, members) : root.controller.removeTab(sourceTab)
         Label { text: qsTr("All items in %1 will be deleted (%2 collections).").arg(removeTab.sourceTab).arg(removeTab.members.length); wrapMode: Text.Wrap }
     }
-    Dialog {
+    ThemeDialog { values: root.controller.theme;
         id: properties
         objectName: "management_properties"
         property string sourceTab
@@ -433,12 +441,12 @@ Pane {
             Label { text: qsTr("Capacity (0 uses the global limit)") }
             SpinBox { id: capacity; objectName: "management_capacity"; from: 0; to: 100000; editable: true }
             Label { text: qsTr("Save items to disk") }
-            CheckBox { id: store; objectName: "management_store" }
+            ThemeCheckBox { values: root.controller.theme; id: store; objectName: "management_store" }
             Label { text: qsTr("Password expires after seconds (0 uses global)") }
             SpinBox { id: encryptedExpiry; objectName: "management_encrypted_expiry"; from: 0; to: 999999; editable: true }
         }
     }
-    Dialog {
+    ThemeDialog { values: root.controller.theme;
         id: clearHistory
         property string sourceTab
         anchors.centerIn: parent; modal: true
@@ -447,7 +455,7 @@ Pane {
         onAccepted: if (sourceTab === root.controller.tabName) root.controller.clearHistory(Number(clearRange.currentValue))
         ColumnLayout {
             Label { text: qsTr("Pinned items are kept. Time ranges keep items with unknown or future copy times."); wrapMode: Text.Wrap; Layout.preferredWidth: 420 }
-            ComboBox {
+            ThemeComboBox { values: root.controller.theme;
                 id: clearRange; Layout.fillWidth: true; textRole: "label"; valueRole: "minutes"
                 model: [{label: qsTr("Last 5 minutes"), minutes: 5}, {label: qsTr("Last 15 minutes"), minutes: 15},
                     {label: qsTr("Last hour"), minutes: 60}, {label: qsTr("Last 24 hours"), minutes: 1440},
@@ -455,7 +463,7 @@ Pane {
             }
         }
     }
-    Dialog {
+    ThemeDialog { values: root.controller.theme;
         id: iconDialog
         property string sourceTab
         anchors.centerIn: parent
@@ -468,7 +476,7 @@ Pane {
         onAccepted: root.controller.saveIcon(iconValue.text, sourceTab)
         ColumnLayout {
             anchors.fill: parent
-            TextField { id: iconSearch; Layout.fillWidth: true; placeholderText: qsTr("Search icons…") }
+            ThemeTextField { values: root.controller.theme; id: iconSearch; Layout.fillWidth: true; placeholderText: qsTr("Search icons…") }
             GridView {
                 Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                 cellWidth: 44; cellHeight: 44
@@ -483,7 +491,7 @@ Pane {
                 }
             }
             RowLayout {
-                TextField { id: iconValue; Layout.fillWidth: true; placeholderText: qsTr("Icon or image file") }
+                ThemeTextField { values: root.controller.theme; id: iconValue; Layout.fillWidth: true; placeholderText: qsTr("Icon or image file") }
                 ThemeButton { values: root.controller.theme; text: qsTr("Browse…"); onClicked: { const path = root.controller.browseIcon(); if (path) iconValue.text = path } }
             }
         }

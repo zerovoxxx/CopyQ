@@ -4,13 +4,13 @@
 #include "gui/clipboardpalettemodel.h"
 #include "platform/platformnativeinterface.h"
 
-#include <QQuickView>
+#include "gui/clipboardwindow.h"
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
 class QMenu;
 
-class ClipboardPalette final : public QQuickView
+class ClipboardPalette final : public ClipboardWindow
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(ClipboardPaletteWindow)

@@ -9,6 +9,7 @@ file(GLOB copyq_SOURCES
     scriptable/scriptableproxy.h
     )
 list(REMOVE_ITEM copyq_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardwindow.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardpalette.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardpalettemodel.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/gui/clipboardmanagement.cpp"
@@ -150,8 +151,9 @@ qt_add_qml_module(copyq-palette-ui
     DEPENDENCIES QtQuick
     RESOURCE_PREFIX /copyq
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/QClip"
-    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Settings.qml gui/qml/Commands.qml gui/qml/Theme.qml gui/qml/ThemeButton.qml gui/qml/ThemeMenu.qml gui/qml/ThemeMenuItem.qml gui/qml/Snippets.qml
+    QML_FILES gui/qml/ClipboardPalette.qml gui/qml/ManagementWindow.qml gui/qml/Settings.qml gui/qml/Commands.qml gui/qml/Theme.qml gui/qml/ThemeButton.qml gui/qml/ThemeMenu.qml gui/qml/ThemeMenuItem.qml gui/qml/Snippets.qml gui/qml/GlassBackground.qml gui/qml/ThemeTextField.qml gui/qml/ThemeComboBox.qml gui/qml/ThemeCheckBox.qml gui/qml/ThemeDelegate.qml gui/qml/ThemeDialog.qml gui/qml/ThemeTextArea.qml
     SOURCES gui/clipboardpalette.h gui/clipboardpalette.cpp
+            gui/clipboardwindow.h gui/clipboardwindow.cpp
             gui/clipboardpalettemodel.h gui/clipboardpalettemodel.cpp
             gui/clipboardmanagement.h gui/clipboardmanagement.cpp
             gui/clipboardsettings.h gui/clipboardsettings.cpp

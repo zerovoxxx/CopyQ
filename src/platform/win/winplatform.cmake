@@ -6,6 +6,7 @@ file(GLOB copyq_SOURCES ${copyq_SOURCES}
     platform/win/winplatform.cpp
     platform/win/winplatformclipboard.cpp
     platform/win/winplatformwindow.cpp
+    platform/win/winwindoweffects.cpp
     platform/dummy/dummyclipboard.cpp
     platform/platformcommon.cpp
     ../qxt/qxtglobalshortcut_win.cpp
@@ -24,4 +25,4 @@ if (MSVC)
     set(copyq_LINK_FLAGS ${copyq_LINK_FLAGS} "/ENTRY:mainCRTStartup")
 endif()
 
-list(APPEND copyq_LIBRARIES imm32)
+list(APPEND copyq_LIBRARIES imm32 dwmapi)

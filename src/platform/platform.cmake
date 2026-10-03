@@ -1,6 +1,10 @@
 # If window system is X11 then set X11_FOUND to TRUE.
 find_package(X11)
 
+if(NOT WIN32 AND NOT APPLE)
+    list(APPEND copyq_SOURCES platform/dummy/dummywindoweffects.cpp)
+endif()
+
 file(GLOB copyq_SOURCES ${copyq_SOURCES}
     platform/platformclipboard.cpp
     platform/platforminput.h

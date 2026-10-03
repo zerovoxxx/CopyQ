@@ -4,14 +4,14 @@
 #include "common/appconfig.h"
 #include "gui/clipboardbrowsershared.h"
 #include <QPointer>
-#include <QQuickView>
+#include "gui/clipboardwindow.h"
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
 class ConfigurationManager;
 class QDialog;
 
-class ClipboardSettings final : public QQuickView
+class ClipboardSettings final : public ClipboardWindow
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(ClipboardSettingsWindow)

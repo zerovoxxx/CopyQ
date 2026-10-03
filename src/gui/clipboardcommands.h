@@ -5,11 +5,11 @@
 #include "common/commandstore.h"
 #include "gui/clipboardbrowsershared.h"
 
-#include <QQuickView>
+#include "gui/clipboardwindow.h"
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
-class ClipboardCommands final : public QQuickView
+class ClipboardCommands final : public ClipboardWindow
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(ClipboardCommandsWindow)

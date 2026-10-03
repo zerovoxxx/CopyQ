@@ -297,5 +297,5 @@ bool ClipboardCommands::event(QEvent *event)
         static_cast<QCloseEvent*>(event)->ignore();
         return true;
     }
-    return QQuickView::event(event);
+    return ClipboardWindow::event(event);
 }

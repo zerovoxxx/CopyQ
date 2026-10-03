@@ -423,6 +423,12 @@ private slots:
         QVERIFY(field);
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Signature"));
         window.setQuery(QStringLiteral("SIG")); QCOMPARE(window.snippets().size(), 1);
+        const auto artifacts = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
+        if (!artifacts.isEmpty()) {
+            QVERIFY(QTest::qWaitForWindowExposed(&window));
+            QTest::qWait(100);
+            QVERIFY(window.grabWindow().save(artifacts + QStringLiteral("/snippets.png")));
+        }
         window.setQuery(QStringLiteral("missing")); QVERIFY(window.snippets().isEmpty());
         window.setQuery(QString());
         QSignalSpy output(&window, &ClipboardSnippets::outputRequested);

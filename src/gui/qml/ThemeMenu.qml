@@ -5,6 +5,7 @@ import QClip
 Menu {
     id: control
     required property var values
+    padding: 6
     background: ClipboardStyle {
         theme: control.values
         kind: ClipboardStyle.Menu

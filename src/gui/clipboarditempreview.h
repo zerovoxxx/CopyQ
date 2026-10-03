@@ -18,17 +18,21 @@ class ClipboardItemPreview : public QQuickPaintedItem
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(ClipboardPaletteModel *history READ history WRITE setHistory NOTIFY historyChanged)
+    Q_PROPERTY(QVariantMap theme READ theme WRITE setTheme NOTIFY themeChanged)
 
 public:
     explicit ClipboardItemPreview(QQuickItem *parent = nullptr);
     ~ClipboardItemPreview() override;
     ClipboardPaletteModel *history() const { return m_history; }
     void setHistory(ClipboardPaletteModel *history);
+    QVariantMap theme() const { return m_theme; }
+    void setTheme(const QVariantMap &theme);
     void paint(QPainter *painter) override;
     QWidget *previewWidget() const;
 
 signals:
     void historyChanged();
+    void themeChanged();
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
@@ -53,5 +57,6 @@ private:
     QPointer<QWidget> m_keyTarget;
     QTimer m_renderTimer;
     QImage m_snapshot;
+    QVariantMap m_theme;
     bool m_rendering = false;
 };

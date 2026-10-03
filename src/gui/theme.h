@@ -101,6 +101,7 @@ private:
     void decorateBrowser(QAbstractScrollArea *c) const;
 
     bool isMainWindowThemeEnabled() const;
+    bool isCustomStyleEnabled() const;
 
     /** Return style sheet with given @a name. */
     QString themeStyleSheet(const QString &name) const;

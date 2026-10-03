@@ -271,8 +271,10 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(&window));
         QTRY_VERIFY(!window.history()->filtering());
         const auto artifacts = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
-        if (!artifacts.isEmpty())
+        if (!artifacts.isEmpty()) {
+            QTest::qWait(100);
             QVERIFY(window.grabWindow().save(artifacts + QStringLiteral("/management.png")));
+        }
         window.resize(800, 520);
         QTRY_COMPARE(window.rootObject()->width(), qreal(800));
         QTest::qWait(50);
@@ -521,6 +523,12 @@ private slots:
                 return false;
             };
             QTRY_VERIFY(findControl());
+            const auto artifacts = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
+            if (!artifacts.isEmpty()) {
+                QVERIFY(QTest::qWaitForWindowExposed(&window));
+                QTest::qWait(100);
+                QVERIFY(window.grabWindow().save(artifacts + QStringLiteral("/settings.png")));
+            }
             QCOMPARE(control->property("text").toString(), QStringLiteral("321"));
             QVERIFY(window.setValue(QStringLiteral("maxitems"), 900));
             QVERIFY(window.setValue(QStringLiteral("check_clipboard"), true));
@@ -651,6 +659,12 @@ private slots:
             QCOMPARE(window.status(), QQuickView::Ready);
             QVERIFY(window.rootObject());
             QCOMPARE(window.fields().size(), 23);
+            const auto artifacts = qEnvironmentVariable("COPYQ_TESTS_ARTIFACT_DIR");
+            if (!artifacts.isEmpty()) {
+                QVERIFY(QTest::qWaitForWindowExposed(&window));
+                QTest::qWait(100);
+                QVERIFY(window.grabWindow().save(artifacts + QStringLiteral("/commands.png")));
+            }
             QVERIFY(window.setField(QStringLiteral("name"), QStringLiteral("Discarded")));
             QVERIFY(window.modified());
             window.cancel();

@@ -99,7 +99,7 @@ void ClipboardPalette::open(QAbstractItemModel *source, const QString &tabName,
         screen = QGuiApplication::primaryScreen();
     if (screen) {
         const auto area = screen->availableGeometry();
-        const auto size = QSize(qMin(800, area.width()), qMin(520, area.height()));
+        const auto size = QSize(qMin(740, area.width()), qMin(440, area.height()));
         setGeometry(QRect(area.center() - QPoint(size.width() / 2, size.height() / 2), size));
     }
     show();
@@ -248,7 +248,7 @@ bool ClipboardPalette::event(QEvent *event)
             }
         }
     }
-    return QQuickView::event(event);
+    return ClipboardWindow::event(event);
 }
 
 void ClipboardPalette::changeSource(const QString &tabName)
